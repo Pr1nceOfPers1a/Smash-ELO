@@ -27,19 +27,24 @@ nav{position:fixed;bottom:0;left:0;right:0;display:flex;background:var(--card);b
 nav button{flex:1;background:none;color:var(--mu);border-radius:0;padding:16px 0}nav button.on{color:var(--ac)}
 .flag{font-size:13px;color:var(--ac);margin:-4px 0 8px 72px}
 button.lnk{background:none;color:var(--ac);padding:0;text-decoration:underline;font-weight:600}
+.tag{display:inline-block;font-size:11px;color:var(--mu);border:1px solid var(--ln);border-radius:6px;padding:1px 6px;margin-left:6px;font-weight:600}
+.cols{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:8px}
+.mn{font-size:14px;font-weight:600;word-break:break-word}
+details summary{cursor:pointer}
 </style></head><body><main><h1>SMASH <span>ELO</span></h1><div id="v"></div></main>
 <nav><button data-t="lb">Ranks</button><button data-t="add">Add match</button><button data-t="hist">History</button><button data-t="set">Settings</button></nav>
 <input type="file" id="f" accept="image/*" hidden>
 <script src="/elo.js"></script>
 <script>
 const LB={all:"Overall",one:"1v1",ffa:"FFA"};
+const FIGHTERS="Mario,Donkey Kong,Link,Samus,Dark Samus,Yoshi,Kirby,Fox,Pikachu,Luigi,Ness,Captain Falcon,Jigglypuff,Peach,Daisy,Bowser,Ice Climbers,Sheik,Zelda,Dr. Mario,Pichu,Falco,Marth,Lucina,Young Link,Ganondorf,Mewtwo,Roy,Chrom,Mr. Game & Watch,Meta Knight,Pit,Dark Pit,Zero Suit Samus,Wario,Snake,Ike,Pokémon Trainer,Diddy Kong,Lucas,Sonic,King Dedede,Olimar,Lucario,R.O.B.,Toon Link,Wolf,Villager,Mega Man,Wii Fit Trainer,Rosalina & Luma,Little Mac,Greninja,Mii Brawler,Mii Swordfighter,Mii Gunner,Palutena,Pac-Man,Robin,Shulk,Bowser Jr.,Duck Hunt,Ryu,Ken,Cloud,Corrin,Bayonetta,Inkling,Ridley,Simon,Richter,King K. Rool,Isabelle,Incineroar,Piranha Plant,Joker,Hero,Banjo & Kazooie,Terry,Byleth,Min Min,Steve,Sephiroth,Pyra/Mythra,Kazuya,Sora".split(",");
 const ls=(k,v)=>{try{return v===undefined?localStorage.getItem(k)||"":localStorage.setItem(k,v)}catch(e){return""}};
 let ms=[],tab="lb",board="all",sel="",draft=[{name:"",place:1},{name:"",place:2}],note="",D=null;
 let me=ls("me"),pass=ls("pass"),admin=ls("admin");
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const sg=x=>(x>=0?"+":"")+x.toFixed(1);
 const api=async(p,o={})=>{const r=await fetch("/api/"+p,{headers:{"content-type":"application/json"},...o});const j=await r.json().catch(()=>({}));if(!r.ok)throw Object.assign(new Error(j.error||"Something went wrong"),{status:r.status});return j};
-async function load(){try{ms=await api("matches");ms.sort((a,b)=>new Date(a.ts)-new Date(b.ts));if(tab!="add")render();else D=ELO.compute(ms)}catch(e){}}
+async function load(){try{ms=await api("matches");ms.sort((a,b)=>new Date(a.ts)-new Date(b.ts));const ae=document.activeElement?.tagName;if(tab!="add"&&ae!="SELECT"&&ae!="INPUT")render();else D=ELO.compute(ms)}catch(e){}}
 function spark(h){
   if(h.length<2)return"";const v=h.map(x=>x.r),lo=Math.min(...v),hi=Math.max(...v),sp=Math.max(hi-lo,1);
   const pts=v.map((y,i)=>`${(i/(v.length-1)*296+2).toFixed(1)},${(56-(y-lo)/sp*52).toFixed(1)}`).join(" ");
@@ -47,31 +52,31 @@ function spark(h){
 }
 const tri=p=>`<div class="tri">${["all","one","ffa"].map(t=>`<div><div class="elo">${p.g[t]?Math.round(p.r[t]):"—"}</div><div class="sub">${LB[t]}</div></div>`).join("")}</div>`;
 function render(){
-  D=ELO.compute(ms);const P=D.players,v=document.getElementById("v");
+  D=ELO.compute(ms);const P=D.players,v=document.getElementById("v");CH=[...new Set([...FIGHTERS,...ms.flatMap(m=>m.results.map(x=>x.char).filter(Boolean))])].sort();
   document.querySelectorAll("nav button").forEach(b=>b.classList.toggle("on",b.dataset.t==tab));
   if(tab=="lb"){
-    if(sel&&P[sel]){
-      const p=P[sel],h=Object.entries(p.h2h).sort((a,b)=>(b[1].w+b[1].l+b[1].t)-(a[1].w+a[1].l+a[1].t));
-      v.innerHTML=`<button class="g" onclick="sel='';render()">← Back</button><div class="card" style="margin-top:10px"><div class="nm" style="font-size:20px">${esc(p.name)} ${p.streak>=2?"🔥 "+p.streak:""}</div><div class="sub">${p.w}W · ${p.l}L · ${p.g.all} games</div>${tri(p)}<div class="sub" style="text-align:center;margin-top:6px">${p.g.one} 1v1 games · ${p.g.ffa} FFA games</div></div><div class="card">${spark(p.hist)||'<div class="sub">Play more matches to see a chart.</div>'}</div><div class="card"><b>Head to head</b>${h.map(([n,x])=>`<div class="row" style="margin:6px 0 0"><span class="nm">${esc(n)}</span><span class="${x.w>x.l?"up":x.w<x.l?"dn":"sub"}">${x.w}–${x.l}${x.t?"–"+x.t:""}</span></div>`).join("")}</div>`;return;
-    }
+    if(sel&&P[sel]){v.innerHTML=playerPage(P[sel]);return}
     let h="";
     if(!me&&Object.keys(P).length)h+=`<div class="card"><div class="sub">Who are you? Pick your name to see your ratings here.</div><select onchange="me=this.value;ls('me',me);render()"><option value="">Choose…</option>${Object.keys(P).sort().map(n=>`<option>${esc(n)}</option>`).join("")}</select></div>`;
-    if(me&&P[me])h+=`<div class="card" data-n="${esc(me)}"><div class="sub">You · ${esc(me)}</div>${tri(P[me])}</div>`;
+    if(me&&P[me])h+=`<div class="card" data-n="${esc(me)}"><div class="sub">You · ${esc(me)}</div>${triP(P[me])}</div>`;
+    h+=avgCard(P);
+    h+=`<div class="row"><input class="n" id="fq" placeholder="Search player" value="${esc(fq)}" oninput="fq=this.value;render();const e=document.getElementById('fq');e.focus();e.setSelectionRange(fq.length,fq.length)"></div>`;
+    const q=fq.trim().toLowerCase();
     h+=`<div class="seg">${Object.keys(LB).map(t=>`<button class="${board==t?"on":""}" onclick="board='${t}';render()">${LB[t]}</button>`).join("")}</div>`;
-    const L=Object.values(P).filter(p=>p.g[board]).sort((a,b)=>b.r[board]-a.r[board]);
-    h+=L.length?L.map((p,i)=>`<div class="card lb" data-n="${esc(p.name)}"><div class="rk">${i+1}</div><div class="nm">${esc(p.name)} ${p.streak>=2?"🔥"+p.streak:""}<div class="sub">${p.g[board]} games</div></div><div class="elo">${Math.round(p.r[board])}</div></div>`).join(""):`<p class="msg">No ${LB[board]} matches yet.</p>`;
+    const L=Object.values(P).filter(p=>p.g[board]&&(!q||p.name.toLowerCase().includes(q))).sort((a,b)=>b.r[board]-a.r[board]);
+    h+=L.length?L.map((p,i)=>`<div class="card lb" data-n="${esc(p.name)}"><div class="rk">${i+1}</div><div class="nm">${esc(p.name)} ${p.streak>=2?"🔥"+p.streak:""}<div class="sub">${p.g[board]} games${prov(p.g[board])}</div></div><div class="elo">${Math.round(p.r[board])}</div></div>`).join(""):`<p class="msg">No ${LB[board]} matches${q?" for that search":" yet"}.</p>`;
     v.innerHTML=h;
   }
   if(tab=="add"){
     if(!pass){v.innerHTML=`<div class="card"><b>Group passcode</b><div class="msg">Ask the group admin for the passcode to add matches.</div><div class="row"><input class="n" type="password" id="pc" placeholder="Passcode"><button onclick="pass=document.getElementById('pc').value.trim();ls('pass',pass);render()">Save</button></div></div>`;return}
-    v.innerHTML=`<datalist id="dl">${Object.keys(P).map(n=>`<option value="${esc(n)}">`).join("")}</datalist>
+    v.innerHTML=`<datalist id="dl">${Object.keys(P).map(n=>`<option value="${esc(n)}">`).join("")}</datalist><datalist id="dlc">${CH.map(c=>`<option value="${esc(c)}">`).join("")}</datalist>
     <div class="card"><button class="g" style="width:100%" onclick="document.getElementById('f').click()">📷 Scan result screen</button><div class="msg" id="st">${esc(note)}</div></div>
-    <div class="card">${draft.map((r,i)=>`<div class="row"><input class="p" type="number" min="1" max="8" value="${r.place}" onchange="draft[${i}].place=+this.value||1" aria-label="Place"><input class="n" list="dl" placeholder="Username" value="${esc(r.name)}" onchange="draft[${i}].name=this.value"><button class="x" onclick="draft.splice(${i},1);render()">✕</button></div>${flag(r.name,i)}`).join("")}
+    <div class="card">${draft.map((r,i)=>`<div class="row"><input class="p" type="number" min="1" max="8" value="${r.place}" onchange="draft[${i}].place=+this.value||1" aria-label="Place"><input class="n" list="dl" placeholder="Username" value="${esc(r.name)}" onchange="draft[${i}].name=this.value"><button class="x" onclick="draft.splice(${i},1);render()">✕</button></div>${flag(r.name,i)}<div class="row" style="margin:-2px 0 10px 72px"><input class="n" list="dlc" placeholder="Character (optional)" value="${esc(r.char||"")}" onchange="draft[${i}].char=this.value"></div>`).join("")}
     <div class="row"><button class="g" onclick="if(draft.length<8){draft.push({name:'',place:draft.length+1});render()}">+ Player</button><button id="sv" style="flex:1" onclick="saveMatch()">Save match</button></div>
     <div class="msg">Place 1 = winner. Tied players share a number. 2 players = 1v1, 3 or more = FFA.</div></div>`;
   }
   if(tab=="hist"){
-    v.innerHTML=ms.length?D.matches.slice().reverse().map(m=>`<div class="card"><div class="row"><span class="sub" style="flex:1">${new Date(m.ts).toLocaleString()} · ${LB[m.mode]}</span>${admin?`<button class="x" onclick="del('${esc(m.id)}')">Delete</button>`:""}</div>${m.results.slice().sort((a,b)=>a.place-b.place).map(x=>`<div class="row" style="margin:2px 0"><span class="rk">${x.place}</span><span class="nm">${esc(x.name)}</span><span class="${m.d.mode[x.name]>=0?"up":"dn"}">${LB[m.mode]} ${sg(m.d.mode[x.name])}</span><span class="sub">All ${sg(m.d.all[x.name])}</span></div>`).join("")}</div>`).join(""):`<p class="msg">No matches yet.</p>`;
+    v.innerHTML=ms.length?D.matches.slice().reverse().map(m=>`<div class="card"><div class="row"><span class="sub" style="flex:1">${new Date(m.ts).toLocaleString()} · ${LB[m.mode]}</span>${admin?`<button class="x" onclick="del('${esc(m.id)}')">Delete</button>`:""}</div>${m.results.slice().sort((a,b)=>a.place-b.place).map(x=>`<div class="row" style="margin:2px 0"><span class="rk">${x.place}</span><span class="nm">${esc(x.name)}${x.char?` <span class="sub">${esc(x.char)}</span>`:""}</span><span class="${m.d.mode[x.name]>=0?"up":"dn"}">${LB[m.mode]} ${sg(m.d.mode[x.name])}</span><span class="sub">All ${sg(m.d.all[x.name])}</span></div>`).join("")}</div>`).join(""):`<p class="msg">No matches yet.</p>`;
   }
   if(tab=="set"){
     v.innerHTML=`<div class="card"><b>Group passcode</b><div class="row" style="margin-top:8px"><input class="n" type="password" value="${esc(pass)}" onchange="pass=this.value.trim();ls('pass',pass)"></div></div>
@@ -81,8 +86,8 @@ function render(){
   }
 }
 document.querySelector("nav").onclick=e=>{if(e.target.dataset.t){tab=e.target.dataset.t;sel="";render()}};
-document.getElementById("v").onclick=e=>{const f=e.target.closest("[data-fix]");if(f){draft[+f.dataset.fix].name=f.dataset.to;render();return}const c=e.target.closest("[data-n]");if(c&&tab=="lb"){sel=c.dataset.n;render();scrollTo(0,0)}};
-let mg={from:"",to:""},mgOut="",mgOk=false;
+document.getElementById("v").onclick=e=>{const k=e.target.closest("[data-ch]");if(k){pchar=pchar==k.dataset.ch?"":k.dataset.ch;render();return}const f=e.target.closest("[data-fix]");if(f){draft[+f.dataset.fix].name=f.dataset.to;render();return}const c=e.target.closest("[data-n]");if(c&&tab=="lb"){sel=c.dataset.n;pchar="";render();scrollTo(0,0)}};
+let mg={from:"",to:""},mgOut="",mgOk=false,CH=[],fchar="",fq="",pchar="",pmode="all";
 function lev(a,b){const d=Array.from({length:a.length+1},(_,i)=>[i]);for(let j=1;j<=b.length;j++)d[0][j]=j;for(let i=1;i<=a.length;i++)for(let j=1;j<=b.length;j++)d[i][j]=Math.min(d[i-1][j]+1,d[i][j-1]+1,d[i-1][j-1]+(a[i-1]==b[j-1]?0:1));return d[a.length][b.length]}
 function flag(name,i){
   const n=name.trim(),known=Object.keys(D.players),l=n.toLowerCase();
@@ -121,9 +126,67 @@ async function doMerge(){
     mg={from:"",to:""};mgOut="Merged.";mgOk=false;await load();render();
   }catch(e){alert(e.message)}
 }
+let psort="best";
+const pct=(w,l)=>w+l?Math.round(100*w/(w+l))+"%":"—";
+const gm=r=>r.w+r.l+r.t,wr=r=>(r.w+.5*r.t)/gm(r),rec=r=>`${r.w}–${r.l}${r.t?"–"+r.t:""}`;
+const prov=g=>g&&g<10?`<span class="tag">provisional</span>`:"";
+const triP=p=>`<div class="tri">${["all","one","ffa"].map(t=>`<div><div class="elo">${p.g[t]?Math.round(p.r[t]):"—"}</div><div class="sub">${LB[t]}</div>${prov(p.g[t])}</div>`).join("")}</div>`;
+function avgCard(P){
+  const ps=Object.values(P);if(!ps.length)return"";
+  return`<div class="card"><div class="sub">Average rating</div><div class="tri">${["all","one","ffa"].map(t=>{const L=ps.filter(p=>p.g[t]);const a=L.length?L.reduce((s,p)=>s+p.r[t],0)/L.length:null;return`<div><div class="elo">${a==null?"—":Math.round(a)}</div><div class="sub">${LB[t]} · ${L.length} ranked</div></div>`}).join("")}</div></div>`;
+}
+function trend(p){
+  const h=p.h[pmode],cur=p.r[pmode];
+  const seg=`<div class="seg">${Object.keys(LB).map(t=>`<button class="${pmode==t?"on":""}" onclick="pmode='${t}';render()">${LB[t]}</button>`).join("")}</div>`;
+  if(!h.length)return seg+`<div class="sub">No ${LB[pmode]} games yet.</div>`;
+  const pts=[{r:1000},...h],vs=pts.map(x=>x.r),lo=Math.min(...vs),hi=Math.max(...vs),sp=Math.max(hi-lo,1);
+  const X=i=>i/(pts.length-1)*296+2,Y=y=>56-(y-lo)/sp*52;
+  const line=vs.map((y,i)=>`${X(i).toFixed(1)},${Y(y).toFixed(1)}`).join(" ");
+  const pi=vs.indexOf(hi),li=vs.indexOf(lo),dt=i=>pts[i].ts?new Date(pts[i].ts).toLocaleDateString():"start";
+  const chg=d=>{const cut=Date.now()-d*864e5,b=h.filter(x=>new Date(x.ts)<=cut).pop(),x=cur-(b?b.r:1000);return`<span class="${x>=0?"up":"dn"}">${sg(x)}</span>`};
+  return seg+`<svg viewBox="0 0 300 60" width="100%" height="60"><polyline fill="none" stroke="var(--ac)" stroke-width="2" points="${line}"/><circle cx="${X(pi).toFixed(1)}" cy="${Y(hi).toFixed(1)}" r="4" fill="var(--ok)"/></svg><div class="sub">Peak ${Math.round(hi)} (${dt(pi)}) · Low ${Math.round(lo)} (${dt(li)}) · ${h.length} games</div><div class="sub">Last 7 days ${chg(7)} · Last 30 days ${chg(30)}</div>`;
+}
+function cvcList(p){
+  const L=Object.values(p.cvc).filter(r=>r.my==pchar).sort((a,b)=>psort=="best"?wr(b)-wr(a)||gm(b)-gm(a):wr(a)-wr(b)||gm(b)-gm(a));
+  return`<div style="margin-top:14px"><div class="row"><b style="flex:1">${esc(pchar)} matchups</b><button class="g" onclick="psort=psort=='best'?'worst':'best';render()">${psort=="best"?"Best first":"Worst first"} ⇅</button></div>${L.length?L.map(r=>`<div class="row" style="margin:4px 0${gm(r)<3?";opacity:.55":""}"><span class="nm">vs ${esc(r.oc)}</span><span class="sub">${rec(r)} · ${Math.round(100*wr(r))}%${gm(r)<3?" · few games":""}</span></div>`).join(""):`<div class="sub">No matchups with ${esc(pchar)} yet.</div>`}</div>`;
+}
+function charCard(p){
+  const ks=Object.keys(p.cm).sort((a,b)=>p.cm[b].n-p.cm[a].n);
+  if(!ks.length)return`<div class="card"><b>By character</b><div class="sub">No character data yet. Fill in the Character box when logging matches.</div></div>`;
+  const byc={};Object.values(D.chars).filter(c=>c.name==p.name).forEach(c=>byc[c.char]=c);
+  const rows=ks.map(k=>{const m=p.cm[k],c=byc[k];return`<div class="row" data-ch="${esc(k)}" style="margin:10px 0 0;cursor:pointer"><span class="nm">${esc(k)}${pchar==k?" ▾":" ▸"}<div class="sub">${m.w}W ${m.n-m.w}L · ${pct(m.w,m.n-m.w)} win · ${Math.round(100*m.n/p.nchar)}% pick</div></span><span class="elo">${c?Math.round(c.r):"—"}</span>${c?prov(c.g):""}</div>`}).join("");
+  return`<div class="card"><b>By character</b><div class="sub">Tap a character to see its best and worst matchups.</div>${rows}${pchar&&p.cm[pchar]?cvcList(p):""}</div>`;
+}
+function rivals(p){
+  const P1=Object.entries(p.h2h).map(([n,r])=>({...r,label:n}));
+  const P2=Object.values(p.h2c).map(r=>({...r,label:`${r.my} vs ${r.opp}'s ${r.oc}`}));
+  const top=(L,f)=>L.filter(r=>gm(r)>=3).sort(f)[0];
+  const nem=L=>{const r=top(L,(a,b)=>wr(a)-wr(b)||gm(b)-gm(a));return r&&wr(r)<.5?r:null};
+  const vic=L=>{const r=top(L,(a,b)=>wr(b)-wr(a)||gm(b)-gm(a));return r&&wr(r)>.5?r:null};
+  const twin=L=>top(L,(a,b)=>Math.abs(wr(a)-.5)-Math.abs(wr(b)-.5)||gm(b)-gm(a));
+  const line=(t,r)=>r?`<div class="sub">${t}: <b>${esc(r.label)}</b> · ${rec(r)} (${Math.round(100*wr(r))}%)</div>`:`<div class="sub">${t}: not enough games yet</div>`;
+  const blk=(title,f)=>`<div style="margin-top:10px"><b>${title}</b>${line("Player",f(P1))}${line("Pair",f(P2))}</div>`;
+  const col=L=>L.slice().sort((a,b)=>wr(b)-wr(a)||gm(b)-gm(a)).map(r=>`<div style="margin:6px 0${gm(r)<3?";opacity:.55":""}"><div class="mn">${esc(r.label)}</div><div class="sub">${rec(r)} · ${Math.round(100*wr(r))}%</div></div>`).join("")||`<div class="sub">None yet</div>`;
+  return`<div class="card"><b>Rivalries</b><div class="sub">Needs 3+ meetings. Pairs are your character vs their player's character.</div>${blk("Nemesis",nem)}${blk("Favorite victim",vic)}${blk("Twin (most even)",twin)}<details style="margin-top:12px"><summary><b>See all matchups</b></summary><div class="cols"><div><div class="sub" style="font-weight:700">Players</div>${col(P1)}</div><div><div class="sub" style="font-weight:700">Player-character pairs</div>${col(P2)}</div></div></details></div>`;
+}
+function upsets(p){
+  const d=u=>new Date(u.ts).toLocaleDateString(),nm=u=>esc(u.opp)+(u.oc?` (${esc(u.oc)})`:"");
+  const top=w=>p.ups.filter(u=>u.won==w).sort((a,b)=>b.gap-a.gap).slice(0,3);
+  const W=top(true),L=top(false);
+  if(!W.length&&!L.length)return`<div class="card"><b>Biggest upsets</b><div class="sub">None yet. An upset is a result against someone rated 50+ points apart.</div></div>`;
+  return`<div class="card"><b>Biggest upsets</b>${W.length?`<div class="sub" style="margin-top:6px">Wins</div>`+W.map(u=>`<div style="margin:6px 0"><span class="up">Beat ${nm(u)}</span><div class="sub">${d(u)} · rated ${Math.round(u.gap)} higher · you had a ${Math.round(u.pr*100)}% chance</div></div>`).join(""):""}${L.length?`<div class="sub" style="margin-top:8px">Losses</div>`+L.map(u=>`<div style="margin:6px 0"><span class="dn">Lost to ${nm(u)}</span><div class="sub">${d(u)} · rated ${Math.round(u.gap)} lower · you were a ${Math.round((1-u.pr)*100)}% favorite</div></div>`).join(""):""}</div>`;
+}
+function playerPage(p){
+  const f=p.ffa,wm=p.wm;
+  return`<button class="g" onclick="sel='';render()">← Back</button>
+  <div class="card" style="margin-top:10px"><div class="nm" style="font-size:20px">${esc(p.name)} ${p.streak>=2?"🔥 "+p.streak:""}</div><div class="sub">${p.w}W · ${p.l}L · ${p.g.all} games</div>${triP(p)}</div>
+  <div class="card"><b>Win rate</b><div class="tri">${[["Overall",p.w,p.l],["1v1",wm.one.w,wm.one.l],["FFA",wm.ffa.w,wm.ffa.l]].map(([t,w,l])=>`<div><div class="elo">${pct(w,l)}</div><div class="sub">${t} · ${w}W ${l}L</div></div>`).join("")}</div>${f.n?`<div class="sub" style="margin-top:8px">Average FFA placement: <b>${(f.place/f.n).toFixed(2)}</b> in ${(f.size/f.n).toFixed(1)}-player matches (${f.n} games)</div>`:`<div class="sub" style="margin-top:8px">No FFA games yet.</div>`}</div>
+  <div class="card"><b>Rating history</b>${trend(p)}</div>
+  ${charCard(p)}${rivals(p)}${upsets(p)}`;
+}
 async function saveMatch(){
   const known=Object.keys(D.players);
-  const r=draft.map(x=>{const n=x.name.trim();return{name:known.find(k=>k.toLowerCase()==n.toLowerCase())||n,place:x.place}}).filter(x=>x.name);
+  const r=draft.map(x=>{const n=x.name.trim(),c0=(x.char||"").trim(),c=CH.find(k=>k.toLowerCase()==c0.toLowerCase())||c0;return{name:known.find(k=>k.toLowerCase()==n.toLowerCase())||n,place:x.place,...(c?{char:c.slice(0,30)}:{})}}).filter(x=>x.name);
   if(r.length<2)return alert("Need at least two players.");
   if(new Set(r.map(x=>x.name.toLowerCase())).size<r.length)return alert("Each username must be unique.");
   const b=document.getElementById("sv");b.disabled=true;
@@ -132,8 +195,8 @@ async function saveMatch(){
 }
 async function del(id){if(!confirm("Delete this match? Ratings will be recalculated."))return;try{await api("matches",{method:"DELETE",body:JSON.stringify({admin,id})});await load()}catch(e){alert(e.message)}}
 function csv(){
-  const rows=["match_id,date,mode,place,player"];
-  D.matches.forEach(m=>m.results.forEach(x=>rows.push([m.id,new Date(m.ts).toISOString(),LB[m.mode],x.place,'"'+x.name.replace(/"/g,'""')+'"'].join(","))));
+  const rows=["match_id,date,mode,place,player,character"];
+  D.matches.forEach(m=>m.results.forEach(x=>rows.push([m.id,new Date(m.ts).toISOString(),LB[m.mode],x.place,'"'+x.name.replace(/"/g,'""')+'"','"'+(x.char||"").replace(/"/g,'""')+'"'].join(","))));
   const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([rows.join("\n")],{type:"text/csv"}));a.download="smash-elo-matches.csv";a.click();
 }
 async function shrink(file){
@@ -145,9 +208,9 @@ document.getElementById("f").onchange=async e=>{
   const file=e.target.files[0];e.target.value="";if(!file)return;
   document.getElementById("st").textContent="Reading screenshot…";
   try{
-    const j=await api("scan",{method:"POST",body:JSON.stringify({passcode:pass,roster:Object.keys(D.players),image:await shrink(file)})});
+    const j=await api("scan",{method:"POST",body:JSON.stringify({passcode:pass,roster:Object.keys(D.players),chars:CH,image:await shrink(file)})});
     if(j.players.length<2){note="Couldn't read that screen. Enter results by hand."}
-    else{draft=j.players.map(p=>({name:String(p.name||""),place:+p.place||1}));note="Check the names and places, then save."}
+    else{draft=j.players.map(p=>({name:String(p.name||""),place:+p.place||1,char:String(p.character||"")}));note="Check the names and places, then save."}
   }catch(err){note=err.message;if(err.status==401){pass="";ls("pass","")}}
   render();
 };
