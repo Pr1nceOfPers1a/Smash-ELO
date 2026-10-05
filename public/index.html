@@ -87,7 +87,7 @@ function render(){
 }
 document.querySelector("nav").onclick=e=>{if(e.target.dataset.t){tab=e.target.dataset.t;sel="";render()}};
 document.getElementById("v").onclick=e=>{const k=e.target.closest("[data-ch]");if(k){pchar=pchar==k.dataset.ch?"":k.dataset.ch;render();return}const f=e.target.closest("[data-fix]");if(f){draft[+f.dataset.fix].name=f.dataset.to;render();return}const c=e.target.closest("[data-n]");if(c&&tab=="lb"){sel=c.dataset.n;pchar="";render();scrollTo(0,0)}};
-let mg={from:"",to:""},mgOut="",mgOk=false,CH=[],fchar="",fq="",pchar="",pmode="all";
+let mg={from:"",to:""},mgOut="",mgOk=false,CH=[],fchar="",fq="",pchar="",pmode="all",prange="all";
 function lev(a,b){const d=Array.from({length:a.length+1},(_,i)=>[i]);for(let j=1;j<=b.length;j++)d[0][j]=j;for(let i=1;i<=a.length;i++)for(let j=1;j<=b.length;j++)d[i][j]=Math.min(d[i-1][j]+1,d[i][j-1]+1,d[i-1][j-1]+(a[i-1]==b[j-1]?0:1));return d[a.length][b.length]}
 function flag(name,i){
   const n=name.trim(),known=Object.keys(D.players),l=n.toLowerCase();
@@ -136,15 +136,24 @@ function avgCard(P){
   return`<div class="card"><div class="sub">Average rating</div><div class="tri">${["all","one","ffa"].map(t=>{const L=ps.filter(p=>p.g[t]);const a=L.length?L.reduce((s,p)=>s+p.r[t],0)/L.length:null;return`<div><div class="elo">${a==null?"—":Math.round(a)}</div><div class="sub">${LB[t]} · ${L.length} ranked</div></div>`}).join("")}</div></div>`;
 }
 function trend(p){
-  const h=p.h[pmode],cur=p.r[pmode];
-  const seg=`<div class="seg">${Object.keys(LB).map(t=>`<button class="${pmode==t?"on":""}" onclick="pmode='${t}';render()">${LB[t]}</button>`).join("")}</div>`;
-  if(!h.length)return seg+`<div class="sub">No ${LB[pmode]} games yet.</div>`;
-  const pts=[{r:1000},...h],vs=pts.map(x=>x.r),lo=Math.min(...vs),hi=Math.max(...vs),sp=Math.max(hi-lo,1);
-  const X=i=>i/(pts.length-1)*296+2,Y=y=>56-(y-lo)/sp*52;
-  const line=vs.map((y,i)=>`${X(i).toFixed(1)},${Y(y).toFixed(1)}`).join(" ");
-  const pi=vs.indexOf(hi),li=vs.indexOf(lo),dt=i=>pts[i].ts?new Date(pts[i].ts).toLocaleDateString():"start";
-  const chg=d=>{const cut=Date.now()-d*864e5,b=h.filter(x=>new Date(x.ts)<=cut).pop(),x=cur-(b?b.r:1000);return`<span class="${x>=0?"up":"dn"}">${sg(x)}</span>`};
-  return seg+`<svg viewBox="0 0 300 60" width="100%" height="60"><polyline fill="none" stroke="var(--ac)" stroke-width="2" points="${line}"/><circle cx="${X(pi).toFixed(1)}" cy="${Y(hi).toFixed(1)}" r="4" fill="var(--ok)"/></svg><div class="sub">Peak ${Math.round(hi)} (${dt(pi)}) · Low ${Math.round(lo)} (${dt(li)}) · ${h.length} games</div><div class="sub">Last 7 days ${chg(7)} · Last 30 days ${chg(30)}</div>`;
+  const h=p.h[pmode],now=Date.now(),DAY=864e5,all=prange=="all";
+  const R={all:"All time",month:"Last month",week:"Last week"};
+  const segM=`<div class="seg">${Object.keys(LB).map(t=>`<button class="${pmode==t?"on":""}" onclick="pmode='${t}';render()">${LB[t]}</button>`).join("")}</div>`;
+  const segR=`<div class="seg">${Object.keys(R).map(k=>`<button class="${prange==k?"on":""}" onclick="prange='${k}';render()">${R[k]}</button>`).join("")}</div>`;
+  if(!h.length)return segM+segR+`<div class="sub">No ${LB[pmode]} games yet.</div>`;
+  const T=x=>new Date(x.ts).getTime(),t1=now,t0=prange=="week"?t1-7*DAY:prange=="month"?t1-30*DAY:Math.min(T(h[0]),t1-1);
+  const r0=all?1000:(h.filter(x=>T(x)<=t0).pop()||{r:1000}).r,W=h.filter(x=>all||T(x)>t0);
+  const span=Math.max(t1-t0,1),X=t=>18+(t-t0)/span*264;
+  const pts=[[t0,r0]];let last=r0;
+  for(const x of W){pts.push([T(x),last]);pts.push([T(x),x.r]);last=x.r}
+  pts.push([t1,last]);
+  const vs=pts.map(a=>a[1]),lo=Math.min(...vs),hi=Math.max(...vs),sp=Math.max(hi-lo,1),Y=y=>hi==lo?30:8+(hi-y)/sp*44;
+  const pk=pts.find(a=>a[1]==hi),line=pts.map(([t,y])=>`${X(t).toFixed(1)},${Y(y).toFixed(1)}`).join(" ");
+  const k=prange=="week"?7:4;
+  const fmt=d=>prange=="week"?d.toLocaleDateString(undefined,{weekday:"short",day:"numeric"}):(all&&span>300*DAY)?d.toLocaleDateString(undefined,{month:"short"})+" '"+String(d.getFullYear()).slice(2):d.toLocaleDateString(undefined,{month:"numeric",day:"numeric"});
+  const ticks=Array.from({length:k+1},(_,i)=>t0+i*span/k).map(t=>`<line x1="${X(t).toFixed(1)}" y1="56" x2="${X(t).toFixed(1)}" y2="60" stroke="var(--mu)"/><text x="${X(t).toFixed(1)}" y="72" text-anchor="middle" font-size="9" style="fill:var(--mu)">${fmt(new Date(t))}</text>`).join("");
+  const n=W.length;
+  return segM+segR+`<svg viewBox="0 0 300 78" width="100%"><line x1="18" y1="56" x2="282" y2="56" stroke="var(--ln)"/>${ticks}<polyline fill="none" stroke="var(--ac)" stroke-width="2" stroke-linejoin="round" points="${line}"/><circle cx="${X(pk[0]).toFixed(1)}" cy="${Y(hi).toFixed(1)}" r="4" fill="var(--ok)"/></svg><div class="sub">Peak ${Math.round(hi)} · Low ${Math.round(lo)} · ${n} game${n==1?"":"s"}${n||all?"":" · no games in this range"}</div>`;
 }
 function cvcList(p){
   const L=Object.values(p.cvc).filter(r=>r.my==pchar).sort((a,b)=>psort=="best"?wr(b)-wr(a)||gm(b)-gm(a):wr(a)-wr(b)||gm(b)-gm(a));
@@ -177,10 +186,10 @@ function upsets(p){
   return`<div class="card"><b>Biggest upsets</b>${W.length?`<div class="sub" style="margin-top:6px">Wins</div>`+W.map(u=>`<div style="margin:6px 0"><span class="up">Beat ${nm(u)}</span><div class="sub">${d(u)} · rated ${Math.round(u.gap)} higher · you had a ${Math.round(u.pr*100)}% chance</div></div>`).join(""):""}${L.length?`<div class="sub" style="margin-top:8px">Losses</div>`+L.map(u=>`<div style="margin:6px 0"><span class="dn">Lost to ${nm(u)}</span><div class="sub">${d(u)} · rated ${Math.round(u.gap)} lower · you were a ${Math.round((1-u.pr)*100)}% favorite</div></div>`).join(""):""}</div>`;
 }
 function playerPage(p){
-  const f=p.ffa,wm=p.wm;
+  const wm=p.wm;
   return`<button class="g" onclick="sel='';render()">← Back</button>
   <div class="card" style="margin-top:10px"><div class="nm" style="font-size:20px">${esc(p.name)} ${p.streak>=2?"🔥 "+p.streak:""}</div><div class="sub">${p.w}W · ${p.l}L · ${p.g.all} games</div>${triP(p)}</div>
-  <div class="card"><b>Win rate</b><div class="tri">${[["Overall",p.w,p.l],["1v1",wm.one.w,wm.one.l],["FFA",wm.ffa.w,wm.ffa.l]].map(([t,w,l])=>`<div><div class="elo">${pct(w,l)}</div><div class="sub">${t} · ${w}W ${l}L</div></div>`).join("")}</div>${f.n?`<div class="sub" style="margin-top:8px">Average FFA placement: <b>${(f.place/f.n).toFixed(2)}</b> in ${(f.size/f.n).toFixed(1)}-player matches (${f.n} games)</div>`:`<div class="sub" style="margin-top:8px">No FFA games yet.</div>`}</div>
+  <div class="card"><b>Win rate</b><div class="tri">${[["Overall",p.w,p.l],["1v1",wm.one.w,wm.one.l],["FFA",wm.ffa.w,wm.ffa.l]].map(([t,w,l])=>`<div><div class="elo">${pct(w,l)}</div><div class="sub">${t} · ${w}W ${l}L</div></div>`).join("")}</div></div>
   <div class="card"><b>Rating history</b>${trend(p)}</div>
   ${charCard(p)}${rivals(p)}${upsets(p)}`;
 }
