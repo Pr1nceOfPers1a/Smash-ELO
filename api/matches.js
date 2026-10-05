@@ -7,6 +7,7 @@ function valid(rs) {
   for (const x of rs) {
     if (!nameOk(x.name)) return false;
     if (!Number.isInteger(x.place) || x.place < 1 || x.place > 8) return false;
+    if (x.char !== undefined && (typeof x.char !== 'string' || x.char.length > 30)) return false;
     const k = x.name.trim().toLowerCase();
     if (seen.has(k)) return false;
     seen.add(k);
@@ -44,7 +45,7 @@ module.exports = async (req, res) => {
       if (b.action === 'merge') return await merge(b, res);
       if (b.passcode !== process.env.GROUP_PASSCODE) return res.status(401).json({ error: 'Wrong passcode' });
       if (!valid(b.results)) return res.status(400).json({ error: 'Invalid match' });
-      const results = b.results.map((x) => ({ name: x.name.trim(), place: x.place }));
+      const results = b.results.map((x) => ({ name: x.name.trim(), place: x.place, ...(x.char && x.char.trim() ? { char: x.char.trim() } : {}) }));
       const r = await sb('matches', { method: 'POST', body: JSON.stringify({ results }) });
       if (!r.ok) return res.status(500).json({ error: 'Database error' });
       return res.status(200).json({ ok: true });
