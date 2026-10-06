@@ -6,7 +6,7 @@
     const get = (n) => (P[n] ??= {
       name: n, r: { all: START, one: START, ffa: START }, g: { all: 0, one: 0, ffa: 0 },
       w: 0, l: 0, wm: { one: { w: 0, l: 0 }, ffa: { w: 0, l: 0 } }, ffa: { n: 0, place: 0, size: 0 },
-      streak: 0, h: { all: [], one: [], ffa: [] }, h2h: {}, h2c: {}, cvc: {}, cm: {}, nchar: 0, ups: [],
+      streak: 0, h: { all: [], one: [], ffa: [] }, h2h: {}, h2c: {}, cvc: {}, cm: {}, nchar: 0, ups: [], cs: { one: { k: 0, d: 0, n: 0, sd: 0, dmg: 0 }, ffa: { k: 0, d: 0, n: 0, sd: 0, dmg: 0 } },
     });
     for (const m of ms) {
       const res = m.results, n = res.length, mode = n === 2 ? 'one' : 'ffa';
@@ -37,6 +37,10 @@
         const p = P[x.name], win = x.place === 1;
         if (win) { p.w++; p.streak = p.streak > 0 ? p.streak + 1 : 1; } else { p.l++; p.streak = p.streak < 0 ? p.streak - 1 : -1; }
         p.wm[mode][win ? 'w' : 'l']++;
+        const cs = p.cs[mode]; // combat stats, only from matches where they were recorded
+        if (Number.isFinite(x.kills) && Number.isFinite(x.deaths)) { cs.k += x.kills; cs.d += x.deaths; cs.n++; }
+        if (Number.isFinite(x.sds)) cs.sd += x.sds;
+        if (Number.isFinite(x.dmg)) cs.dmg += x.dmg;
         if (mode === 'ffa') { p.ffa.n++; p.ffa.place += x.place; p.ffa.size += n; }
         if (x.char) { const c = (p.cm[x.char] ??= { n: 0, w: 0 }); c.n++; if (win) c.w++; p.nchar++; }
         for (const y of res) if (y !== x) {

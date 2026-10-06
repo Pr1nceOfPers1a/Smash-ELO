@@ -31,6 +31,7 @@ button.lnk{background:none;color:var(--ac);padding:0;text-decoration:underline;f
 .cols{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:8px}
 .mn{font-size:14px;font-weight:600;word-break:break-word}
 details summary{cursor:pointer}
+input.sm{flex:1;width:0;min-width:0;text-align:center;padding:8px 4px}
 </style></head><body><main><h1>SMASH <span>ELO</span></h1><div id="v"></div></main>
 <nav><button data-t="lb">Ranks</button><button data-t="add">Add match</button><button data-t="hist">History</button><button data-t="set">Settings</button></nav>
 <input type="file" id="f" accept="image/*" hidden>
@@ -71,7 +72,7 @@ function render(){
     if(!pass){v.innerHTML=`<div class="card"><b>Group passcode</b><div class="msg">Ask the group admin for the passcode to add matches.</div><div class="row"><input class="n" type="password" id="pc" placeholder="Passcode"><button onclick="pass=document.getElementById('pc').value.trim();ls('pass',pass);render()">Save</button></div></div>`;return}
     v.innerHTML=`<datalist id="dl">${Object.keys(P).map(n=>`<option value="${esc(n)}">`).join("")}</datalist><datalist id="dlc">${CH.map(c=>`<option value="${esc(c)}">`).join("")}</datalist>
     <div class="card"><button class="g" style="width:100%" onclick="document.getElementById('f').click()">📷 Scan result screen</button><div class="msg" id="st">${esc(note)}</div></div>
-    <div class="card">${draft.map((r,i)=>`<div class="row"><input class="p" type="number" min="1" max="8" value="${r.place}" onchange="draft[${i}].place=+this.value||1" aria-label="Place"><input class="n" list="dl" placeholder="Username" value="${esc(r.name)}" onchange="draft[${i}].name=this.value"><button class="x" onclick="draft.splice(${i},1);render()">✕</button></div>${flag(r.name,i)}<div class="row" style="margin:-2px 0 10px 72px"><input class="n" list="dlc" placeholder="Character (optional)" value="${esc(r.char||"")}" onchange="draft[${i}].char=this.value"></div>`).join("")}
+    <div class="card">${draft.map((r,i)=>`<div class="row"><input class="p" type="number" min="1" max="8" value="${r.place}" onchange="draft[${i}].place=+this.value||1" aria-label="Place"><input class="n" list="dl" placeholder="Username" value="${esc(r.name)}" onchange="draft[${i}].name=this.value"><button class="x" onclick="draft.splice(${i},1);render()">✕</button></div>${flag(r.name,i)}<div class="row" style="margin:-2px 0 6px 72px"><input class="n" list="dlc" placeholder="Character (optional)" value="${esc(r.char||"")}" onchange="draft[${i}].char=this.value"></div><div class="row" style="margin:0 0 10px 72px;gap:6px">${[["kills","KOs"],["deaths","Deaths"],["sds","SDs"],["dmg","Dmg"]].map(([k,t])=>`<input class="sm" type="number" inputmode="decimal" min="0" placeholder="${t}" value="${r[k]??""}" onchange="draft[${i}].${k}=nv(this.value)" aria-label="${t}">`).join("")}</div>`).join("")}
     <div class="row"><button class="g" onclick="if(draft.length<8){draft.push({name:'',place:draft.length+1});render()}">+ Player</button><button id="sv" style="flex:1" onclick="saveMatch()">Save match</button></div>
     <div class="msg">Place 1 = winner. Tied players share a number. 2 players = 1v1, 3 or more = FFA.</div></div>`;
   }
@@ -190,12 +191,24 @@ function playerPage(p){
   return`<button class="g" onclick="sel='';render()">← Back</button>
   <div class="card" style="margin-top:10px"><div class="nm" style="font-size:20px">${esc(p.name)} ${p.streak>=2?"🔥 "+p.streak:""}</div><div class="sub">${p.w}W · ${p.l}L · ${p.g.all} games</div>${triP(p)}</div>
   <div class="card"><b>Win rate</b><div class="tri">${[["Overall",p.w,p.l],["1v1",wm.one.w,wm.one.l],["FFA",wm.ffa.w,wm.ffa.l]].map(([t,w,l])=>`<div><div class="elo">${pct(w,l)}</div><div class="sub">${t} · ${w}W ${l}L</div></div>`).join("")}</div></div>
-  <div class="card"><b>Rating history</b>${trend(p)}</div>
+  ${combat(p)}<div class="card"><b>Rating history</b>${trend(p)}</div>
   ${charCard(p)}${rivals(p)}${upsets(p)}`;
+}
+const nv=v=>v==null||v===""?undefined:+v;
+function statsOf(x){const o={};for(const k of ["kills","deaths","sds","dmg"])if(Number.isFinite(x[k])&&x[k]>=0)o[k]=x[k];return o}
+function fromScan(pl){
+  const noPlace=pl.some(p=>!(+p.place));
+  return{draft:pl.map((p,i)=>({name:String(p.name||""),place:+p.place||i+1,char:String(p.character||""),...statsOf({kills:nv(p.kills),deaths:nv(p.deaths),sds:nv(p.sds),dmg:nv(p.damage)})})),note:noPlace?"Placement wasn't shown, so I used the order listed. Check it, then save.":"Check the names, places, and stats, then save."};
+}
+function combat(p){
+  const a=p.cs.one,b=p.cs.ffa,K=a.k+b.k,Dd=a.d+b.d,SD=a.sd+b.sd,DM=a.dmg+b.dmg,N=a.n+b.n;
+  if(!N&&!SD&&!DM)return`<div class="card"><b>Combat stats</b><div class="sub">No stats yet. Scan the second results screen, or type KOs, deaths, SDs, and damage when you add a match.</div></div>`;
+  const kd=c=>c.n?(c.d?(c.k/c.d).toFixed(2):c.k?"∞":"—"):"—";
+  return`<div class="card"><b>Combat stats</b><div class="tri" style="margin-top:8px"><div><div class="elo">${kd(a)}</div><div class="sub">1v1 K/D · ${a.n} games</div></div><div><div class="elo">${kd(b)}</div><div class="sub">FFA K/D · ${b.n} games</div></div></div><div class="tri" style="margin-top:10px"><div><div class="elo">${K}</div><div class="sub">Kills</div></div><div><div class="elo">${Dd}</div><div class="sub">Deaths</div></div><div><div class="elo">${SD}</div><div class="sub">SDs</div></div><div><div class="elo">${Math.round(DM).toLocaleString()}</div><div class="sub">Damage dealt</div></div></div><div class="sub" style="margin-top:8px">Totals only include matches with stats recorded.</div></div>`;
 }
 async function saveMatch(){
   const known=Object.keys(D.players);
-  const r=draft.map(x=>{const n=x.name.trim(),c0=(x.char||"").trim(),c=CH.find(k=>k.toLowerCase()==c0.toLowerCase())||c0;return{name:known.find(k=>k.toLowerCase()==n.toLowerCase())||n,place:x.place,...(c?{char:c.slice(0,30)}:{})}}).filter(x=>x.name);
+  const r=draft.map(x=>{const n=x.name.trim(),c0=(x.char||"").trim(),c=CH.find(k=>k.toLowerCase()==c0.toLowerCase())||c0;return{name:known.find(k=>k.toLowerCase()==n.toLowerCase())||n,place:x.place,...(c?{char:c.slice(0,30)}:{}),...statsOf(x)}}).filter(x=>x.name);
   if(r.length<2)return alert("Need at least two players.");
   if(new Set(r.map(x=>x.name.toLowerCase())).size<r.length)return alert("Each username must be unique.");
   const b=document.getElementById("sv");b.disabled=true;
@@ -204,8 +217,8 @@ async function saveMatch(){
 }
 async function del(id){if(!confirm("Delete this match? Ratings will be recalculated."))return;try{await api("matches",{method:"DELETE",body:JSON.stringify({admin,id})});await load()}catch(e){alert(e.message)}}
 function csv(){
-  const rows=["match_id,date,mode,place,player,character"];
-  D.matches.forEach(m=>m.results.forEach(x=>rows.push([m.id,new Date(m.ts).toISOString(),LB[m.mode],x.place,'"'+x.name.replace(/"/g,'""')+'"','"'+(x.char||"").replace(/"/g,'""')+'"'].join(","))));
+  const rows=["match_id,date,mode,place,player,character,kills,deaths,sds,damage"];
+  D.matches.forEach(m=>m.results.forEach(x=>rows.push([m.id,new Date(m.ts).toISOString(),LB[m.mode],x.place,'"'+x.name.replace(/"/g,'""')+'"','"'+(x.char||"").replace(/"/g,'""')+'"',x.kills??"",x.deaths??"",x.sds??"",x.dmg??""].join(","))));
   const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([rows.join("\n")],{type:"text/csv"}));a.download="smash-elo-matches.csv";a.click();
 }
 async function shrink(file){
@@ -219,7 +232,7 @@ document.getElementById("f").onchange=async e=>{
   try{
     const j=await api("scan",{method:"POST",body:JSON.stringify({passcode:pass,roster:Object.keys(D.players),chars:CH,image:await shrink(file)})});
     if(j.players.length<2){note="Couldn't read that screen. Enter results by hand."}
-    else{draft=j.players.map(p=>({name:String(p.name||""),place:+p.place||1,char:String(p.character||"")}));note="Check the names and places, then save."}
+    else{({draft,note}=fromScan(j.players))}
   }catch(err){note=err.message;if(err.status==401){pass="";ls("pass","")}}
   render();
 };
