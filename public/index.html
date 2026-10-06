@@ -25,7 +25,7 @@ button:disabled{opacity:.5}
 button.g{background:var(--yel);color:var(--ink)}
 button.x{background:none;border:0;box-shadow:none;color:var(--mu);padding:6px 10px;font-size:12px}
 button.lnk{background:none;border:0;box-shadow:none;color:var(--ac);padding:0;text-decoration:underline;font:inherit;font-weight:700}
-.seg{display:flex;gap:6px;margin:0 4px 14px 0}.seg button{flex:1;background:#fff;color:var(--ink);padding:10px 2px;font-size:8px;white-space:nowrap}.seg button.on{background:var(--blue);color:#fff}
+.seg{display:flex;gap:6px;margin:0 4px 14px 0}.seg button{flex:1;background:#fff;color:var(--ink);padding:10px 2px;font-size:8px;white-space:nowrap}.seg button.on{background:var(--blue);color:#fff}.seg button.srch{flex:0 0 46px;padding:8px 0;font-size:14px}.seg button.srch.on{background:var(--ac)}
 .lb{display:flex;align-items:center;gap:10px;cursor:pointer}.rk{width:28px;display:inline-flex;justify-content:center;align-items:center;color:var(--mu);font:10px var(--pf)}
 .nm{flex:1;font-weight:700;min-width:0}.sub{color:var(--mu);font-size:13px}.elo{font:15px/1.3 var(--pf)}
 .tri{display:flex;justify-content:space-around;text-align:center;margin-top:8px}.tri .elo{font-size:14px}
@@ -78,12 +78,13 @@ function render(){
   if(tab=="lb"){
     if(sel&&P[sel]){v.innerHTML=playerPage(P[sel]);return}
     let h="";
-    if(!me&&Object.keys(P).length)h+=`<div class="card"><div class="sub">Who are you? Pick your name to see your ratings here.</div><select onchange="me=this.value;ls('me',me);render()"><option value="">Choose…</option>${Object.keys(P).sort().map(n=>`<option>${esc(n)}</option>`).join("")}</select></div>`;
+
     if(me&&P[me])h+=`<div class="card" data-n="${esc(me)}"><div class="sub">You · ${esc(me)}</div>${triP(P[me])}</div>`;
-    h+=avgCard(P);
-    h+=`<div class="row"><input class="n" id="fq" placeholder="Search player" value="${esc(fq)}" oninput="fq=this.value;render();const e=document.getElementById('fq');e.focus();e.setSelectionRange(fq.length,fq.length)"></div>`;
+
+
     const q=fq.trim().toLowerCase();
-    h+=`<div class="seg">${Object.keys(LB).map(t=>`<button class="${board==t?"on":""}" onclick="board='${t}';render()">${LB[t]}</button>`).join("")}</div>`;
+    h+=`<div class="seg">${Object.keys(LB).map(t=>`<button class="${board==t?"on":""}" onclick="board='${t}';render()">${LB[t]}</button>`).join("")}<button class="srch${sopen?" on":""}" aria-label="Search players" onclick="${sopen?"sopen=false;fq='';render()":"sopen=true;render();document.getElementById('fq').focus()"}">${sopen?"✕":"🔍"}</button></div>`;
+    if(sopen)h+=`<div class="row"><input class="n" id="fq" placeholder="Search player" value="${esc(fq)}" oninput="fq=this.value;render();const e=document.getElementById('fq');e.focus();e.setSelectionRange(fq.length,fq.length)"></div>`;
     const full=boardList(board),L=full.filter(p=>!q||p.name.toLowerCase().includes(q));
     h+=L.length?L.map(p=>{const i=full.indexOf(p);return`<div class="card lb" data-n="${esc(p.name)}"><div class="rk">${i<3?medal(i):i+1}</div><div class="nm">${esc(p.name)} ${p.streak>=2?"🔥"+p.streak:""}<div class="sub">${p.g[board]} games${prov(p.g[board])}</div></div><div class="elo">${Math.round(p.r[board])}</div></div>`}).join(""):`<p class="msg">No ${LB[board]} matches${q?" for that search":" yet"}.</p>`;
     v.innerHTML=h;
@@ -107,9 +108,9 @@ function render(){
     <div class="card"><button class="g" onclick="csv()">Export matches (CSV)</button></div>${mergeCard(P)}`;
   }
 }
-document.querySelector("nav").onclick=e=>{if(e.target.dataset.t){tab=e.target.dataset.t;sel="";if(tab=="tr")RACE.key="";render()}};
+document.querySelector("nav").onclick=e=>{if(e.target.dataset.t){tab=e.target.dataset.t;sel="";if(tab=="tr")RACE.key="";if(tab!="lb"){sopen=false;fq=""}render()}};
 document.getElementById("v").onclick=e=>{const k=e.target.closest("[data-ch]");if(k){pchar=pchar==k.dataset.ch?"":k.dataset.ch;render();return}const f=e.target.closest("[data-fix]");if(f){draft[+f.dataset.fix].name=f.dataset.to;render();return}const c=e.target.closest("[data-n]");if(c&&(tab=="lb"||tab=="tr")){tab="lb";sel=c.dataset.n;pchar="";render();scrollTo(0,0)}};
-let mg={from:"",to:""},mgOut="",mgOk=false,CH=[],fchar="",fq="",pchar="",pmode="all",prange="all";
+let mg={from:"",to:""},mgOut="",mgOk=false,CH=[],fchar="",fq="",sopen=false,pchar="",pmode="all",prange="all";
 function lev(a,b){const d=Array.from({length:a.length+1},(_,i)=>[i]);for(let j=1;j<=b.length;j++)d[0][j]=j;for(let i=1;i<=a.length;i++)for(let j=1;j<=b.length;j++)d[i][j]=Math.min(d[i-1][j]+1,d[i][j-1]+1,d[i-1][j-1]+(a[i-1]==b[j-1]?0:1));return d[a.length][b.length]}
 function flag(name,i){
   const n=name.trim(),known=Object.keys(D.players),l=n.toLowerCase();
