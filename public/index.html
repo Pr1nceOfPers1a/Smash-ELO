@@ -51,8 +51,11 @@ input.sm{flex:1;width:0;min-width:0;text-align:center;padding:8px 4px}
 .blk{border:3px solid var(--ink);box-shadow:3px 3px 0 var(--ink)}
 .b0{height:46px;background:#ffd23f}.b1{height:32px;background:#c9ced8}.b2{height:22px;background:#d9894a}
 .sw{display:inline-block;width:9px;height:9px;border:2px solid var(--ink);margin-right:4px}
+#now{display:none;align-items:center;gap:6px 10px;flex-wrap:wrap;margin:0 4px 16px 0;background:var(--yel);border:3px solid var(--ink);box-shadow:4px 4px 0 var(--ink);padding:9px 11px}
+#now .live{font:8px/1.5 var(--pf);color:var(--ink);white-space:nowrap}#now .who{font-weight:700;flex:1;min-width:0;overflow-wrap:anywhere}#now .ago{font-size:12px;color:var(--ink)}
+.dot{display:inline-block;width:8px;height:8px;background:var(--ac);border:2px solid var(--ink);margin-right:6px;vertical-align:middle}
 @media (prefers-reduced-motion:reduce){.blink{animation:none}}
-</style></head><body><main><h1>SMASH <span>ELO</span></h1><div class="tl">▶ 1UP LEADERBOARD <span class="blink">█</span></div><div id="v"></div></main>
+</style></head><body><main><h1>SMASH <span>ELO</span></h1><div class="tl">▶ 1UP LEADERBOARD <span class="blink">█</span></div><div id="now"></div><div id="v"></div></main>
 <nav><button data-t="lb">Ranks</button><button data-t="tr">Trends</button><button data-t="add">Add</button><button data-t="hist">History</button><button data-t="set">Settings</button></nav>
 <input type="file" id="f" accept="image/*" hidden>
 <script src="/elo.js"></script>
@@ -65,7 +68,16 @@ let me=ls("me"),pass=ls("pass"),admin=ls("admin");
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const sg=x=>(x>=0?"+":"")+x.toFixed(1);
 const api=async(p,o={})=>{const r=await fetch("/api/"+p,{headers:{"content-type":"application/json"},...o});const j=await r.json().catch(()=>({}));if(!r.ok)throw Object.assign(new Error(j.error||"Something went wrong"),{status:r.status});return j};
-async function load(){try{ms=await api("matches");ms.sort((a,b)=>new Date(a.ts)-new Date(b.ts));const ae=document.activeElement?.tagName;if(tab!="add"&&ae!="SELECT"&&ae!="INPUT")render();else D=ELO.compute(ms)}catch(e){}}
+function updateNow(){
+  const el=document.getElementById("now");if(!el)return;
+  const t=Date.now(),at=m=>new Date(m.ts).getTime(),recent=ms.filter(m=>t-at(m)<=300000).sort((a,b)=>at(b)-at(a));
+  if(!recent.length){el.innerHTML="";el.style.display="none";return}
+  const names=[];for(const m of recent)for(const x of m.results)if(!names.includes(x.name))names.push(x.name);
+  const mins=Math.max(0,Math.floor((t-at(recent[0]))/60000)),shown=names.slice(0,6),more=names.length-shown.length;
+  el.style.display="flex";
+  el.innerHTML=`<span class="live"><i class="dot blink"></i>PLAYING NOW</span><span class="who">${shown.map(esc).join(", ")}${more>0?` +${more} more`:""}</span><span class="ago">${mins<1?"just now":mins+" min ago"}</span>`;
+}
+async function load(){try{ms=await api("matches");ms.sort((a,b)=>new Date(a.ts)-new Date(b.ts));updateNow();const ae=document.activeElement?.tagName;if(tab!="add"&&ae!="SELECT"&&ae!="INPUT")render();else D=ELO.compute(ms)}catch(e){}}
 function spark(h){
   if(h.length<2)return"";const v=h.map(x=>x.r),lo=Math.min(...v),hi=Math.max(...v),sp=Math.max(hi-lo,1);
   const pts=v.map((y,i)=>`${(i/(v.length-1)*296+2).toFixed(1)},${(56-(y-lo)/sp*52).toFixed(1)}`).join(" ");
@@ -354,5 +366,5 @@ document.getElementById("f").onchange=async e=>{
   }catch(err){note=err.message;if(err.status==401){pass="";ls("pass","")}}
   render();
 };
-load();render();setInterval(()=>{if(!document.hidden)load()},8000);
+load();render();setInterval(()=>{if(!document.hidden)load()},8000);setInterval(updateNow,15000);
 </script></body></html>
