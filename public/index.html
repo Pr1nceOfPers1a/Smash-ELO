@@ -101,6 +101,7 @@ function render(){
     if(sopen)h+=`<div class="row"><input class="n" id="fq" placeholder="Search player" value="${esc(fq)}" oninput="fq=this.value;render();const e=document.getElementById('fq');e.focus();e.setSelectionRange(fq.length,fq.length)"></div>`;
     const full=boardList(board),L=full.filter(p=>!q||p.name.toLowerCase().includes(q));
     h+=L.length?L.map(p=>{const i=full.indexOf(p);return`<div class="card lb" data-n="${esc(p.name)}"><div class="rk">${i<3?medal(i):i+1}</div><div class="nm">${esc(p.name)} ${p.streak>=2?"🔥"+p.streak:""}<div class="sub">${p.g[board]} games${prov(p.g[board])}</div></div><div class="elo">${Math.round(p.r[board])}</div></div>`}).join(""):`<p class="msg">No ${LB[board]} matches${q?" for that search":" yet"}.</p>`;
+    if(ms.length&&!q)h+=podiums();
     v.innerHTML=h;
   }
   if(tab=="tr"){v.innerHTML=trendsPage();raceStart()}
@@ -383,6 +384,7 @@ function statRows(key,range,mode,sv){
   }
   return out.sort((a,b)=>b.val===a.val?(b.k-a.k||b.g-a.g):b.val>a.val?1:-1);
 }
+function podiums(){return`<h3 style="font:10px/1.6 var(--pf);margin:22px 0 10px">ALL-TIME PODIUMS</h3>${Object.keys(STATS).map(podiumCard).join("")}`}
 function podiumCard(k){
   const rows=statRows(k,"all","all","best").slice(0,3),S=STATS[k];
   const slot=i=>{const r=rows[i];return r?`<div class="slot">${medal(i,22)}<div class="pn">${esc(r.name)}</div><div class="pr">${r.disp}</div><div class="blk b${i}"></div></div>`:`<div class="slot" style="visibility:hidden"><div class="pr">&nbsp;</div><div class="blk b${i}"></div></div>`};
@@ -394,7 +396,7 @@ function statPage(){
   const sv=stat=="streak"?`<div class="seg"><button class="${ssv=="best"?"on":""}" onclick="ssv='best';render()">Longest run</button><button class="${ssv=="cur"?"on":""}" onclick="ssv='cur';render()">Active now</button></div>`:"";
   const needs=["kd","kos","dmg","sds"].includes(stat);
   const list=rows.length?rows.map((r,i)=>`<div class="card lb" data-n="${esc(r.name)}"><div class="rk">${i<3?medal(i):i+1}</div><div class="nm">${esc(r.name)}<div class="sub">${r.sub}</div></div><div class="elo">${r.disp}</div></div>`).join(""):`<div class="card"><div class="msg">${needs?"No stats recorded for this filter. Scan the second results screen, or type KOs, deaths, SDs, and damage when you add a match.":stat=="streak"?(ssv=="cur"?"Nobody is on a streak of 2+ right now.":"No streaks of 2+ for this filter."):"Nobody has enough games for this filter yet."}</div></div>`;
-  return`<button class="g" onclick="stat='';tab=sfrom;sel=sfsel;render();scrollTo(0,0)">← Back</button><div style="height:12px"></div>${chips}<div class="card"><b>${S.t}</b><div class="msg">${S.d}${needs?" Only matches with stats recorded count.":""}</div></div>${seg(SR,srange,"srange")}${seg(SM,smode,"smode")}${sv}${list}<h3 style="font:10px/1.6 var(--pf);margin:22px 0 10px">ALL-TIME PODIUMS</h3>${Object.keys(STATS).map(podiumCard).join("")}`;
+  return`<button class="g" onclick="stat='';tab=sfrom;sel=sfsel;render();scrollTo(0,0)">← Back</button><div style="height:12px"></div>${chips}<div class="card"><b>${S.t}</b><div class="msg">${S.d}${needs?" Only matches with stats recorded count.":""}</div></div>${seg(SR,srange,"srange")}${seg(SM,smode,"smode")}${sv}${list}${podiums()}`;
 }
 async function saveMatch(){
   const known=Object.keys(D.players);
