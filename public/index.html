@@ -282,7 +282,7 @@ function trendsData(days){
     e.n++;x.place<y.place?e.aw++:x.place>y.place?e.bw++:e.t++;
   }
   const rival=Object.values(pr).sort((a,b)=>b.n-a.n||Math.abs(a.aw-a.bw)-Math.abs(b.aw-b.bw))[0]||null;
-  return{t0,t1,inP,rows,climber,faller,active,cur,longest,upset,rival,top3:nowL.slice(0,3)};
+  return{t0,t1,inP,rows,climber,faller,active,cur,longest,upset,rival,top3:nowL.slice(0,3),top5:nowL.slice(0,5)};
 }
 const RACE={key:"",f:0,raf:0,done:false,start:0,s:[],g:null};
 const RDUR=6000,RCOL=["#e0a400","#7d8596","#b8672a"],RPAL=["#e5322d","#2f6bff","#13813a","#8a3ffc","#00a3a3","#d6336c","#ff7a00","#5c6b00","#1b1730"];
@@ -311,10 +311,9 @@ function raceStart(){
 }
 function replayRace(){RACE.f=0;RACE.done=false;raceStart()}
 function raceCard(T,days){
-  const all=rview=="all";RACE.g=null;RACE.s=[];RACE.capped=0;RACE.all=all;
-  let tops=all?T.rows.map(r=>D.players[r.name]).sort((a,b)=>b.r.all-a.r.all):T.top3;
+  const all=rview=="top5";RACE.g=null;RACE.s=[];RACE.all=all;
+  let tops=all?T.top5:T.top3;
   if(!tops.length)return"";
-  if(tops.length>12){RACE.capped=tops.length-12;tops=tops.slice(0,12)}
   RACE.s=tops.map((p,i)=>({name:p.name,col:i<3?RCOL[i]:RPAL[(i-3)%RPAL.length],pts:stepPts(p,T.t0,T.t1)}));
   const vs=RACE.s.flatMap(s=>s.pts.map(q=>q[1])),lo=Math.min(...vs),hi=Math.max(...vs),sp=Math.max(hi-lo,10),pad=sp*.1;
   const X=t=>26+(t-T.t0)/(T.t1-T.t0)*264,Y=v=>118-(v-(lo-pad))/(sp+2*pad)*108;
@@ -323,7 +322,7 @@ function raceCard(T,days){
   const ticks=Array.from({length:k+1},(_,i)=>T.t0+i*(T.t1-T.t0)/k).map(t=>`<line x1="${X(t).toFixed(1)}" y1="118" x2="${X(t).toFixed(1)}" y2="122" stroke="var(--ink)"/><text x="${X(t).toFixed(1)}" y="134" text-anchor="middle" font-size="8" style="fill:var(--mu)">${fmt(new Date(t))}</text>`).join("");
   const yl=[hi,(hi+lo)/2,lo].map(v=>`<text x="2" y="${(Y(v)+3).toFixed(1)}" font-size="8" style="fill:var(--mu)">${Math.round(v)}</text><line x1="26" y1="${Y(v).toFixed(1)}" x2="290" y2="${Y(v).toFixed(1)}" stroke="var(--ln)" stroke-dasharray="2 3"/>`).join("");
   const lines=RACE.s.map((s,i)=>`<polyline id="rl${i}" fill="none" stroke="${s.col}" stroke-width="${all?2:3}" stroke-linejoin="miter" shape-rendering="crispEdges" points=""/>`).join(""),heads=RACE.s.map((s,i)=>`<rect id="rh${i}" width="${all?5:6}" height="${all?5:6}" fill="${s.col}" stroke="var(--ink)" stroke-width="1"/>`).join("");
-  return`<div class="card"><div class="row"><b class="ct" style="flex:1">Rating race</b><button class="g" onclick="replayRace()">▶ Replay</button></div><div class="seg" style="margin:4px 0 8px"><button class="${all?"":"on"}" onclick="rview='top3';render()">Podium race</button><button class="${all?"on":""}" onclick="rview='all';render()">Everyone</button></div><div class="sub" id="rt">&nbsp;</div><div class="pod${all?" list":""}" id="pod"></div><svg viewBox="0 0 300 140" width="100%" role="img" aria-label="Rating of the top three players over the last ${days} days"><line x1="26" y1="118" x2="290" y2="118" stroke="var(--ink)"/>${yl}${ticks}${lines}${heads}</svg>${RACE.capped?`<div class="sub">Showing the 12 highest-rated of ${12+RACE.capped} players who played.</div>`:""}</div>`;
+  return`<div class="card"><div class="row"><b class="ct" style="flex:1">Rating race</b><button class="g" onclick="replayRace()">▶ Replay</button></div><div class="seg" style="margin:4px 0 8px"><button class="${all?"":"on"}" onclick="rview='top3';render()">Podium race</button><button class="${all?"on":""}" onclick="rview='top5';render()">Top 5</button></div><div class="sub" id="rt">&nbsp;</div><div class="pod${all?" list":""}" id="pod"></div><svg viewBox="0 0 300 140" width="100%" role="img" aria-label="Rating of the top three players over the last ${days} days"><line x1="26" y1="118" x2="290" y2="118" stroke="var(--ink)"/>${yl}${ticks}${lines}${heads}</svg></div>`;
 }
 function trendsPage(){
   const days=tper=="week"?7:30,w=tper,T=trendsData(days),R0=Math.round;
