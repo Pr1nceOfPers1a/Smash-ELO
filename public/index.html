@@ -259,7 +259,7 @@ function medalLine(p){
 // ---------- Trends ----------
 let tper="week",rview="top3";
 const DAY=864e5,tms=x=>new Date(x.ts).getTime();
-function rAt(p,t){let r=null;for(const x of p.h.all){if(tms(x)<=t)r=x.r;else break}return r}
+function rAt(p,t,m="all"){let r=null;for(const x of p.h[m]){if(tms(x)<=t)r=x.r;else break}return r}
 function stepPts(p,t0,t1){const r0=rAt(p,t0)??1000,pts=[[t0,r0]];let last=r0;for(const x of p.h.all){const t=tms(x);if(t<=t0)continue;if(t>t1)break;pts.push([t,last]);pts.push([t,x.r]);last=x.r}pts.push([t1,last]);return pts}
 function trendsData(days){
   const P=D.players,lastT=D.matches.length?tms(D.matches[D.matches.length-1]):0,t1=Math.max(Date.now(),lastT),t0=t1-days*DAY;
@@ -282,7 +282,19 @@ function trendsData(days){
     e.n++;x.place<y.place?e.aw++:x.place>y.place?e.bw++:e.t++;
   }
   const rival=Object.values(pr).sort((a,b)=>b.n-a.n||Math.abs(a.aw-a.bw)-Math.abs(b.aw-b.bw))[0]||null;
-  return{t0,t1,inP,rows,climber,faller,active,cur,longest,upset,rival,top3:nowL.slice(0,3),top5:nowL.slice(0,5)};
+  const cs={};for(const m of inP)for(const x of m.results){const c=(cs[x.name]??={name:x.name,k:0,d:0,n:0,sd:0,dmg:0});
+    if(Number.isFinite(x.kills)&&Number.isFinite(x.deaths)){c.k+=x.kills;c.d+=x.deaths;c.n++}
+    if(Number.isFinite(x.sds))c.sd+=x.sds;if(Number.isFinite(x.dmg))c.dmg+=x.dmg}
+  const ca=Object.values(cs),kdOf=c=>c.d?c.k/c.d:c.k?Infinity:0,top=(L,f)=>L.sort(f)[0]||null;
+  const cmb={any:ca.some(c=>c.n||c.sd||c.dmg),
+    kd:top(ca.filter(c=>c.n>=3).map(c=>({...c,kd:kdOf(c)})),(a,b)=>a.kd===b.kd?b.k-a.k:b.kd>a.kd?1:-1),
+    kos:top(ca.filter(c=>c.k>0),(a,b)=>b.k-a.k||b.n-a.n),dmg:top(ca.filter(c=>c.dmg>0),(a,b)=>b.dmg-a.dmg),sds:top(ca.filter(c=>c.sd>0),(a,b)=>b.sd-a.sd||b.dmg-a.dmg)};
+  const lead={};for(const t of ["one","ffa"]){
+    const cur=Object.values(P).filter(p=>p.g[t]).sort((a,b)=>b.r[t]-a.r[t]);
+    const st=Object.values(P).map(p=>({name:p.name,r:rAt(p,t0,t)})).filter(x=>x.r!=null).sort((a,b)=>b.r-a.r);
+    lead[t]={cur:cur[0]||null,prev:st[0]?st[0].name:null};
+  }
+  return{t0,t1,inP,rows,climber,faller,active,cur,longest,upset,rival,cmb,lead,top3:nowL.slice(0,3),top5:nowL.slice(0,5)};
 }
 const RACE={key:"",f:0,raf:0,done:false,start:0,s:[],g:null};
 const RDUR=6000,RCOL=["#e0a400","#7d8596","#b8672a"],RPAL=["#e5322d","#2f6bff","#13813a","#8a3ffc","#00a3a3","#d6336c","#ff7a00","#5c6b00","#1b1730"];
@@ -336,7 +348,13 @@ function trendsPage(){
   const st=(T.cur.length?T.cur.map(p=>`<div class="row" style="margin:6px 0" data-n="${esc(p.name)}"><span class="nm">🔥 ${esc(p.name)}</span><span class="elo up">${p.streak}</span><span class="sub">in a row</span></div>`).join(""):`<div class="sub">No active streaks of 2 or more.</div>`)+(T.longest?`<div class="sub" style="margin-top:8px">Longest this ${w}: <b>${esc(T.longest.name)}</b> · ${T.longest.n} wins in a row</div>`:"");
   const u=T.upset,up=u?`<div class="nm" style="margin-top:8px"><span class="up">${esc(u.name)}</span> beat ${esc(u.opp)}</div><div class="sub">${u.mc||u.oc?`${esc(u.mc||"?")} vs ${esc(u.oc||"?")} · `:""}rated ${R0(u.gap)} lower · only a ${R0(u.pr*100)}% chance · ${new Date(u.ts).toLocaleDateString()}</div>`:`<div class="sub" style="margin-top:8px">No upsets this ${w}. An upset needs a 50+ point rating gap.</div>`;
   const rv=T.rival,riv=rv?`<div class="nm" style="margin-top:8px">${esc(rv.a)} vs ${esc(rv.b)}</div><div class="sub">${rv.n} meetings · ${rv.aw}–${rv.bw}${rv.t?"–"+rv.t:""} (${esc(rv.a)} first)</div>`:`<div class="sub" style="margin-top:8px">No rivalries yet.</div>`;
-  return seg+raceCard(T,days)+`<div class="pair">${cf("Top climber",T.climber,true)}${cf("Biggest drop",T.faller,false)}</div><div class="card"><b>Who's moving</b><div class="msg">Rating change over the last ${days} days. Tap a player for their page.</div>${mv}</div><div class="card"><b>Most active</b>${act}</div><div class="card"><b>Hot streaks</b><div style="margin-top:6px">${st}</div></div><div class="card"><b>Upset of the ${w}</b>${up}</div><div class="card"><b>Rivalry of the ${w}</b>${riv}</div>`;
+  const lr=t=>{const L=T.lead[t];if(!L.cur)return`<div class="row" style="margin:8px 0"><span class="sub" style="flex:0 0 52px">${LB[t]}</span><span class="sub">No games yet</span></div>`;
+    const note=!L.prev?"new board":L.prev==L.cur.name?"held the lead":`took the lead from ${esc(L.prev)}`;
+    return`<div class="row" data-n="${esc(L.cur.name)}" style="margin:8px 0;cursor:pointer"><span class="sub" style="flex:0 0 52px">${LB[t]}</span><span class="rk">${medal(0,18)}</span><span class="nm">${esc(L.cur.name)}<div class="sub">${note}</div></span><span class="elo">${R0(L.cur.r[t])}</span></div>`};
+  const leadCard=`<div class="card"><b>Rating leaders</b>${lr("one")}${lr("ffa")}</div>`;
+  const C=T.cmb,cr=(label,c,val,sub)=>c?`<div class="row" data-n="${esc(c.name)}" style="margin:8px 0;cursor:pointer"><span class="sub" style="flex:0 0 96px">${label}</span><span class="nm">${esc(c.name)}${sub?`<div class="sub">${sub}</div>`:""}</span><span class="elo">${val}</span></div>`:`<div class="row" style="margin:8px 0"><span class="sub" style="flex:0 0 96px">${label}</span><span class="sub">—</span></div>`;
+  const cmbCard=C.any?`<div class="card"><b>Combat leaders</b><div class="msg">Only matches with stats recorded count. Best K/D needs 3+.</div>${cr("Best K/D",C.kd,C.kd&&(C.kd.kd===Infinity?"∞":C.kd.kd.toFixed(2)),C.kd&&`${C.kd.k} KOs · ${C.kd.d} deaths · ${C.kd.n} games`)}${cr("Most KOs",C.kos,C.kos&&C.kos.k)}${cr("Most damage",C.dmg,C.dmg&&Math.round(C.dmg.dmg).toLocaleString())}${cr("Most SDs",C.sds,C.sds&&C.sds.sd)}</div>`:`<div class="card"><b>Combat leaders</b><div class="msg">No stats recorded in the last ${days} days. Scan the second results screen, or type KOs, deaths, SDs, and damage when you add a match.</div></div>`;
+  return seg+raceCard(T,days)+`<div class="pair">${cf("Top climber",T.climber,true)}${cf("Biggest drop",T.faller,false)}</div><div class="card"><b>Who's moving</b><div class="msg">Rating change over the last ${days} days. Tap a player for their page.</div>${mv}</div><div class="card"><b>Most active</b>${act}</div><div class="card"><b>Hot streaks</b><div style="margin-top:6px">${st}</div></div>${leadCard}${cmbCard}<div class="card"><b>Upset of the ${w}</b>${up}</div><div class="card"><b>Rivalry of the ${w}</b>${riv}</div>`;
 }
 async function saveMatch(){
   const known=Object.keys(D.players);
