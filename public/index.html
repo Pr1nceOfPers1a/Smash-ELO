@@ -197,8 +197,8 @@ function playerPage(p){
 const nv=v=>v==null||v===""?undefined:+v;
 function statsOf(x){const o={};for(const k of ["kills","deaths","sds","dmg"])if(Number.isFinite(x[k])&&x[k]>=0)o[k]=x[k];return o}
 function fromScan(pl){
-  const noPlace=pl.some(p=>!(+p.place));
-  return{draft:pl.map((p,i)=>({name:String(p.name||""),place:+p.place||i+1,char:String(p.character||""),...statsOf({kills:nv(p.kills),deaths:nv(p.deaths),sds:nv(p.sds),dmg:nv(p.damage)})})),note:noPlace?"Placement wasn't shown, so I used the order listed. Check it, then save.":"Check the names, places, and stats, then save."};
+  const noPlace=pl.some(p=>!(+p.place)),miss=pl.reduce((n,p)=>n+["kills","deaths","sds","damage"].filter(k=>!Number.isFinite(nv(p[k]))).length,0);
+  return{draft:pl.map((p,i)=>({name:String(p.name||""),place:+p.place||i+1,char:String(p.character||""),...statsOf({kills:nv(p.kills),deaths:nv(p.deaths),sds:nv(p.sds),dmg:nv(p.damage)})})),note:(noPlace?"Placement wasn't shown, so I used the order listed. Check it, then save.":"Check the names, places, and stats, then save.")+(miss>0&&miss<pl.length*4?` ${miss} stat value${miss>1?"s":""} couldn't be read. Fill ${miss>1?"them":"it"} in.`:"")};
 }
 function combat(p){
   const a=p.cs.one,b=p.cs.ffa,K=a.k+b.k,Dd=a.d+b.d,SD=a.sd+b.sd,DM=a.dmg+b.dmg,N=a.n+b.n;
@@ -222,16 +222,16 @@ function csv(){
   const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([rows.join("\n")],{type:"text/csv"}));a.download="smash-elo-matches.csv";a.click();
 }
 async function shrink(file){
-  const bm=await createImageBitmap(file),s=Math.min(1,1600/Math.max(bm.width,bm.height));
+  const bm=await createImageBitmap(file).catch(()=>{throw new Error("Couldn't open that image. Try a screenshot or a JPEG/PNG photo.")}),s=Math.min(1,1568/Math.max(bm.width,bm.height));
   const c=document.createElement("canvas");c.width=bm.width*s;c.height=bm.height*s;
-  c.getContext("2d").drawImage(bm,0,0,c.width,c.height);return c.toDataURL("image/jpeg",.85).split(",")[1];
+  c.getContext("2d").drawImage(bm,0,0,c.width,c.height);return c.toDataURL("image/jpeg",.92).split(",")[1];
 }
 document.getElementById("f").onchange=async e=>{
   const file=e.target.files[0];e.target.value="";if(!file)return;
   document.getElementById("st").textContent="Reading screenshot…";
   try{
     const j=await api("scan",{method:"POST",body:JSON.stringify({passcode:pass,roster:Object.keys(D.players),chars:CH,image:await shrink(file)})});
-    if(j.players.length<2){note="Couldn't read that screen. Enter results by hand."}
+    if(j.players.length<2){note=j.problem?"Couldn't read it: "+j.problem:"Couldn't read that screen. Enter results by hand."}
     else{({draft,note}=fromScan(j.players))}
   }catch(err){note=err.message;if(err.status==401){pass="";ls("pass","")}}
   render();
