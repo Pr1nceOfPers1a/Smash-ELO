@@ -25,8 +25,8 @@
             const [wi, lo] = s === 1 ? [a, b] : [b, a], pw = P[wi.name], pl = P[lo.name], gap = pl.r.all - pw.r.all;
             if (gap >= UPSET_GAP) {
               const pr = 1 / (1 + 10 ** (gap / 400)); // winner's win chance going in
-              pw.ups.push({ ts: m.ts, opp: lo.name, oc: lo.char || '', gap, pr, won: true });
-              pl.ups.push({ ts: m.ts, opp: wi.name, oc: wi.char || '', gap, pr, won: false });
+              pw.ups.push({ ts: m.ts, opp: lo.name, oc: lo.char || '', mc: wi.char || '', gap, pr, won: true });
+              pl.ups.push({ ts: m.ts, opp: wi.name, oc: wi.char || '', mc: lo.char || '', gap, pr, won: false });
             }
           }
         }
