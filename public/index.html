@@ -50,6 +50,7 @@ input.sm{flex:1;width:0;min-width:0;text-align:center;padding:8px 4px}
 .slot .pr{font:12px var(--pf);margin:6px 0 2px}.slot .pd{font-size:12px;font-weight:700;margin-bottom:6px}
 .blk{border:3px solid var(--ink);box-shadow:3px 3px 0 var(--ink)}
 .b0{height:46px;background:#ffd23f}.b1{height:32px;background:#c9ced8}.b2{height:22px;background:#d9894a}
+.pod.list{display:block;min-height:0}.sb{display:flex;align-items:center;gap:6px;margin:5px 0}.sb .rk{width:22px}.sb .nm{font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.sb .pr{font:11px var(--pf)}.sb .pd{font-size:12px;font-weight:700;min-width:56px;text-align:right}
 .sw{display:inline-block;width:9px;height:9px;border:2px solid var(--ink);margin-right:4px}
 #now{display:none;align-items:center;gap:6px 10px;flex-wrap:wrap;margin:0 4px 16px 0;background:var(--yel);border:3px solid var(--ink);box-shadow:4px 4px 0 var(--ink);padding:9px 11px}
 #now .live{font:8px/1.5 var(--pf);color:var(--ink);white-space:nowrap}#now .who{font-weight:700;flex:1;min-width:0;overflow-wrap:anywhere}#now .ago{font-size:12px;color:var(--ink)}
@@ -256,7 +257,7 @@ function medalLine(p){
   return o.length?`<div class="medals">${o.map(([t,i])=>`<span class="mb">${medal(i,18)} ${LB[t]} #${i+1}</span>`).join("")}</div>`:"";
 }
 // ---------- Trends ----------
-let tper="week";
+let tper="week",rview="top3";
 const DAY=864e5,tms=x=>new Date(x.ts).getTime();
 function rAt(p,t){let r=null;for(const x of p.h.all){if(tms(x)<=t)r=x.r;else break}return r}
 function stepPts(p,t0,t1){const r0=rAt(p,t0)??1000,pts=[[t0,r0]];let last=r0;for(const x of p.h.all){const t=tms(x);if(t<=t0)continue;if(t>t1)break;pts.push([t,last]);pts.push([t,x.r]);last=x.r}pts.push([t1,last]);return pts}
@@ -284,7 +285,7 @@ function trendsData(days){
   return{t0,t1,inP,rows,climber,faller,active,cur,longest,upset,rival,top3:nowL.slice(0,3)};
 }
 const RACE={key:"",f:0,raf:0,done:false,start:0,s:[],g:null};
-const RDUR=6000,RCOL=["#e0a400","#7d8596","#b8672a"];
+const RDUR=6000,RCOL=["#e0a400","#7d8596","#b8672a"],RPAL=["#e5322d","#2f6bff","#13813a","#8a3ffc","#00a3a3","#d6336c","#ff7a00","#5c6b00","#1b1730"];
 const rVal=(s,t)=>{let v=s.pts[0][1];for(const q of s.pts){if(q[0]<=t)v=q[1];else break}return v};
 function raceFrame(f){
   const g=RACE.g,tt=g.t0+f*(g.t1-g.t0);
@@ -294,14 +295,14 @@ function raceFrame(f){
 function racePoly(s,tt){const g=RACE.g,pts=s.pts.filter(q=>q[0]<=tt).concat([[tt,rVal(s,tt)]]);return pts.map(q=>`${g.X(q[0]).toFixed(1)},${g.Y(q[1]).toFixed(1)}`).join(" ")}
 function drawRace(f){
   const g=RACE.g;if(!g)return;const fr=raceFrame(f),$=id=>document.getElementById(id);
-  RACE.s.forEach((s,i)=>{const e=$("rl"+i),h=$("rh"+i);if(!e||!h)return;e.setAttribute("points",racePoly(s,fr.tt));h.setAttribute("x",(g.X(fr.tt)-3).toFixed(1));h.setAttribute("y",(g.Y(rVal(s,fr.tt))-3).toFixed(1))});
-  const pod=$("pod");if(pod)pod.innerHTML=[1,0,2].filter(i=>fr.items[i]).map(i=>{const it=fr.items[i];return`<div class="slot"><div class="pn"><i class="sw" style="background:${it.col}"></i>${esc(it.name)}</div><div class="pr">${Math.round(it.v)}</div><div class="pd ${it.d>=0?"up":"dn"}">${it.d>=0?"▲":"▼"} ${Math.abs(Math.round(it.d))}</div><div style="margin:0 auto 4px">${medal(i,26)}</div><div class="blk b${i}"></div></div>`}).join("");
+  RACE.s.forEach((s,i)=>{const e=$("rl"+i),h=$("rh"+i);if(!e||!h)return;e.setAttribute("points",racePoly(s,fr.tt));h.setAttribute("x",(g.X(fr.tt)-g.hs/2).toFixed(1));h.setAttribute("y",(g.Y(rVal(s,fr.tt))-g.hs/2).toFixed(1))});
+  const pod=$("pod");if(pod)pod.innerHTML=RACE.all?fr.items.map((it,i)=>`<div class="sb"><span class="rk">${i<3?medal(i,16):i+1}</span><i class="sw" style="background:${it.col}"></i><span class="nm">${esc(it.name)}</span><span class="pr">${Math.round(it.v)}</span><span class="pd ${it.d>=0?"up":"dn"}">${it.d>=0?"▲":"▼"} ${Math.abs(Math.round(it.d))}</span></div>`).join(""):[1,0,2].filter(i=>fr.items[i]).map(i=>{const it=fr.items[i];return`<div class="slot"><div class="pn"><i class="sw" style="background:${it.col}"></i>${esc(it.name)}</div><div class="pr">${Math.round(it.v)}</div><div class="pd ${it.d>=0?"up":"dn"}">${it.d>=0?"▲":"▼"} ${Math.abs(Math.round(it.d))}</div><div style="margin:0 auto 4px">${medal(i,26)}</div><div class="blk b${i}"></div></div>`}).join("");
   const rt=$("rt");if(rt)rt.textContent=new Date(fr.tt).toLocaleString(undefined,{weekday:"short",month:"short",day:"numeric",hour:"numeric",minute:"2-digit"});
 }
 function raceStop(){if(RACE.raf){cancelAnimationFrame(RACE.raf);RACE.raf=0}}
 function raceStart(){
   raceStop();if(!RACE.g)return;
-  const key=tper+"|"+RACE.s.map(x=>x.name).join(","),reduce=window.matchMedia&&matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const key=tper+"|"+rview+"|"+RACE.s.map(x=>x.name).join(","),reduce=window.matchMedia&&matchMedia("(prefers-reduced-motion: reduce)").matches;
   if(RACE.key!=key){RACE.key=key;RACE.f=0;RACE.done=false}
   if(RACE.done||reduce){RACE.f=1;RACE.done=true;drawRace(1);return}
   RACE.start=performance.now()-RACE.f*RDUR;drawRace(RACE.f);
@@ -310,17 +311,19 @@ function raceStart(){
 }
 function replayRace(){RACE.f=0;RACE.done=false;raceStart()}
 function raceCard(T,days){
-  const tops=T.top3;RACE.g=null;RACE.s=[];
+  const all=rview=="all";RACE.g=null;RACE.s=[];RACE.capped=0;RACE.all=all;
+  let tops=all?T.rows.map(r=>D.players[r.name]).sort((a,b)=>b.r.all-a.r.all):T.top3;
   if(!tops.length)return"";
-  RACE.s=tops.map((p,i)=>({name:p.name,col:RCOL[i],pts:stepPts(p,T.t0,T.t1)}));
+  if(tops.length>12){RACE.capped=tops.length-12;tops=tops.slice(0,12)}
+  RACE.s=tops.map((p,i)=>({name:p.name,col:i<3?RCOL[i]:RPAL[(i-3)%RPAL.length],pts:stepPts(p,T.t0,T.t1)}));
   const vs=RACE.s.flatMap(s=>s.pts.map(q=>q[1])),lo=Math.min(...vs),hi=Math.max(...vs),sp=Math.max(hi-lo,10),pad=sp*.1;
   const X=t=>26+(t-T.t0)/(T.t1-T.t0)*264,Y=v=>118-(v-(lo-pad))/(sp+2*pad)*108;
-  RACE.g={t0:T.t0,t1:T.t1,X,Y};
+  RACE.g={t0:T.t0,t1:T.t1,X,Y,hs:all?5:6};
   const k=days==7?7:5,fmt=d=>d.toLocaleDateString(undefined,days==7?{weekday:"short"}:{month:"numeric",day:"numeric"});
   const ticks=Array.from({length:k+1},(_,i)=>T.t0+i*(T.t1-T.t0)/k).map(t=>`<line x1="${X(t).toFixed(1)}" y1="118" x2="${X(t).toFixed(1)}" y2="122" stroke="var(--ink)"/><text x="${X(t).toFixed(1)}" y="134" text-anchor="middle" font-size="8" style="fill:var(--mu)">${fmt(new Date(t))}</text>`).join("");
   const yl=[hi,(hi+lo)/2,lo].map(v=>`<text x="2" y="${(Y(v)+3).toFixed(1)}" font-size="8" style="fill:var(--mu)">${Math.round(v)}</text><line x1="26" y1="${Y(v).toFixed(1)}" x2="290" y2="${Y(v).toFixed(1)}" stroke="var(--ln)" stroke-dasharray="2 3"/>`).join("");
-  const lines=RACE.s.map((s,i)=>`<polyline id="rl${i}" fill="none" stroke="${s.col}" stroke-width="3" stroke-linejoin="miter" shape-rendering="crispEdges" points=""/>`).join(""),heads=RACE.s.map((s,i)=>`<rect id="rh${i}" width="6" height="6" fill="${s.col}" stroke="var(--ink)" stroke-width="1"/>`).join("");
-  return`<div class="card"><div class="row"><b class="ct" style="flex:1">Podium race</b><button class="g" onclick="replayRace()">▶ Replay</button></div><div class="sub" id="rt">&nbsp;</div><div class="pod" id="pod"></div><svg viewBox="0 0 300 140" width="100%" role="img" aria-label="Rating of the top three players over the last ${days} days"><line x1="26" y1="118" x2="290" y2="118" stroke="var(--ink)"/>${yl}${ticks}${lines}${heads}</svg></div>`;
+  const lines=RACE.s.map((s,i)=>`<polyline id="rl${i}" fill="none" stroke="${s.col}" stroke-width="${all?2:3}" stroke-linejoin="miter" shape-rendering="crispEdges" points=""/>`).join(""),heads=RACE.s.map((s,i)=>`<rect id="rh${i}" width="${all?5:6}" height="${all?5:6}" fill="${s.col}" stroke="var(--ink)" stroke-width="1"/>`).join("");
+  return`<div class="card"><div class="row"><b class="ct" style="flex:1">Rating race</b><button class="g" onclick="replayRace()">▶ Replay</button></div><div class="seg" style="margin:4px 0 8px"><button class="${all?"":"on"}" onclick="rview='top3';render()">Podium race</button><button class="${all?"on":""}" onclick="rview='all';render()">Everyone</button></div><div class="sub" id="rt">&nbsp;</div><div class="pod${all?" list":""}" id="pod"></div><svg viewBox="0 0 300 140" width="100%" role="img" aria-label="Rating of the top three players over the last ${days} days"><line x1="26" y1="118" x2="290" y2="118" stroke="var(--ink)"/>${yl}${ticks}${lines}${heads}</svg>${RACE.capped?`<div class="sub">Showing the 12 highest-rated of ${12+RACE.capped} players who played.</div>`:""}</div>`;
 }
 function trendsPage(){
   const days=tper=="week"?7:30,w=tper,T=trendsData(days),R0=Math.round;
