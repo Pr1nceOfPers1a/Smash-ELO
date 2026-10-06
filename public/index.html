@@ -360,18 +360,20 @@ function trendsPage(){
 }
 
 // ---------- Stat ranking pages ----------
-const STATS={kd:{c:"K/D",t:"K/D ratio",d:"Kills per death. Needs 3+ games with stats."},kos:{c:"KOs",t:"Most KOs",d:"Total kills."},dmg:{c:"Damage",t:"Most damage",d:"Total damage dealt."},sds:{c:"SDs",t:"Most SDs",d:"Total self-destructs."},streak:{c:"Streak",t:"Win streaks",d:"Wins in a row."},wr:{c:"Win %",t:"Win rate",d:"Needs 5+ games."}};
+const STATS={kd:{c:"K/D",t:"K/D ratio",d:"Kills per death. Needs 3+ games with stats."},kos:{c:"KOs",t:"Most KOs",d:"Total kills."},dmg:{c:"Damage",t:"Most damage",d:"Total damage dealt."},sds:{c:"SDs",t:"Most SDs",d:"Total self-destructs."},streak:{c:"Streak",t:"Win streaks",d:"Wins in a row. Avg opp = average rating of the opponents in that streak."},wr:{c:"Win %",t:"Win rate",d:"Needs 5+ games. Avg opp = average rating of opponents faced."}};
 const SR={week:"Week",month:"Month",all:"All time"},SM={all:"Overall",one:"1v1",ffa:"FFA"};
 let stat="",sfrom="lb",sfsel="",srange="all",smode="all",ssv="best";
 function goStat(k,r,m,v){if(!stat){sfrom=tab;sfsel=sel}stat=STATS[k]?k:"kd";srange=SR[r]?r:"all";smode=SM[m]?m:"all";ssv=v=="cur"?"cur":"best";sel="";render();scrollTo(0,0)}
 function statRows(key,range,mode,sv){
   const lastT=D.matches.length?tms(D.matches[D.matches.length-1]):0,days=range=="week"?7:range=="month"?30:0,t0=days?Math.max(Date.now(),lastT)-days*DAY:-1;
-  const S={};
-  for(const m of D.matches){if(tms(m)<=t0||(mode!="all"&&m.mode!=mode))continue;
-    for(const x of m.results){const c=(S[x.name]??={name:x.name,k:0,d:0,n:0,sd:0,dmg:0,g:0,w:0,run:0,best:0});
-      c.g++;if(x.place===1){c.w++;c.run++;if(c.run>c.best)c.best=c.run}else c.run=0;
+  const S={},R={};
+  for(const m of D.matches){const inW=!(tms(m)<=t0||(mode!="all"&&m.mode!=mode));
+    if(inW)for(const x of m.results){const c=(S[x.name]??={name:x.name,k:0,d:0,n:0,sd:0,dmg:0,g:0,w:0,run:0,best:0,os:0,rs:0,rn:0,bs:0,bn:0});
+      const op=m.results.filter(y=>y!==x).map(y=>R[y.name]??1000),oa=op.reduce((a,b)=>a+b,0)/op.length;
+      c.g++;c.os+=oa;if(x.place===1){c.w++;c.run++;c.rs+=oa;c.rn++;if(c.run>c.best){c.best=c.run;c.bs=c.rs;c.bn=c.rn}}else{c.run=0;c.rs=0;c.rn=0}
       if(Number.isFinite(x.kills)&&Number.isFinite(x.deaths)){c.k+=x.kills;c.d+=x.deaths;c.n++}
-      if(Number.isFinite(x.sds))c.sd+=x.sds;if(Number.isFinite(x.dmg))c.dmg+=x.dmg}}
+      if(Number.isFinite(x.sds))c.sd+=x.sds;if(Number.isFinite(x.dmg))c.dmg+=x.dmg}
+    for(const x of m.results)R[x.name]=(R[x.name]??1000)+m.d.all[x.name]}
   const A=Object.values(S),L=n=>n.toLocaleString(),out=[];
   const add=(c,val,disp,sub)=>out.push({name:c.name,val,disp,sub,k:c.k,g:c.g});
   for(const c of A){
@@ -379,8 +381,8 @@ function statRows(key,range,mode,sv){
     if(key=="kos"&&c.k>0)add(c,c.k,String(c.k),`${c.n} games with stats`);
     if(key=="dmg"&&c.dmg>0)add(c,c.dmg,L(Math.round(c.dmg)),`${c.g} games`);
     if(key=="sds"&&c.sd>0)add(c,c.sd,String(c.sd),`${c.g} games`);
-    if(key=="wr"&&c.g>=5)add(c,c.w/c.g,Math.round(100*c.w/c.g)+"%",`${c.w}W ${c.g-c.w}L`);
-    if(key=="streak"){const v=sv=="cur"?c.run:c.best;if(v>=2)add(c,v,String(v),sv=="cur"?`longest ${c.best} · ${c.g} games`:`${c.w}W of ${c.g} games · now ${c.run}`)}
+    if(key=="wr"&&c.g>=5)add(c,c.w/c.g,Math.round(100*c.w/c.g)+"%",`${c.w}W ${c.g-c.w}L · avg opp ${Math.round(c.os/c.g)}`);
+    if(key=="streak"){const v=sv=="cur"?c.run:c.best;if(v>=2)add(c,v,String(v),sv=="cur"?`longest ${c.best} · avg opp ${Math.round(c.rs/c.rn)}`:`${c.w}W of ${c.g} · now ${c.run} · avg opp ${Math.round(c.bs/c.bn)}`)}
   }
   return out.sort((a,b)=>b.val===a.val?(b.k-a.k||b.g-a.g):b.val>a.val?1:-1);
 }
