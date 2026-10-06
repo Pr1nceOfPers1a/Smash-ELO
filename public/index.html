@@ -51,7 +51,7 @@ input.sm{flex:1;width:0;min-width:0;text-align:center;padding:8px 4px}
 .blk{border:3px solid var(--ink);box-shadow:3px 3px 0 var(--ink)}
 .b0{height:46px;background:#ffd23f}.b1{height:32px;background:#c9ced8}.b2{height:22px;background:#d9894a}
 .pod.list{display:block;min-height:0}.sb{display:flex;align-items:center;gap:6px;margin:5px 0}.sb .rk{width:22px}.sb .nm{font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.sb .pr{font:11px var(--pf)}.sb .pd{font-size:12px;font-weight:700;min-width:56px;text-align:right}
-.sw{display:inline-block;width:9px;height:9px;border:2px solid var(--ink);margin-right:4px}
+.seg.w{flex-wrap:wrap}.seg.w button{flex:1 0 28%}[data-stat]{cursor:pointer}.pod.mini{min-height:0;margin:8px 0 2px}.mini .b0{height:28px}.mini .b1{height:18px}.mini .b2{height:10px}.mini .slot .pr{font-size:10px}.sw{display:inline-block;width:9px;height:9px;border:2px solid var(--ink);margin-right:4px}
 #now{display:none;align-items:center;gap:6px 10px;flex-wrap:wrap;margin:0 4px 16px 0;background:var(--yel);border:3px solid var(--ink);box-shadow:4px 4px 0 var(--ink);padding:9px 11px}
 #now .live{font:8px/1.5 var(--pf);color:var(--ink);white-space:nowrap}#now .who{font-weight:700;flex:1;min-width:0;overflow-wrap:anywhere}#now .ago{font-size:12px;color:var(--ink)}
 .dot{display:inline-block;width:8px;height:8px;background:var(--ac);border:2px solid var(--ink);margin-right:6px;vertical-align:middle}
@@ -88,6 +88,7 @@ const tri=p=>`<div class="tri">${["all","one","ffa"].map(t=>`<div><div class="el
 function render(){
   raceStop();D=ELO.compute(ms);const P=D.players,v=document.getElementById("v");CH=[...new Set([...FIGHTERS,...ms.flatMap(m=>m.results.map(x=>x.char).filter(Boolean))])].sort();
   document.querySelectorAll("nav button").forEach(b=>b.classList.toggle("on",b.dataset.t==tab));
+  if(stat&&!(sel&&P[sel])&&(tab=="lb"||tab=="tr")){v.innerHTML=statPage();return}
   if(tab=="lb"){
     if(sel&&P[sel]){v.innerHTML=playerPage(P[sel]);return}
     let h="";
@@ -121,8 +122,8 @@ function render(){
     <div class="card"><button class="g" onclick="csv()">Export matches (CSV)</button></div>${mergeCard(P)}`;
   }
 }
-document.querySelector("nav").onclick=e=>{if(e.target.dataset.t){tab=e.target.dataset.t;sel="";if(tab=="tr")RACE.key="";if(tab!="lb"){sopen=false;fq=""}render()}};
-document.getElementById("v").onclick=e=>{const k=e.target.closest("[data-ch]");if(k){pchar=pchar==k.dataset.ch?"":k.dataset.ch;render();return}const f=e.target.closest("[data-fix]");if(f){draft[+f.dataset.fix].name=f.dataset.to;render();return}const c=e.target.closest("[data-n]");if(c&&(tab=="lb"||tab=="tr")){tab="lb";sel=c.dataset.n;pchar="";render();scrollTo(0,0)}};
+document.querySelector("nav").onclick=e=>{if(e.target.dataset.t){tab=e.target.dataset.t;sel="";stat="";if(tab=="tr")RACE.key="";if(tab!="lb"){sopen=false;fq=""}render()}};
+document.getElementById("v").onclick=e=>{const sc=e.target.closest("[data-stat]");if(sc){goStat(sc.dataset.stat,sc.dataset.sr,sc.dataset.sm,sc.dataset.sv);return}const k=e.target.closest("[data-ch]");if(k){pchar=pchar==k.dataset.ch?"":k.dataset.ch;render();return}const f=e.target.closest("[data-fix]");if(f){draft[+f.dataset.fix].name=f.dataset.to;render();return}const c=e.target.closest("[data-n]");if(c&&(tab=="lb"||tab=="tr")){tab="lb";sel=c.dataset.n;pchar="";render();scrollTo(0,0)}};
 let mg={from:"",to:""},mgOut="",mgOk=false,CH=[],fchar="",fq="",sopen=false,pchar="",pmode="all",prange="all";
 function lev(a,b){const d=Array.from({length:a.length+1},(_,i)=>[i]);for(let j=1;j<=b.length;j++)d[0][j]=j;for(let i=1;i<=a.length;i++)for(let j=1;j<=b.length;j++)d[i][j]=Math.min(d[i-1][j]+1,d[i][j-1]+1,d[i-1][j-1]+(a[i-1]==b[j-1]?0:1));return d[a.length][b.length]}
 function flag(name,i){
@@ -224,8 +225,8 @@ function upsets(p){
 function playerPage(p){
   const wm=p.wm;
   return`<button class="g" onclick="sel='';render()">← Back</button>
-  <div class="card" style="margin-top:10px"><div class="nm" style="font-size:20px">${esc(p.name)} ${p.streak>=2?"🔥 "+p.streak:""}</div><div class="sub">${p.w}W · ${p.l}L · ${p.g.all} games</div>${medalLine(p)}${triP(p)}</div>
-  <div class="card"><b>Win rate</b><div class="tri">${[["Overall",p.w,p.l],["1v1",wm.one.w,wm.one.l],["FFA",wm.ffa.w,wm.ffa.l]].map(([t,w,l])=>`<div><div class="elo">${pct(w,l)}</div><div class="sub">${t} · ${w}W ${l}L</div></div>`).join("")}</div></div>
+  <div class="card" style="margin-top:10px"><div class="nm" style="font-size:20px">${esc(p.name)} ${p.streak>=2?`<span data-stat="streak" data-sv="cur">🔥 ${p.streak}</span>`:""}</div><div class="sub">${p.w}W · ${p.l}L · ${p.g.all} games</div>${medalLine(p)}${triP(p)}</div>
+  <div class="card"><b>Win rate</b><div class="tri">${[["Overall","all",p.w,p.l],["1v1","one",wm.one.w,wm.one.l],["FFA","ffa",wm.ffa.w,wm.ffa.l]].map(([t,k,w,l])=>`<div data-stat="wr" data-sm="${k}"><div class="elo">${pct(w,l)}</div><div class="sub">${t} · ${w}W ${l}L</div></div>`).join("")}</div></div>
   ${combat(p)}<div class="card"><b>Rating history</b>${trend(p)}</div>
   ${charCard(p)}${rivals(p)}${upsets(p)}`;
 }
@@ -239,7 +240,7 @@ function combat(p){
   const a=p.cs.one,b=p.cs.ffa,K=a.k+b.k,Dd=a.d+b.d,SD=a.sd+b.sd,DM=a.dmg+b.dmg,N=a.n+b.n;
   if(!N&&!SD&&!DM)return`<div class="card"><b>Combat stats</b><div class="sub">No stats yet. Scan the second results screen, or type KOs, deaths, SDs, and damage when you add a match.</div></div>`;
   const kd=c=>c.n?(c.d?(c.k/c.d).toFixed(2):c.k?"∞":"—"):"—";
-  return`<div class="card"><b>Combat stats</b><div class="tri" style="margin-top:8px"><div><div class="elo">${kd(a)}</div><div class="sub">1v1 K/D · ${a.n} games</div></div><div><div class="elo">${kd(b)}</div><div class="sub">FFA K/D · ${b.n} games</div></div></div><div class="tri" style="margin-top:10px"><div><div class="elo">${K}</div><div class="sub">Kills</div></div><div><div class="elo">${Dd}</div><div class="sub">Deaths</div></div><div><div class="elo">${SD}</div><div class="sub">SDs</div></div><div><div class="elo">${Math.round(DM).toLocaleString()}</div><div class="sub">Damage dealt</div></div></div><div class="sub" style="margin-top:8px">Totals only include matches with stats recorded.</div></div>`;
+  return`<div class="card"><b>Combat stats</b><div class="tri" style="margin-top:8px"><div data-stat="kd" data-sm="one"><div class="elo">${kd(a)}</div><div class="sub">1v1 K/D · ${a.n} games</div></div><div data-stat="kd" data-sm="ffa"><div class="elo">${kd(b)}</div><div class="sub">FFA K/D · ${b.n} games</div></div></div><div class="tri" style="margin-top:10px"><div data-stat="kos"><div class="elo">${K}</div><div class="sub">Kills</div></div><div><div class="elo">${Dd}</div><div class="sub">Deaths</div></div><div data-stat="sds"><div class="elo">${SD}</div><div class="sub">SDs</div></div><div data-stat="dmg"><div class="elo">${Math.round(DM).toLocaleString()}</div><div class="sub">Damage dealt</div></div></div><div class="sub" style="margin-top:8px">Totals only include matches with stats recorded. Tap a stat to see everyone ranked.</div></div>`;
 }
 // ---------- 8-bit medals ----------
 const MG=["..RR....BB..","...RR..BB...","....RRBB....","....RRBB....","...oooooo...","..ommmmmmo..",".ommhhmmmmo.",".ommhmmmmmo.",".ommmmmmmso.",".ommmmmmsso.","..ommmmsso..","...oooooo..."];
@@ -345,16 +346,55 @@ function trendsPage(){
   const mv=T.rows.map(r=>{const d=R0(r.d),rc=r.rs==null?"NEW":r.rs-r.rn>0?"▲"+(r.rs-r.rn):r.rs-r.rn<0?"▼"+(r.rn-r.rs):"–";return`<div class="mv" data-n="${esc(r.name)}"><span class="rk">${r.rn<=3?medal(r.rn-1,20):r.rn}</span><span class="nm">${esc(r.name)}<div class="sub">${r.n} game${r.n>1?"s":""} · now ${R0(r.e)}</div></span><span class="dl ${d>0?"up":d<0?"dn":""}">${d>0?"▲":d<0?"▼":"–"} ${Math.abs(d)}</span><span class="rc">#${r.rn} ${rc}</span></div>`}).join("");
   const mx=Math.max(...T.active.map(r=>r.n));
   const act=T.active.map(r=>`<div style="margin:8px 0" data-n="${esc(r.name)}"><div class="row" style="margin:0"><span class="nm">${esc(r.name)}</span><span class="sub">${r.n} games · ${r.opp} opponent${r.opp==1?"":"s"}</span></div><div class="bar" style="width:${Math.max(4,r.n/mx*100)}%"></div></div>`).join("");
-  const st=(T.cur.length?T.cur.map(p=>`<div class="row" style="margin:6px 0" data-n="${esc(p.name)}"><span class="nm">🔥 ${esc(p.name)}</span><span class="elo up">${p.streak}</span><span class="sub">in a row</span></div>`).join(""):`<div class="sub">No active streaks of 2 or more.</div>`)+(T.longest?`<div class="sub" style="margin-top:8px">Longest this ${w}: <b>${esc(T.longest.name)}</b> · ${T.longest.n} wins in a row</div>`:"");
+  const st=(T.cur.length?T.cur.map(p=>`<div class="row" style="margin:6px 0" data-stat="streak" data-sv="cur" data-sr="all"><span class="nm">🔥 ${esc(p.name)}</span><span class="elo up">${p.streak}</span><span class="sub">in a row</span></div>`).join(""):`<div class="sub">No active streaks of 2 or more.</div>`)+(T.longest?`<div class="sub" style="margin-top:8px" data-stat="streak" data-sv="best" data-sr="${tper}">Longest this ${w}: <b>${esc(T.longest.name)}</b> · ${T.longest.n} wins in a row ›</div>`:"");
   const u=T.upset,up=u?`<div class="nm" style="margin-top:8px"><span class="up">${esc(u.name)}</span> beat ${esc(u.opp)}</div><div class="sub">${u.mc||u.oc?`${esc(u.mc||"?")} vs ${esc(u.oc||"?")} · `:""}rated ${R0(u.gap)} lower · only a ${R0(u.pr*100)}% chance · ${new Date(u.ts).toLocaleDateString()}</div>`:`<div class="sub" style="margin-top:8px">No upsets this ${w}. An upset needs a 50+ point rating gap.</div>`;
   const rv=T.rival,riv=rv?`<div class="nm" style="margin-top:8px">${esc(rv.a)} vs ${esc(rv.b)}</div><div class="sub">${rv.n} meetings · ${rv.aw}–${rv.bw}${rv.t?"–"+rv.t:""} (${esc(rv.a)} first)</div>`:`<div class="sub" style="margin-top:8px">No rivalries yet.</div>`;
   const lr=t=>{const L=T.lead[t];if(!L.cur)return`<div class="row" style="margin:8px 0"><span class="sub" style="flex:0 0 52px">${LB[t]}</span><span class="sub">No games yet</span></div>`;
     const note=!L.prev?"new board":L.prev==L.cur.name?"held the lead":`took the lead from ${esc(L.prev)}`;
     return`<div class="row" data-n="${esc(L.cur.name)}" style="margin:8px 0;cursor:pointer"><span class="sub" style="flex:0 0 52px">${LB[t]}</span><span class="rk">${medal(0,18)}</span><span class="nm">${esc(L.cur.name)}<div class="sub">${note}</div></span><span class="elo">${R0(L.cur.r[t])}</span></div>`};
   const leadCard=`<div class="card"><b>Rating leaders</b>${lr("one")}${lr("ffa")}</div>`;
-  const C=T.cmb,cr=(label,c,val,sub)=>c?`<div class="row" data-n="${esc(c.name)}" style="margin:8px 0;cursor:pointer"><span class="sub" style="flex:0 0 96px">${label}</span><span class="nm">${esc(c.name)}${sub?`<div class="sub">${sub}</div>`:""}</span><span class="elo">${val}</span></div>`:`<div class="row" style="margin:8px 0"><span class="sub" style="flex:0 0 96px">${label}</span><span class="sub">—</span></div>`;
-  const cmbCard=C.any?`<div class="card"><b>Combat leaders</b><div class="msg">Only matches with stats recorded count. Best K/D needs 3+.</div>${cr("Best K/D",C.kd,C.kd&&(C.kd.kd===Infinity?"∞":C.kd.kd.toFixed(2)),C.kd&&`${C.kd.k} KOs · ${C.kd.d} deaths · ${C.kd.n} games`)}${cr("Most KOs",C.kos,C.kos&&C.kos.k)}${cr("Most damage",C.dmg,C.dmg&&Math.round(C.dmg.dmg).toLocaleString())}${cr("Most SDs",C.sds,C.sds&&C.sds.sd)}</div>`:`<div class="card"><b>Combat leaders</b><div class="msg">No stats recorded in the last ${days} days. Scan the second results screen, or type KOs, deaths, SDs, and damage when you add a match.</div></div>`;
+  const C=T.cmb,cr=(label,key,c,val,sub)=>c?`<div class="row" data-stat="${key}" data-sr="${tper}" style="margin:8px 0"><span class="sub" style="flex:0 0 96px">${label}</span><span class="nm">${esc(c.name)}${sub?`<div class="sub">${sub}</div>`:""}</span><span class="elo">${val}</span><span class="sub">›</span></div>`:`<div class="row" style="margin:8px 0"><span class="sub" style="flex:0 0 96px">${label}</span><span class="sub">—</span></div>`;
+  const cmbCard=C.any?`<div class="card"><b>Combat leaders</b><div class="msg">Only matches with stats recorded count. Best K/D needs 3+. Tap a stat to see everyone ranked.</div>${cr("Best K/D","kd",C.kd,C.kd&&(C.kd.kd===Infinity?"∞":C.kd.kd.toFixed(2)),C.kd&&`${C.kd.k} KOs · ${C.kd.d} deaths · ${C.kd.n} games`)}${cr("Most KOs","kos",C.kos,C.kos&&C.kos.k)}${cr("Most damage","dmg",C.dmg,C.dmg&&Math.round(C.dmg.dmg).toLocaleString())}${cr("Most SDs","sds",C.sds,C.sds&&C.sds.sd)}</div>`:`<div class="card"><b>Combat leaders</b><div class="msg">No stats recorded in the last ${days} days. Scan the second results screen, or type KOs, deaths, SDs, and damage when you add a match.</div></div>`;
   return seg+raceCard(T,days)+`<div class="pair">${cf("Top climber",T.climber,true)}${cf("Biggest drop",T.faller,false)}</div><div class="card"><b>Who's moving</b><div class="msg">Rating change over the last ${days} days. Tap a player for their page.</div>${mv}</div><div class="card"><b>Most active</b>${act}</div><div class="card"><b>Hot streaks</b><div style="margin-top:6px">${st}</div></div>${leadCard}${cmbCard}<div class="card"><b>Upset of the ${w}</b>${up}</div><div class="card"><b>Rivalry of the ${w}</b>${riv}</div>`;
+}
+
+// ---------- Stat ranking pages ----------
+const STATS={kd:{c:"K/D",t:"K/D ratio",d:"Kills per death. Needs 3+ games with stats."},kos:{c:"KOs",t:"Most KOs",d:"Total kills."},dmg:{c:"Damage",t:"Most damage",d:"Total damage dealt."},sds:{c:"SDs",t:"Most SDs",d:"Total self-destructs."},streak:{c:"Streak",t:"Win streaks",d:"Wins in a row."},wr:{c:"Win %",t:"Win rate",d:"Needs 5+ games."}};
+const SR={week:"Week",month:"Month",all:"All time"},SM={all:"Overall",one:"1v1",ffa:"FFA"};
+let stat="",sfrom="lb",sfsel="",srange="all",smode="all",ssv="best";
+function goStat(k,r,m,v){if(!stat){sfrom=tab;sfsel=sel}stat=STATS[k]?k:"kd";srange=SR[r]?r:"all";smode=SM[m]?m:"all";ssv=v=="cur"?"cur":"best";sel="";render();scrollTo(0,0)}
+function statRows(key,range,mode,sv){
+  const lastT=D.matches.length?tms(D.matches[D.matches.length-1]):0,days=range=="week"?7:range=="month"?30:0,t0=days?Math.max(Date.now(),lastT)-days*DAY:-1;
+  const S={};
+  for(const m of D.matches){if(tms(m)<=t0||(mode!="all"&&m.mode!=mode))continue;
+    for(const x of m.results){const c=(S[x.name]??={name:x.name,k:0,d:0,n:0,sd:0,dmg:0,g:0,w:0,run:0,best:0});
+      c.g++;if(x.place===1){c.w++;c.run++;if(c.run>c.best)c.best=c.run}else c.run=0;
+      if(Number.isFinite(x.kills)&&Number.isFinite(x.deaths)){c.k+=x.kills;c.d+=x.deaths;c.n++}
+      if(Number.isFinite(x.sds))c.sd+=x.sds;if(Number.isFinite(x.dmg))c.dmg+=x.dmg}}
+  const A=Object.values(S),L=n=>n.toLocaleString(),out=[];
+  const add=(c,val,disp,sub)=>out.push({name:c.name,val,disp,sub,k:c.k,g:c.g});
+  for(const c of A){
+    if(key=="kd"&&c.n>=3)add(c,c.d?c.k/c.d:c.k?Infinity:0,c.d?(c.k/c.d).toFixed(2):c.k?"∞":"0.00",`${c.k} KOs · ${c.d} deaths · ${c.n} games`);
+    if(key=="kos"&&c.k>0)add(c,c.k,String(c.k),`${c.n} games with stats`);
+    if(key=="dmg"&&c.dmg>0)add(c,c.dmg,L(Math.round(c.dmg)),`${c.g} games`);
+    if(key=="sds"&&c.sd>0)add(c,c.sd,String(c.sd),`${c.g} games`);
+    if(key=="wr"&&c.g>=5)add(c,c.w/c.g,Math.round(100*c.w/c.g)+"%",`${c.w}W ${c.g-c.w}L`);
+    if(key=="streak"){const v=sv=="cur"?c.run:c.best;if(v>=2)add(c,v,String(v),sv=="cur"?`longest ${c.best} · ${c.g} games`:`${c.w}W of ${c.g} games · now ${c.run}`)}
+  }
+  return out.sort((a,b)=>b.val===a.val?(b.k-a.k||b.g-a.g):b.val>a.val?1:-1);
+}
+function podiumCard(k){
+  const rows=statRows(k,"all","all","best").slice(0,3),S=STATS[k];
+  const slot=i=>{const r=rows[i];return r?`<div class="slot">${medal(i,22)}<div class="pn">${esc(r.name)}</div><div class="pr">${r.disp}</div><div class="blk b${i}"></div></div>`:`<div class="slot" style="visibility:hidden"><div class="pr">&nbsp;</div><div class="blk b${i}"></div></div>`};
+  return`<div class="card" data-stat="${k}" data-sr="all" data-sm="all"><div class="row" style="margin-bottom:0"><b class="ct" style="flex:1">${S.t}</b><span class="sub">see all ›</span></div>${rows.length?`<div class="pod mini">${slot(1)}${slot(0)}${slot(2)}</div>`:`<div class="sub" style="margin-top:6px">${k=="kd"||k=="wr"?"Nobody qualifies yet.":"Nothing recorded yet."}</div>`}</div>`;
+}
+function statPage(){
+  const S=STATS[stat],rows=statRows(stat,srange,smode,ssv),seg=(o,cur,fn)=>`<div class="seg">${Object.keys(o).map(k=>`<button class="${k==cur?"on":""}" onclick="${fn}='${k}';render()">${o[k]}</button>`).join("")}</div>`;
+  const chips=`<div class="seg w">${Object.keys(STATS).map(k=>`<button class="${k==stat?"on":""}" onclick="stat='${k}';render()">${STATS[k].c}</button>`).join("")}</div>`;
+  const sv=stat=="streak"?`<div class="seg"><button class="${ssv=="best"?"on":""}" onclick="ssv='best';render()">Longest run</button><button class="${ssv=="cur"?"on":""}" onclick="ssv='cur';render()">Active now</button></div>`:"";
+  const needs=["kd","kos","dmg","sds"].includes(stat);
+  const list=rows.length?rows.map((r,i)=>`<div class="card lb" data-n="${esc(r.name)}"><div class="rk">${i<3?medal(i):i+1}</div><div class="nm">${esc(r.name)}<div class="sub">${r.sub}</div></div><div class="elo">${r.disp}</div></div>`).join(""):`<div class="card"><div class="msg">${needs?"No stats recorded for this filter. Scan the second results screen, or type KOs, deaths, SDs, and damage when you add a match.":stat=="streak"?(ssv=="cur"?"Nobody is on a streak of 2+ right now.":"No streaks of 2+ for this filter."):"Nobody has enough games for this filter yet."}</div></div>`;
+  return`<button class="g" onclick="stat='';tab=sfrom;sel=sfsel;render();scrollTo(0,0)">← Back</button><div style="height:12px"></div>${chips}<div class="card"><b>${S.t}</b><div class="msg">${S.d}${needs?" Only matches with stats recorded count.":""}</div></div>${seg(SR,srange,"srange")}${seg(SM,smode,"smode")}${sv}${list}<h3 style="font:10px/1.6 var(--pf);margin:22px 0 10px">ALL-TIME PODIUMS</h3>${Object.keys(STATS).map(podiumCard).join("")}`;
 }
 async function saveMatch(){
   const known=Object.keys(D.players);
