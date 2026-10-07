@@ -110,9 +110,10 @@ const ls=(k,v)=>{try{return v===undefined?localStorage.getItem(k)||"":localStora
 let ms=[],tab="lb",board="all",sel="",draft=[{name:"",place:1},{name:"",place:2}],note="",D=null;
 let me=ls("me"),pass=ls("pass"),admin=ls("admin"),gid=ls("gid"),gname=ls("gname"),jn=(typeof location!="undefined"&&new URLSearchParams(location.search).get("g")||"").slice(0,24),jk="",jmsg="",admOk=false,gtier=(typeof localStorage!="undefined"&&localStorage.getItem("gtier"))||"premier",gk="",gAdm=false,ml={open:false,step:"",key:"",code:"",chal:"",email:"",msg:"",busy:false},pkList=[],pkDays=30,pkMsg="",cg={open:false,pick:"",name:"",pw:"",ak:"",ak2:"",key:"",msg:"",busy:false,done:null},tdTot=null,tdStart=0,tdAcc=null,demo=false,tryOpen=false,tryKey="",tryMsg="",tryStage="",tryRes=null,tryBusy=false,tryLeft=0,pubN=null,pubAcc=null,howto=-1,howCtx="add",scanBase="",tkList=[],tkUses=1,tkHrs=24,tkMsg="",mgG="",mgMs=null,mgD=null;
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
-const isAdm=()=>!!(admin&&admOk&&!demo);
+let peep=null;
+const isAdm=()=>!!(admin&&admOk&&!demo&&!peep);
 const PREM=()=>demo||gtier!="free";
-const isGA=()=>isAdm()||(gAdm&&!demo);
+const isGA=()=>isAdm()||(gAdm&&!demo&&!peep);
 const strip=m=>({...m,results:m.results.map(({char,kills,deaths,sds,dmg,...r})=>r)});
 const calc=m=>ELO.compute(PREM()?m:m.map(strip));
 const WARN=/premier|not match|different|expired|enter the admin|wrong|couldn't|can't|wasn't|failed|too many|not signed|no longer valid|invalid|need at least|must be|already|not set up|error|went wrong|partway|nothing to change|each username/i;
@@ -149,6 +150,7 @@ function render(){
   renderCore();
   {const nv=document.querySelector("nav");if(nv)nv.style.display=gid?"":"none"}
   if(demo){const v=document.getElementById("v");v.insertAdjacentHTML("afterbegin",`<div class="card" style="background:var(--yel)"><b class="ct">DEMO</b><div class="msg" style="margin:4px 0 8px">Sample players and matches. None of this is real data.</div><button onclick="exitDemo()">Exit demo</button></div>`)}
+  if(peep){const v=document.getElementById("v");v.insertAdjacentHTML("afterbegin",`<div class="card" style="background:var(--yel)"><b class="ct">PEEKING</b><div class="msg" style="margin:4px 0 8px">You are viewing <b>${esc(gname)}</b> as a player. View only: nothing can be added or changed.</div><button onclick="peepExit()">Exit peek</button></div>`)}
   drawHow();
 }
 function renderCore(){
@@ -573,7 +575,7 @@ async function joinGroup(){
     tryStage="";tryOpen=false;gid=j.id;gname=j.name;gtier=j.tier||"premier";ls("gtier",gtier);gAdm=false;gk="";pass=jk;ls("gid",gid);ls("gname",gname);ls("pass",pass);gaResume();jk="";jmsg="";ms=[];sel="";tab="lb";await load();render()}
   catch(e){jmsg=e.message;render()}
 }
-function leaveGroup(msg){gAdm=false;gk="";demo=false;tryStage="";tryOpen=false;tab="lb";gid="";gname="";pass="";ls("gid","");ls("gname","");ls("pass","");ms=[];sel="";stat="";jmsg=typeof msg=="string"?msg:"";render()}
+function leaveGroup(msg){if(peep)return peepExit();gAdm=false;gk="";demo=false;tryStage="";tryOpen=false;tab="lb";gid="";gname="";pass="";ls("gid","");ls("gname","");ls("pass","");ms=[];sel="";stat="";jmsg=typeof msg=="string"?msg:"";render()}
 let grp={list:null,orph:0,msg:"",nn:"",nk:"",adopt:true,busy:false};
 const groupsApi=o=>api("groups",{method:"POST",body:JSON.stringify({admin,...o})});
 async function gmLoad(quiet){
@@ -604,7 +606,7 @@ async function gmEdit(id,what){
 function groupsCard(){
   if(!isAdm())return"";
   const base=typeof location!="undefined"?location.origin:"";
-  const rows=(grp.list||[]).map(g=>`<div class="card" style="margin:8px 0;padding:9px 12px;box-shadow:none"><div class="nm">${esc(g.name)}</div><div class="sub"><span class="tag" style="margin:0 6px 0 0;background:${g.tier=="free"?"#6b6590":"#13813a"}">${g.tier=="free"?"FREE":"PREMIER"}</span>Passkey: <b>${esc(g.passkey)}</b> · ${g.matches} match${g.matches==1?"":"es"}</div><div class="sub">Admin password: ${g.hasAdminKey?"set":"not set"}</div><div class="sub">Link: ${esc(base)}/?g=${esc(encodeURIComponent(g.name))}</div><div class="row" style="margin:6px 0 0"><button class="g" onclick="gmEdit('${g.id}','name')">Rename</button><button class="g" onclick="gmEdit('${g.id}','key')">New passkey</button></div><div class="row" style="margin:6px 0 0"><button class="g" onclick="gmEdit('${g.id}','adminKey')">Admin password</button><button class="g" onclick="gmEdit('${g.id}','tier')">Make ${g.tier=="free"?"Premier":"Free"}</button></div></div>`).join("");
+  const rows=(grp.list||[]).map(g=>`<div class="card" style="margin:8px 0;padding:9px 12px;box-shadow:none"><div class="nm">${esc(g.name)}</div><div class="sub"><span class="tag" style="margin:0 6px 0 0;background:${g.tier=="free"?"#6b6590":"#13813a"}">${g.tier=="free"?"FREE":"PREMIER"}</span>Passkey: <b>${esc(g.passkey)}</b> · ${g.matches} match${g.matches==1?"":"es"}</div><div class="sub">Admin password: ${g.hasAdminKey?"set":"not set"}</div><div class="sub">Link: ${esc(base)}/?g=${esc(encodeURIComponent(g.name))}</div><div class="row" style="margin:6px 0 0"><button class="g" onclick="gmEdit('${g.id}','name')">Rename</button><button class="g" onclick="gmEdit('${g.id}','key')">New passkey</button></div><div class="row" style="margin:6px 0 0"><button class="g" onclick="gmEdit('${g.id}','adminKey')">Admin password</button><button class="g" onclick="gmEdit('${g.id}','tier')">Make ${g.tier=="free"?"Premier":"Free"}</button></div><div class="row" style="margin:6px 0 0"><button style="flex:1" onclick="peekGroup('${g.id}')">👁 Peek</button></div></div>`).join("");
   return`<div class="card"><b>Manage groups</b><div class="msg">Every group has its own matches, ratings and passkey. Master only.</div><div class="row"><button class="g" ${grp.busy?"disabled":""} onclick="gmLoad()">Show groups</button></div>${rows}
   <div class="msg" style="margin-top:12px">Create a group</div><div class="row"><input class="n" placeholder="Group name" value="${esc(grp.nn)}" oninput="grp.nn=this.value"></div><div class="row"><input class="n" placeholder="Group password (4+ characters)" value="${esc(grp.nk)}" oninput="grp.nk=this.value" autocomplete="off"></div><div class="row"><input class="n" placeholder="Admin password (4+ characters)" value="${esc(grp.na||"")}" oninput="grp.na=this.value" autocomplete="off"></div><div class="row"><select onchange="grp.tier=this.value"><option value="premier" ${grp.tier!="free"?"selected":""}>Premier group</option><option value="free" ${grp.tier=="free"?"selected":""}>Free group</option></select></div>
   ${grp.orph>0?`<label class="msg" style="display:block"><input type="checkbox" ${grp.adopt?"checked":""} onchange="grp.adopt=this.checked"> Move the ${grp.orph} existing match${grp.orph==1?"":"es"} that have no group into this one</label>`:""}
@@ -653,7 +655,19 @@ async function tdDownload(){
 }
 const sig=d=>JSON.stringify(d.map(x=>[String(x.name||"").trim(),x.place,String(x.char||"").trim(),x.kills??null,x.deaths??null,x.sds??null,x.dmg??null]));
 const trackAcc=kind=>{if(demo||!gid)return;api("scans",{method:"POST",body:JSON.stringify({action:"acc",kind})}).catch(()=>{})};
+async function peekGroup(id){
+  const g=(grp.list||[]).find(x=>x.id==id);if(!g||peep)return;
+  peep={gid,gname,pass,gtier,gAdm,gk};
+  gid=g.id;gname=g.name;pass=g.passkey;gtier=g.tier=="free"?"free":"premier";gAdm=false;gk="";ms=[];sel="";stat="";tab="lb";tryOpen=false;tryStage="";
+  render();scrollTo(0,0);await load();render();
+}
+function peepExit(){
+  if(!peep)return;const o=peep;peep=null;
+  gid=o.gid;gname=o.gname;pass=o.pass;gtier=o.gtier;ls("gtier",gtier);gAdm=o.gAdm;gk=o.gk;ms=[];sel="";stat="";tab="set";
+  if(gid)load();render();scrollTo(0,0);
+}
 async function saveMatch(){
+  if(peep)return alert("Peek mode is view only.");
   const known=Object.keys(D.players);
   const r=draft.map(x=>{const n=x.name.trim(),c0=(x.char||"").trim(),c=CH.find(k=>k.toLowerCase()==c0.toLowerCase())||c0;return{name:known.find(k=>k.toLowerCase()==n.toLowerCase())||n,place:x.place,...(PREM()&&c?{char:c.slice(0,30)}:{}),...(PREM()?statsOf(x):{})}}).filter(x=>x.name);
   if(r.length<2)return alert("Need at least two players.");
@@ -676,7 +690,7 @@ async function shrink(file){
   const c=document.createElement("canvas");c.width=bm.width*s;c.height=bm.height*s;
   c.getContext("2d").drawImage(bm,0,0,c.width,c.height);return c.toDataURL("image/jpeg",.92).split(",")[1];
 }
-document.getElementById("f").onchange=async e=>{
+document.getElementById("f").onchange=async e=>{if(peep){e.target.value="";return alert("Peek mode is view only.")}
   const file=e.target.files[0];e.target.value="";if(!file)return;
   document.getElementById("st").textContent="Reading screenshot…";
   try{
