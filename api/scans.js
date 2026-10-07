@@ -1,4 +1,5 @@
 // Training-data store: confirmed scans (image + correct labels) go into a private Supabase Storage bucket.
+const { auth, adminOk } = require('./_lib');
 const BUCKET = 'scans';
 const U = () => process.env.SUPABASE_URL, K = () => process.env.SUPABASE_SERVICE_KEY;
 const st = (p, o = {}) => fetch(`${U()}/storage/v1/${p}`, { ...o, headers: { apikey: K(), Authorization: `Bearer ${K()}`, ...o.headers } });
@@ -42,7 +43,7 @@ module.exports = async (req, res) => {
     if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
     const b = req.body || {};
     if (b.action === 'list' || b.action === 'get') {
-      if (b.admin !== process.env.ADMIN_PASSCODE) return res.status(401).json({ error: 'Wrong admin passcode' });
+      if (!adminOk(b.admin)) return res.status(401).json({ error: 'Wrong admin passcode' });
       if (b.action === 'list') return res.status(200).json({ ids: await ids() });
       if (!ID.test(b.id || '')) return res.status(400).json({ error: 'Bad id' });
       const [im, js] = await Promise.all([st(`object/authenticated/${BUCKET}/${b.id}.jpg`), st(`object/authenticated/${BUCKET}/${b.id}.json`)]);
@@ -50,7 +51,7 @@ module.exports = async (req, res) => {
       const meta = await js.json();
       return res.status(200).json({ id: b.id, image: Buffer.from(await im.arrayBuffer()).toString('base64'), labels: meta.labels, scanned: meta.scanned });
     }
-    if (b.passcode !== process.env.GROUP_PASSCODE) return res.status(401).json({ error: 'Wrong passcode' });
+    if (!(await auth(req))) return res.status(401).json({ error: 'Not signed in to a group' });
     const now = Date.now();
     hits = hits.filter((t) => now - t < 3600e3);
     if (hits.length >= 120) return res.status(429).json({ error: 'Too many saves, try again later' });

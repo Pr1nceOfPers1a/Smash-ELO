@@ -1,4 +1,5 @@
 // Best-effort rate limit (per server instance): 30 scans per hour.
+const { auth } = require('./_lib');
 let hits = [];
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const num = { type: ['number', 'null'] };
@@ -36,7 +37,7 @@ module.exports = async (req, res) => {
   try {
     if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
     const b = req.body || {};
-    if (b.passcode !== process.env.GROUP_PASSCODE) return res.status(401).json({ error: 'Wrong passcode' });
+    if (!(await auth(req))) return res.status(401).json({ error: 'Not signed in to a group' });
     if (!process.env.ANTHROPIC_API_KEY) return res.status(503).json({ error: 'Scanning is not set up' });
     const now = Date.now();
     hits = hits.filter((t) => now - t < 3600e3);

@@ -1,4 +1,4 @@
-const { sb } = require('./_lib');
+const { sb, auth, adminOk } = require('./_lib');
 const UUID = /^[0-9a-f-]{36}$/i;
 const nameOk = (s) => typeof s === 'string' && s.trim().length > 0 && s.length <= 24;
 function valid(rs) {
@@ -17,12 +17,12 @@ function valid(rs) {
   }
   return true;
 }
-async function merge(b, res) {
-  if (b.admin !== process.env.ADMIN_PASSCODE) return res.status(401).json({ error: 'Wrong admin passcode' });
+async function merge(b, res, g) {
+  if (!adminOk(b.admin)) return res.status(401).json({ error: 'Wrong admin passcode' });
   if (!nameOk(b.from) || !nameOk(b.to)) return res.status(400).json({ error: 'Bad names' });
   const from = b.from.trim(), to = b.to.trim();
   const fl = from.toLowerCase(), tl = to.toLowerCase();
-  const r = await sb('matches?select=id,results&limit=5000');
+  const r = await sb(`matches?select=id,results&group_id=eq.${g.id}&limit=5000`);
   const all = await r.json();
   const hit = all.filter((m) => m.results.some((x) => x.name.toLowerCase() === fl));
   // If a match has both players, merging would put one person in it twice.
@@ -40,23 +40,24 @@ module.exports = async (req, res) => {
   try {
     res.setHeader('Cache-Control', 'no-store');
     const b = req.body || {};
+    const g = await auth(req);
+    if (!g) return res.status(401).json({ error: 'Not signed in to a group' });
     if (req.method === 'GET') {
-      const r = await sb('matches?select=id,ts,results&order=ts.asc&limit=5000');
+      const r = await sb(`matches?select=id,ts,results&group_id=eq.${g.id}&order=ts.asc&limit=5000`);
       return res.status(200).json(await r.json());
     }
     if (req.method === 'POST') {
-      if (b.action === 'merge') return await merge(b, res);
-      if (b.passcode !== process.env.GROUP_PASSCODE) return res.status(401).json({ error: 'Wrong passcode' });
+      if (b.action === 'merge') return await merge(b, res, g);
       if (!valid(b.results)) return res.status(400).json({ error: 'Invalid match' });
       const results = b.results.map((x) => ({ name: x.name.trim(), place: x.place, ...(x.char && x.char.trim() ? { char: x.char.trim() } : {}), ...Object.fromEntries(['kills', 'deaths', 'sds', 'dmg'].filter((k) => x[k] !== undefined).map((k) => [k, x[k]])) }));
-      const r = await sb('matches', { method: 'POST', body: JSON.stringify({ results }) });
+      const r = await sb('matches', { method: 'POST', body: JSON.stringify({ results, group_id: g.id }) });
       if (!r.ok) return res.status(500).json({ error: 'Database error' });
       return res.status(200).json({ ok: true });
     }
     if (req.method === 'DELETE') {
-      if (b.admin !== process.env.ADMIN_PASSCODE) return res.status(401).json({ error: 'Wrong admin passcode' });
+      if (!adminOk(b.admin)) return res.status(401).json({ error: 'Wrong admin passcode' });
       if (!UUID.test(b.id || '')) return res.status(400).json({ error: 'Bad id' });
-      await sb(`matches?id=eq.${b.id}`, { method: 'DELETE' });
+      await sb(`matches?id=eq.${b.id}&group_id=eq.${g.id}`, { method: 'DELETE' });
       return res.status(200).json({ ok: true });
     }
     res.status(405).json({ error: 'Method not allowed' });
