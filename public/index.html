@@ -140,7 +140,7 @@ function render(){
     <div class="card"><b>Admin passcode</b><div class="msg${wc(admMsg)}">${isAdm()?"Admin tools unlocked.":admMsg||"Enter the admin passcode to unlock admin tools."}</div><div class="row"><input class="n" type="password" autocomplete="off" value="${esc(admin)}" onchange="setAdmin(this.value)">${isAdm()?`<button class="g" onclick="setAdmin('')">Lock</button>`:""}</div></div>
     <div class="card"><b>You are</b><div class="row" style="margin-top:8px"><select onchange="me=this.value;ls('me',me);render()"><option value="">Choose…</option>${Object.keys(P).sort().map(n=>`<option ${n==me?"selected":""}>${esc(n)}</option>`).join("")}</select><button class="g" ${me&&P[me]?"":"disabled"} onclick="sel=me;stat='';tab='lb';render();scrollTo(0,0)">See stats</button></div></div>
     <div class="card"><button class="g" onclick="csv()">Export matches (CSV)</button></div>
-    ${isAdm()?`<div class="card"><b>Scans</b><div class="msg">Scans you confirm as correct are saved here.</div><div class="row"><button class="g" ${tdBusy?"disabled":""} onclick="tdCount()">Check count</button><button class="g" ${tdBusy?"disabled":""} onclick="tdDownload()">Download all (.zip)</button></div><div class="msg${wc(tdMsg)}">${esc(tdMsg)}</div>${tdTot!=null?`<div class="row" style="margin:8px 0 0"><b class="ct" style="flex:1">Total scans (site-wide)</b><span class="elo">${tdTot.toLocaleString()}</span></div><div class="sub">Every scan run, saved or not. Counting began at ${tdStart.toLocaleString()} (one per match logged before then).</div><div class="row" style="margin:8px 0 0"><input class="n" id="tdset" inputmode="numeric" placeholder="Set exact total"><button class="g" onclick="tdSet()">Set</button></div>`:""}</div>`:""}${mergeCard(P)}${groupsCard()}`;
+    ${isAdm()?`<div class="card"><b>Scans</b><div class="msg">Scans you confirm as correct are saved here.</div><div class="row"><button class="g" ${tdBusy?"disabled":""} onclick="tdCount()">Check count</button><button class="g" ${tdBusy?"disabled":""} onclick="tdDownload()">Download all (.zip)</button></div><div class="msg${wc(tdMsg)}">${esc(tdMsg)}</div>${tdTot!=null?`<div class="row" style="margin:8px 0 0"><b class="ct" style="flex:1">Total scans (site-wide)</b><span class="elo">${tdTot.toLocaleString()}</span></div><div class="sub">Every scan run, saved or not. Counting began at ${tdStart.toLocaleString()} (one per match logged before then).</div>`:""}</div>`:""}${mergeCard(P)}${groupsCard()}`;
   }
 }
 document.querySelector("nav").onclick=e=>{if(e.target.dataset.t){tab=e.target.dataset.t;sel="";stat="";if(tab=="tr")RACE.key="";if(tab!="lb"){sopen=false;fq=""}render()}};
@@ -508,11 +508,6 @@ async function tdCount(quiet){
   if(!quiet){tdBusy=true;tdMsg="Counting…";render()}
   try{const j=await scansApi({action:"count"});tdTot=j.total;tdStart=j.start||0;tdMsg=quiet?"":`${j.saved} confirmed scan${j.saved==1?"":"s"} saved.`}catch(e){tdMsg=quiet?"":e.message}
   tdBusy=false;render();
-}
-async function tdSet(){
-  const v=document.getElementById("tdset").value.trim();if(!/^\d{1,7}$/.test(v)){tdMsg="Enter a whole number.";return render()}
-  try{await scansApi({action:"settotal",value:+v});await tdCount(true);tdMsg="Total updated."}catch(e){tdMsg=e.message}
-  render();
 }
 async function tdDownload(){
   if(!admin){tdMsg="Enter the admin passcode first.";return render()}
