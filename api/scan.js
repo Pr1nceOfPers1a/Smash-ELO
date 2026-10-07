@@ -1,5 +1,6 @@
 // Best-effort rate limit (per server instance): 30 scans per hour.
 const { auth } = require('./_lib');
+const { bump } = require('./_counter');
 let hits = [];
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const num = { type: ['number', 'null'] };
@@ -81,6 +82,7 @@ module.exports = async (req, res) => {
       name: String(p.name || ''), place: Number.isInteger(p.place) ? p.place : null, character: String(p.character || ''),
       kills: clean(p.kills), deaths: clean(p.deaths), sds: clean(p.sds), damage: clean(p.damage),
     }));
+    await bump(); // counts every scan that reached the model, saved or not
     res.status(200).json({ players, problem: String(out.input?.problem || '').slice(0, 200) });
   } catch (e) {
     res.status(500).json({ error: 'Scan failed: unexpected server error' });
