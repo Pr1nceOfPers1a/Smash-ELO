@@ -124,7 +124,7 @@ function render(){
     <div class="card"><b>Admin passcode</b><div class="msg">Needed to delete or merge matches and to manage groups.</div><div class="row"><input class="n" type="password" value="${esc(admin)}" onchange="admin=this.value.trim();ls('admin',admin)"></div></div>
     <div class="card"><b>You are</b><div class="row" style="margin-top:8px"><select onchange="me=this.value;ls('me',me)"><option value="">Choose…</option>${Object.keys(P).sort().map(n=>`<option ${n==me?"selected":""}>${esc(n)}</option>`).join("")}</select></div></div>
     <div class="card"><button class="g" onclick="csv()">Export matches (CSV)</button></div>
-    <div class="card"><b>Training data</b><div class="msg">Scans you confirm as correct are saved here (needs the admin passcode above).</div><div class="row"><button class="g" ${tdBusy?"disabled":""} onclick="tdCount()">Check count</button><button class="g" ${tdBusy?"disabled":""} onclick="tdDownload()">Download all (.zip)</button></div><div class="msg">${esc(tdMsg)}</div></div>${mergeCard(P)}${groupsCard()}`;
+    <div class="card"><b>Scans</b><div class="msg">Scans you confirm as correct are saved here (needs the admin passcode above).</div><div class="row"><button class="g" ${tdBusy?"disabled":""} onclick="tdCount()">Check count</button><button class="g" ${tdBusy?"disabled":""} onclick="tdDownload()">Download all (.zip)</button></div><div class="msg">${esc(tdMsg)}</div></div>${mergeCard(P)}${groupsCard()}`;
   }
 }
 document.querySelector("nav").onclick=e=>{if(e.target.dataset.t){tab=e.target.dataset.t;sel="";stat="";if(tab=="tr")RACE.key="";if(tab!="lb"){sopen=false;fq=""}render()}};
@@ -504,7 +504,7 @@ async function saveMatch(){
   const b=document.getElementById("sv");b.disabled=true;
   const keep=confOk()?{image:scanImg,labels:r.map(x=>({name:x.name,place:x.place,character:x.char||"",kills:x.kills??null,deaths:x.deaths??null,sds:x.sds??null,damage:x.dmg??null})),scanned:scanRaw}:null;
   try{await api("matches",{method:"POST",body:JSON.stringify({passcode:pass,results:r})});draft=[{name:"",place:1},{name:"",place:2}];note="";scanImg="";scanRaw=null;conf=false;confSnap="";tab="lb";await load();render()
-    if(keep)api("scans",{method:"POST",body:JSON.stringify({passcode:pass,...keep})}).catch(e=>alert("Match saved, but the scan couldn't be added to the training set: "+e.message))}
+    if(keep)api("scans",{method:"POST",body:JSON.stringify({passcode:pass,...keep})}).catch(e=>alert("Match saved, but the scan couldn't be saved: "+e.message))}
   catch(e){alert(e.message);b.disabled=false}
 }
 async function del(id){if(!confirm("Delete this match? Ratings will be recalculated."))return;try{await api("matches",{method:"DELETE",body:JSON.stringify({admin,id})});await load()}catch(e){alert(e.message)}}
