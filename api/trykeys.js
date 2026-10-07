@@ -11,7 +11,7 @@ module.exports = async (req, res) => {
       if (!k) { K.fail(req); return res.status(401).json({ error: 'That key is wrong, used up or expired.' }); }
       return res.status(200).json({ ok: true, left: k.left, exp: k.exp });
     }
-    if (!adminOk(b.admin)) return res.status(401).json({ error: 'Wrong admin passcode' });
+    if (!adminOk(b.admin)) return res.status(401).json({ error: 'Wrong Master Passkey' });
     if (b.action === 'list') return res.status(200).json({ keys: await K.list() });
     if (b.action === 'create') {
       const uses = b.uses, hours = b.hours;

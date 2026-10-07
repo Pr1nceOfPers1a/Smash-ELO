@@ -15,7 +15,11 @@ module.exports = async (req, res) => {
       let used = false;
       try { used = await TK.consume(trial); } catch (e) { return res.status(503).json({ error: 'Something went wrong. Try again in a moment.' }); }
       if (!used) { TK.fail(req); return res.status(401).json({ error: 'That key is wrong, used up or expired.' }); }
-    } else if (!(await auth(req))) return res.status(401).json({ error: 'Not signed in to a group' });
+    } else {
+      const grp = await auth(req);
+      if (!grp) return res.status(401).json({ error: 'Not signed in to a group' });
+      if (grp.tier === 'free') return res.status(403).json({ error: 'Scanning is a Premier Group feature.' });
+    }
     const giveBack = async () => { if (trial) await TK.refund(trial).catch(() => {}); }; // a failed scan does not use up a try
     if (!process.env.ANTHROPIC_API_KEY) { await giveBack(); return res.status(503).json({ error: 'Scanning is not set up' }); }
     const now = Date.now();

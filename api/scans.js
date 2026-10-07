@@ -45,7 +45,7 @@ module.exports = async (req, res) => {
     if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
     const b = req.body || {};
     if (b.action === 'list' || b.action === 'get' || b.action === 'count' || b.action === 'verify') {
-      if (!adminOk(b.admin)) return res.status(401).json({ error: 'Wrong admin passcode' });
+      if (!adminOk(b.admin)) return res.status(401).json({ error: 'Wrong Master Passkey' });
       if (b.action === 'verify') return res.status(200).json({ ok: true });
       if (b.action === 'count') {
         const c = await ensure();
@@ -59,7 +59,9 @@ module.exports = async (req, res) => {
       const meta = await js.json();
       return res.status(200).json({ id: b.id, image: Buffer.from(await im.arrayBuffer()).toString('base64'), labels: meta.labels, scanned: meta.scanned });
     }
-    if (!(await auth(req))) return res.status(401).json({ error: 'Not signed in to a group' });
+    const grp = await auth(req);
+    if (!grp) return res.status(401).json({ error: 'Not signed in to a group' });
+    if (grp.tier === 'free') return res.status(403).json({ error: 'Scanning is a Premier Group feature.' });
     if (b.action === 'acc') { await ACC.bumpAcc(b.kind); return res.status(200).json({ ok: true }); }
     const now = Date.now();
     hits = hits.filter((t) => now - t < 3600e3);
