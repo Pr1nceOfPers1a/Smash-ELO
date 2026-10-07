@@ -51,6 +51,15 @@ input.sm{flex:1;width:0;min-width:0;text-align:center;padding:8px 4px}
 .blk{border:3px solid var(--ink);box-shadow:3px 3px 0 var(--ink)}
 .b0{height:46px;background:#ffd23f}.b1{height:32px;background:#c9ced8}.b2{height:22px;background:#d9894a}
 .pod.list{display:block;min-height:0}.sb{display:flex;align-items:center;gap:6px;margin:5px 0}.sb .rk{width:22px}.sb .nm{font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.sb .pr{font:11px var(--pf)}.sb .pd{font-size:12px;font-weight:700;min-width:56px;text-align:right}
+.warn{color:var(--bad)!important;font-weight:700}
+.pk{border:3px solid var(--gc,var(--ink));background:var(--card);padding:6px 8px 8px;margin:0 4px 14px 0;box-shadow:3px 3px 0 var(--ink)}
+.pk .lab{font:8px/1.4 var(--pf);color:var(--gc);margin:0 0 6px;text-transform:uppercase}
+.pk .seg{margin:0}.pk .seg button.on{background:var(--gc)}
+.pk.c1{--gc:#2f6bff}.pk.c2{--gc:#13813a}.pk.c3{--gc:#8a3ffc}.pk.c4{--gc:#d9480f}
+.card .pk{margin:6px 0 10px;box-shadow:none}
+.hd{display:flex;flex-wrap:wrap;gap:2px 10px;align-items:baseline;margin-bottom:4px}.hd .ct{flex:1}
+.lbl{font:700 11px/1.4 ui-monospace,Menlo,Consolas,monospace;color:var(--ac);text-align:right;margin-left:auto}
+.mini1{padding:10px 12px}.mini1 .elo{margin-top:2px}
 .seg.w{flex-wrap:wrap}.seg.w button{flex:1 0 28%}[data-stat]{cursor:pointer}.pod.mini{min-height:0;margin:8px 0 2px}.mini .b0{height:28px}.mini .b1{height:18px}.mini .b2{height:10px}.mini .slot .pr{font-size:10px}.sw{display:inline-block;width:9px;height:9px;border:2px solid var(--ink);margin-right:4px}
 #now{display:none;align-items:center;gap:6px 10px;flex-wrap:wrap;margin:0 4px 16px 0;background:var(--yel);border:3px solid var(--ink);box-shadow:4px 4px 0 var(--ink);padding:9px 11px}
 #now .live{font:8px/1.5 var(--pf);color:var(--ink);white-space:nowrap}#now .who{font-weight:700;flex:1;min-width:0;overflow-wrap:anywhere}#now .ago{font-size:12px;color:var(--ink)}
@@ -67,6 +76,13 @@ const ls=(k,v)=>{try{return v===undefined?localStorage.getItem(k)||"":localStora
 let ms=[],tab="lb",board="all",sel="",draft=[{name:"",place:1},{name:"",place:2}],note="",D=null;
 let me=ls("me"),pass=ls("pass"),admin=ls("admin"),gid=ls("gid"),gname=ls("gname"),jn=(typeof location!="undefined"&&new URLSearchParams(location.search).get("g")||"").slice(0,24),jk="",jmsg="";
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const WARN=/enter the admin|wrong|couldn't|can't|wasn't|failed|too many|not signed|no longer valid|invalid|need at least|must be|already|not set up|error|went wrong|partway|nothing to change|each username/i;
+const wc=t=>WARN.test(String(t||""))?" warn":"";
+const ord=n=>n+(["th","st","nd","rd"][(n%100>10&&n%100<14)?0:(n%10<4?n%10:0)]||"th");
+function setPlace(i,el){const n=Math.min(8,Math.max(1,parseInt(el.value)||1));draft[i].place=n;el.value=ord(n)}
+const SL={kd:"K/D",kos:"KOs",dmg:"damage",sds:"SDs",streak:"win streak",wr:"win rate"};
+const lbLink=(k,m,v)=>`<span class="lbl" data-stat="${k}"${m?` data-sm="${m}"`:""}${v?` data-sv="${v}"`:""}>See ${SL[k]} leaderboard ›</span>`;
+const pgrp=(c,label,inner)=>`<div class="pk ${c}"><div class="lab">${label}</div>${inner}</div>`;
 const sg=x=>(x>=0?"+":"")+x.toFixed(1);
 const api=async(p,o={})=>{const r=await fetch("/api/"+p,{headers:{"content-type":"application/json",...(gid?{"x-group":gid,"x-key":pass}:{})},...o});const j=await r.json().catch(()=>({}));if(!r.ok&&j.error=="Not signed in to a group"&&gid){leaveGroup("Your group passkey changed or is no longer valid. Join again.")}if(!r.ok)throw Object.assign(new Error(j.error||"Something went wrong"),{status:r.status});return j};
 function updateNow(){
@@ -110,10 +126,10 @@ function render(){
   if(tab=="add"){
     if(!pass){v.innerHTML=`<div class="card"><b>Group passcode</b><div class="msg">Ask the group admin for the passcode to add matches.</div><div class="row"><input class="n" type="password" id="pc" placeholder="Passcode"><button onclick="pass=document.getElementById('pc').value.trim();ls('pass',pass);render()">Save</button></div></div>`;return}
     v.innerHTML=`<datalist id="dl">${Object.keys(P).map(n=>`<option value="${esc(n)}">`).join("")}</datalist><datalist id="dlc">${CH.map(c=>`<option value="${esc(c)}">`).join("")}</datalist>
-    <div class="card"><button class="g" style="width:100%" onclick="document.getElementById('f').click()">📷 Scan result screen</button><div class="msg" id="st">${esc(note)}</div>${scanImg?`<button class="${confOk()?"":"g"}" style="width:100%;margin-top:6px" onclick="conf=!confOk();confSnap=conf?JSON.stringify(draft):'';render()">${confOk()?"✓ All data is correct":conf?"Edited. Tap to confirm again":"Is all data correct?"}</button><div class="msg">Tap once every name, place, character and stat matches the screenshot. Confirmed scans are saved to help train a better scanner.</div>`:""}</div>
-    <div class="card">${draft.map((r,i)=>`<div class="row"><input class="p" type="number" min="1" max="8" value="${r.place}" onchange="draft[${i}].place=+this.value||1" aria-label="Place"><input class="n" list="dl" placeholder="Username" value="${esc(r.name)}" onchange="draft[${i}].name=this.value"><button class="x" onclick="draft.splice(${i},1);render()">✕</button></div>${flag(r.name,i)}<div class="row" style="margin:-2px 0 6px 72px"><input class="n" list="dlc" placeholder="Character (optional)" value="${esc(r.char||"")}" onchange="draft[${i}].char=this.value"></div><div class="row" style="margin:0 0 10px 72px;gap:6px">${[["kills","KOs"],["deaths","Deaths"],["sds","SDs"],["dmg","Dmg"]].map(([k,t])=>`<input class="sm" type="number" inputmode="decimal" min="0" placeholder="${t}" value="${r[k]??""}" onchange="draft[${i}].${k}=nv(this.value)" aria-label="${t}">`).join("")}</div>`).join("")}
+    <div class="card"><button class="g" style="width:100%" onclick="document.getElementById('f').click()">📷 Scan result screen</button><div class="msg${wc(note)}" id="st">${esc(note)}</div>${scanImg?`<button class="${confOk()?"":"g"}" style="width:100%;margin-top:6px" onclick="conf=!confOk();confSnap=conf?JSON.stringify(draft):'';render()">${confOk()?"✓ All data is correct":conf?"Edited. Tap to confirm again":"Is all data correct?"}</button><div class="msg">Tap once every name, place, character and stat matches the screenshot. Confirmed scans are saved to help train a better scanner.</div>`:""}</div>
+    <div class="card">${draft.map((r,i)=>`<div class="row"><input class="p" type="text" inputmode="numeric" maxlength="4" value="${ord(r.place)}" onfocus="this.select()" onchange="setPlace(${i},this)" aria-label="Place"><input class="n" list="dl" placeholder="Username" value="${esc(r.name)}" onchange="draft[${i}].name=this.value"><button class="x" onclick="draft.splice(${i},1);render()">✕</button></div>${flag(r.name,i)}<div class="row" style="margin:-2px 0 6px 72px"><input class="n" list="dlc" placeholder="Character (optional)" value="${esc(r.char||"")}" onchange="draft[${i}].char=this.value"></div><div class="row" style="margin:0 0 10px 72px;gap:6px">${[["kills","KOs"],["deaths","Deaths"],["sds","SDs"],["dmg","Dmg"]].map(([k,t])=>`<input class="sm" type="number" inputmode="decimal" min="0" placeholder="${t}" value="${r[k]??""}" onchange="draft[${i}].${k}=nv(this.value)" aria-label="${t}">`).join("")}</div>`).join("")}
     <div class="row"><button class="g" onclick="if(draft.length<8){draft.push({name:'',place:draft.length+1});render()}">+ Player</button><button id="sv" style="flex:1" onclick="saveMatch()">Save match</button></div>
-    <div class="msg">Place 1 = winner. Tied players share a number. 2 players = 1v1, 3 or more = FFA.</div></div>`;
+    <div class="msg">Type 1 to 8 for placement (1st = winner). Tied players share a place. 2 players = 1v1, 3 or more = FFA.</div></div>`;
   }
   if(tab=="hist"){
     const cnt=ms.length?(()=>{const n1=D.matches.filter(m=>m.mode=="one").length;return`<div class="card" style="padding:9px 12px"><div class="row" style="margin:0"><b class="ct" style="flex:1">Matches logged</b><span class="elo">${ms.length.toLocaleString()}</span></div><div class="sub">${n1.toLocaleString()} 1v1 · ${(ms.length-n1).toLocaleString()} FFA</div></div>`})():"";
@@ -122,9 +138,9 @@ function render(){
   if(tab=="set"){
     v.innerHTML=`<div class="card"><b>Group</b><div class="msg">${gid?`You're in <b>${esc(gname)}</b>.`:"You're not in a group yet."}</div><div class="row">${gid?`<button class="g" onclick="leaveGroup()">Switch group</button>`:`<button class="g" onclick="tab='lb';render()">Join a group</button>`}</div></div>
     <div class="card"><b>Admin passcode</b><div class="msg">Needed to delete or merge matches and to manage groups.</div><div class="row"><input class="n" type="password" value="${esc(admin)}" onchange="admin=this.value.trim();ls('admin',admin)"></div></div>
-    <div class="card"><b>You are</b><div class="row" style="margin-top:8px"><select onchange="me=this.value;ls('me',me)"><option value="">Choose…</option>${Object.keys(P).sort().map(n=>`<option ${n==me?"selected":""}>${esc(n)}</option>`).join("")}</select></div></div>
+    <div class="card"><b>You are</b><div class="row" style="margin-top:8px"><select onchange="me=this.value;ls('me',me);render()"><option value="">Choose…</option>${Object.keys(P).sort().map(n=>`<option ${n==me?"selected":""}>${esc(n)}</option>`).join("")}</select><button class="g" ${me&&P[me]?"":"disabled"} onclick="sel=me;stat='';tab='lb';render();scrollTo(0,0)">See stats</button></div></div>
     <div class="card"><button class="g" onclick="csv()">Export matches (CSV)</button></div>
-    <div class="card"><b>Scans</b><div class="msg">Scans you confirm as correct are saved here (needs the admin passcode above).</div><div class="row"><button class="g" ${tdBusy?"disabled":""} onclick="tdCount()">Check count</button><button class="g" ${tdBusy?"disabled":""} onclick="tdDownload()">Download all (.zip)</button></div><div class="msg">${esc(tdMsg)}</div></div>${mergeCard(P)}${groupsCard()}`;
+    <div class="card"><b>Scans</b><div class="msg">Scans you confirm as correct are saved here (needs the admin passcode above).</div><div class="row"><button class="g" ${tdBusy?"disabled":""} onclick="tdCount()">Check count</button><button class="g" ${tdBusy?"disabled":""} onclick="tdDownload()">Download all (.zip)</button></div><div class="msg${wc(tdMsg)}">${esc(tdMsg)}</div></div>${mergeCard(P)}${groupsCard()}`;
   }
 }
 document.querySelector("nav").onclick=e=>{if(e.target.dataset.t){tab=e.target.dataset.t;sel="";stat="";if(tab=="tr")RACE.key="";if(tab!="lb"){sopen=false;fq=""}render()}};
@@ -141,7 +157,7 @@ function flag(name,i){
 function mergeCard(P){
   if(!admin)return"";
   const names=Object.keys(P).sort(),opt=v=>`<option value="">Choose…</option>`+names.map(n=>`<option ${n==v?"selected":""}>${esc(n)}</option>`).join("");
-  return`<div class="card"><b>Merge players</b><div class="msg">Moves all matches from the first name into the second. A backup CSV downloads first.</div><div class="row"><select onchange="mg.from=this.value;mgOut='';mgOk=false">${opt(mg.from)}</select><span class="sub">into</span><select onchange="mg.to=this.value;mgOut='';mgOk=false">${opt(mg.to)}</select></div><button class="g" onclick="previewMerge()">Preview</button><div class="msg">${mgOut}</div>${mgOk?`<button onclick="doMerge()">Merge now</button>`:""}</div>`;
+  return`<div class="card"><b>Merge players</b><div class="msg">Moves all matches from the first name into the second. A backup CSV downloads first.</div><div class="row"><select onchange="mg.from=this.value;mgOut='';mgOk=false">${opt(mg.from)}</select><span class="sub">into</span><select onchange="mg.to=this.value;mgOut='';mgOk=false">${opt(mg.to)}</select></div><button class="g" onclick="previewMerge()">Preview</button><div class="msg${wc(mgOut)}">${mgOut}</div>${mgOk?`<button onclick="doMerge()">Merge now</button>`:""}</div>`;
 }
 function previewMerge(){
   const {from,to}=mg;if(!from||!to||from==to)return alert("Pick two different players.");
@@ -180,8 +196,8 @@ function avgCard(P){
 function trend(p){
   const h=p.h[pmode],now=Date.now(),DAY=864e5,all=prange=="all";
   const R={all:"All time",month:"Last month",week:"Last week"};
-  const segM=`<div class="seg">${Object.keys(LB).map(t=>`<button class="${pmode==t?"on":""}" onclick="pmode='${t}';render()">${LB[t]}</button>`).join("")}</div>`;
-  const segR=`<div class="seg">${Object.keys(R).map(k=>`<button class="${prange==k?"on":""}" onclick="prange='${k}';render()">${R[k]}</button>`).join("")}</div>`;
+  const segM=pgrp("c3","Game mode",`<div class="seg">${Object.keys(LB).map(t=>`<button class="${pmode==t?"on":""}" onclick="pmode='${t}';render()">${LB[t]}</button>`).join("")}</div>`);
+  const segR=pgrp("c2","Time range",`<div class="seg">${Object.keys(R).map(k=>`<button class="${prange==k?"on":""}" onclick="prange='${k}';render()">${R[k]}</button>`).join("")}</div>`);
   if(!h.length)return segM+segR+`<div class="sub">No ${LB[pmode]} games yet.</div>`;
   const T=x=>new Date(x.ts).getTime(),t1=now,t0=prange=="week"?t1-7*DAY:prange=="month"?t1-30*DAY:Math.min(T(h[0]),t1-1);
   const r0=all?1000:(h.filter(x=>T(x)<=t0).pop()||{r:1000}).r,W=h.filter(x=>all||T(x)>t0);
@@ -240,7 +256,8 @@ function playerPage(p){
   const wm=p.wm,op=oppOf(p.name);
   return`<button class="g" onclick="sel='';render()">← Back</button>
   <div class="card" style="margin-top:10px"><div class="nm" style="font-size:20px">${esc(p.name)} ${p.streak>=2?`<span data-stat="streak" data-sv="cur">🔥 ${p.streak}</span>`:""}</div><div class="sub">${p.w}W · ${p.l}L · ${p.g.all} games</div>${medalLine(p)}${triP(p)}</div>
-  <div class="card"><b>Win rate</b><div class="tri">${[["Overall","all",p.w,p.l],["1v1","one",wm.one.w,wm.one.l],["FFA","ffa",wm.ffa.w,wm.ffa.l]].map(([t,k,w,l])=>`<div data-stat="wr" data-sm="${k}"><div class="elo">${pct(w,l)}</div><div class="sub">${t} · ${w}W ${l}L</div><div class="sub">${op.avg(k)==null?"":"avg opp "+op.avg(k)}</div></div>`).join("")}</div>${op.best>=2?`<div class="sub" style="margin-top:10px" data-stat="streak" data-sv="best">Longest win streak: <b>${op.best}</b> · avg opp ${op.bavg} ›</div>`:""}</div>
+  <div class="card"><div class="hd"><b class="ct">Win rate</b>${lbLink("wr")}</div><div class="tri">${[["Overall","all",p.w,p.l],["1v1","one",wm.one.w,wm.one.l],["FFA","ffa",wm.ffa.w,wm.ffa.l]].map(([t,k,w,l])=>`<div data-stat="wr" data-sm="${k}"><div class="elo">${pct(w,l)}</div><div class="sub">${t} · ${w}W ${l}L</div><div class="sub">${op.avg(k)==null?"":"avg opp "+op.avg(k)}</div></div>`).join("")}</div></div>
+  ${op.best>=2?`<div class="card"><div class="hd"><b class="ct">Win streak</b>${lbLink("streak","","best")}</div><div style="margin-top:6px">Longest: <b>${op.best}</b> wins in a row · avg opp ${op.bavg}</div>${p.streak>=2?`<div class="sub">Current: ${p.streak} in a row</div>`:""}</div>`:""}
   ${combat(p)}<div class="card"><b>Rating history</b>${trend(p)}</div>
   ${charCard(p)}${rivals(p)}${upsets(p)}`;
 }
@@ -254,7 +271,9 @@ function combat(p){
   const a=p.cs.one,b=p.cs.ffa,K=a.k+b.k,Dd=a.d+b.d,SD=a.sd+b.sd,DM=a.dmg+b.dmg,N=a.n+b.n;
   if(!N&&!SD&&!DM)return`<div class="card"><b>Combat stats</b><div class="sub">No stats yet. Scan the second results screen, or type KOs, deaths, SDs, and damage when you add a match.</div></div>`;
   const kd=c=>c.n?(c.d?(c.k/c.d).toFixed(2):c.k?"∞":"—"):"—";
-  return`<div class="card"><b>Combat stats</b><div class="tri" style="margin-top:8px"><div data-stat="kd" data-sm="one"><div class="elo">${kd(a)}</div><div class="sub">1v1 K/D · ${a.n} games</div></div><div data-stat="kd" data-sm="ffa"><div class="elo">${kd(b)}</div><div class="sub">FFA K/D · ${b.n} games</div></div></div><div class="tri" style="margin-top:10px"><div data-stat="kos"><div class="elo">${K}</div><div class="sub">Kills</div></div><div><div class="elo">${Dd}</div><div class="sub">Deaths</div></div><div data-stat="sds"><div class="elo">${SD}</div><div class="sub">SDs</div></div><div data-stat="dmg"><div class="elo">${Math.round(DM).toLocaleString()}</div><div class="sub">Damage dealt</div></div></div><div class="sub" style="margin-top:8px">Totals only include matches with stats recorded. Tap a stat to see everyone ranked.</div></div>`;
+  const big=(t,k,v)=>`<div class="card mini1"><div class="hd" style="margin:0"><b class="ct">${t}</b>${lbLink(k)}</div><div class="elo">${v}</div></div>`;
+  return`<div class="card"><div class="hd"><b class="ct">K/D</b>${lbLink("kd")}</div><div class="tri" style="margin-top:4px"><div data-stat="kd" data-sm="one"><div class="elo">${kd(a)}</div><div class="sub">1v1 K/D · ${a.n} games</div></div><div data-stat="kd" data-sm="ffa"><div class="elo">${kd(b)}</div><div class="sub">FFA K/D · ${b.n} games</div></div></div><div class="sub" style="margin-top:8px">Total deaths: ${Dd}</div></div>
+  ${big("Total KOs","kos",K)}${big("Total SDs","sds",SD)}${big("Total damage","dmg",Math.round(DM).toLocaleString())}<div class="msg" style="margin:-6px 0 14px">Totals only include matches with stats recorded.</div>`;
 }
 // ---------- 8-bit medals ----------
 const MG=["..RR....BB..","...RR..BB...","....RRBB....","....RRBB....","...oooooo...","..ommmmmmo..",".ommhhmmmmo.",".ommhmmmmmo.",".ommmmmmmso.",".ommmmmmsso.","..ommmmsso..","...oooooo..."];
@@ -349,11 +368,11 @@ function raceCard(T,days){
   const ticks=Array.from({length:k+1},(_,i)=>T.t0+i*(T.t1-T.t0)/k).map(t=>`<line x1="${X(t).toFixed(1)}" y1="118" x2="${X(t).toFixed(1)}" y2="122" stroke="var(--ink)"/><text x="${X(t).toFixed(1)}" y="134" text-anchor="middle" font-size="8" style="fill:var(--mu)">${fmt(new Date(t))}</text>`).join("");
   const yl=[hi,(hi+lo)/2,lo].map(v=>`<text x="2" y="${(Y(v)+3).toFixed(1)}" font-size="8" style="fill:var(--mu)">${Math.round(v)}</text><line x1="26" y1="${Y(v).toFixed(1)}" x2="290" y2="${Y(v).toFixed(1)}" stroke="var(--ln)" stroke-dasharray="2 3"/>`).join("");
   const lines=RACE.s.map((s,i)=>`<polyline id="rl${i}" fill="none" stroke="${s.col}" stroke-width="${all?2:3}" stroke-linejoin="miter" shape-rendering="crispEdges" points=""/>`).join(""),heads=RACE.s.map((s,i)=>`<rect id="rh${i}" width="${all?5:6}" height="${all?5:6}" fill="${s.col}" stroke="var(--ink)" stroke-width="1"/>`).join("");
-  return`<div class="card"><div class="row"><b class="ct" style="flex:1">Rating race</b><button class="g" onclick="replayRace()">▶ Replay</button></div><div class="seg" style="margin:4px 0 8px"><button class="${all?"":"on"}" onclick="rview='top3';render()">Podium race</button><button class="${all?"on":""}" onclick="rview='top5';render()">Top 5</button></div><div class="sub" id="rt">&nbsp;</div><div class="pod${all?" list":""}" id="pod"></div><svg viewBox="0 0 300 140" width="100%" role="img" aria-label="Rating of the top three players over the last ${days} days"><line x1="26" y1="118" x2="290" y2="118" stroke="var(--ink)"/>${yl}${ticks}${lines}${heads}</svg></div>`;
+  return`<div class="card"><div class="row"><b class="ct" style="flex:1">Rating race</b><button class="g" onclick="replayRace()">▶ Replay</button></div>${pgrp("c4","Race view",`<div class="seg"><button class="${all?"":"on"}" onclick="rview='top3';render()">Podium race</button><button class="${all?"on":""}" onclick="rview='top5';render()">Top 5</button></div>`)}<div class="sub" id="rt">&nbsp;</div><div class="pod${all?" list":""}" id="pod"></div><svg viewBox="0 0 300 140" width="100%" role="img" aria-label="Rating of the top three players over the last ${days} days"><line x1="26" y1="118" x2="290" y2="118" stroke="var(--ink)"/>${yl}${ticks}${lines}${heads}</svg></div>`;
 }
 function trendsPage(){
   const days=tper=="week"?7:30,w=tper,T=trendsData(days),R0=Math.round;
-  const seg=`<div class="seg"><button class="${tper=="week"?"on":""}" onclick="tper='week';render()">Week</button><button class="${tper=="month"?"on":""}" onclick="tper='month';render()">Month</button></div>`;
+  const seg=pgrp("c2","Time range",`<div class="seg"><button class="${tper=="week"?"on":""}" onclick="tper='week';render()">Week</button><button class="${tper=="month"?"on":""}" onclick="tper='month';render()">Month</button></div>`);
   RACE.g=null;RACE.s=[];
   if(!T.inP.length)return seg+`<div class="card"><b>Quiet here</b><div class="msg">No matches in the last ${days} days.</div></div>`;
   const cf=(t,r,good)=>`<div class="card"${r?` data-n="${esc(r.name)}" style="cursor:pointer"`:""}><div class="ct">${t}</div>${r?`<div class="nm" style="margin-top:8px">${esc(r.name)}</div><div class="elo ${good?"up":"dn"}">${r.d>=0?"+":""}${R0(r.d)}</div><div class="sub">${R0(r.s)} → ${R0(r.e)} · ${r.n} games</div>`:`<div class="sub" style="margin-top:8px">Nobody yet (needs 2+ games)</div>`}</div>`;
@@ -403,18 +422,18 @@ function podiums(){return`<h3 style="font:10px/1.6 var(--pf);margin:22px 0 10px"
 function podiumCard(k){
   const rows=statRows(k,"all","all","best").slice(0,3),S=STATS[k];
   const slot=i=>{const r=rows[i];return r?`<div class="slot">${medal(i,22)}<div class="pn">${esc(r.name)}</div><div class="pr">${r.disp}</div><div class="blk b${i}"></div></div>`:`<div class="slot" style="visibility:hidden"><div class="pr">&nbsp;</div><div class="blk b${i}"></div></div>`};
-  return`<div class="card" data-stat="${k}" data-sr="all" data-sm="all"><div class="row" style="margin-bottom:0"><b class="ct" style="flex:1">${S.t}</b><span class="sub">see all ›</span></div>${rows.length?`<div class="pod mini">${slot(1)}${slot(0)}${slot(2)}</div>`:`<div class="sub" style="margin-top:6px">${k=="kd"||k=="wr"?"Nobody qualifies yet.":"Nothing recorded yet."}</div>`}</div>`;
+  return`<div class="card" data-stat="${k}" data-sr="all" data-sm="all"><div class="hd" style="margin-bottom:0"><b class="ct">${S.t}</b><span class="lbl">See ${SL[k]} leaderboard ›</span></div>${rows.length?`<div class="pod mini">${slot(1)}${slot(0)}${slot(2)}</div>`:`<div class="sub" style="margin-top:6px">${k=="kd"||k=="wr"?"Nobody qualifies yet.":"Nothing recorded yet."}</div>`}</div>`;
 }
 function statPage(){
   const S=STATS[stat],rows=statRows(stat,srange,smode,ssv),seg=(o,cur,fn)=>`<div class="seg">${Object.keys(o).map(k=>`<button class="${k==cur?"on":""}" onclick="${fn}='${k}';render()">${o[k]}</button>`).join("")}</div>`;
-  const chips=`<div class="seg w">${Object.keys(STATS).map(k=>`<button class="${k==stat?"on":""}" onclick="stat='${k}';render()">${STATS[k].c}</button>`).join("")}</div>`;
-  const sv=stat=="streak"?`<div class="seg"><button class="${ssv=="best"?"on":""}" onclick="ssv='best';render()">Longest run</button><button class="${ssv=="cur"?"on":""}" onclick="ssv='cur';render()">Active now</button></div>`:"";
+  const chips=pgrp("c1","Stat",`<div class="seg w">${Object.keys(STATS).map(k=>`<button class="${k==stat?"on":""}" onclick="stat='${k}';render()">${STATS[k].c}</button>`).join("")}</div>`);
+  const sv=stat=="streak"?pgrp("c4","Streak view",`<div class="seg"><button class="${ssv=="best"?"on":""}" onclick="ssv='best';render()">Longest run</button><button class="${ssv=="cur"?"on":""}" onclick="ssv='cur';render()">Active now</button></div>`):"";
   const needs=["kd","kos","dmg","sds"].includes(stat);
   const list=rows.length?rows.map((r,i)=>`<div class="card lb" data-n="${esc(r.name)}"><div class="rk">${i<3?medal(i):i+1}</div><div class="nm">${esc(r.name)}<div class="sub">${r.sub}</div></div><div class="elo">${r.disp}</div></div>`).join(""):`<div class="card"><div class="msg">${needs?"No stats recorded for this filter. Scan the second results screen, or type KOs, deaths, SDs, and damage when you add a match.":stat=="streak"?(ssv=="cur"?"Nobody is on a streak of 2+ right now.":"No streaks of 2+ for this filter."):"Nobody has enough games for this filter yet."}</div></div>`;
-  return`<button class="g" onclick="stat='';tab=sfrom;sel=sfsel;render();scrollTo(0,0)">← Back</button><div style="height:12px"></div>${chips}<div class="card"><b>${S.t}</b><div class="msg">${S.d}${needs?" Only matches with stats recorded count.":""}</div></div>${seg(SR,srange,"srange")}${seg(SM,smode,"smode")}${sv}${list}${podiums()}`;
+  return`<button class="g" onclick="stat='';tab=sfrom;sel=sfsel;render();scrollTo(0,0)">← Back</button><div style="height:12px"></div>${chips}<div class="card"><b>${S.t}</b><div class="msg">${S.d}${needs?" Only matches with stats recorded count.":""}</div></div>${pgrp("c2","Time range",seg(SR,srange,"srange"))}${pgrp("c3","Game mode",seg(SM,smode,"smode"))}${sv}${list}${podiums()}`;
 }
 // ---------- Groups ----------
-function joinCard(){return`<div class="card"><b>Join your group</b><div class="msg">Ask your group's admin for the group name and passkey.</div><div class="row"><input class="n" placeholder="Group name" value="${esc(jn)}" oninput="jn=this.value" autocapitalize="off"></div><div class="row"><input class="n" type="password" placeholder="Passkey" value="${esc(jk)}" oninput="jk=this.value" autocomplete="off"></div><div class="row"><button style="flex:1" onclick="joinGroup()">Join</button></div><div class="msg">${esc(jmsg)}</div></div>`}
+function joinCard(){return`<div class="card"><b>Join your group</b><div class="msg">Ask your group's admin for the group name and passkey.</div><div class="row"><input class="n" placeholder="Group name" value="${esc(jn)}" oninput="jn=this.value" autocapitalize="off"></div><div class="row"><input class="n" type="password" placeholder="Passkey" value="${esc(jk)}" oninput="jk=this.value" autocomplete="off"></div><div class="row"><button style="flex:1" onclick="joinGroup()">Join</button></div><div class="msg${wc(jmsg)}">${esc(jmsg)}</div></div>`}
 async function joinGroup(){
   jmsg="Checking…";render();
   try{const j=await api("groups",{method:"POST",body:JSON.stringify({action:"join",name:jn,passkey:jk})});
@@ -453,7 +472,7 @@ function groupsCard(){
   return`<div class="card"><b>Manage groups</b><div class="msg">Every group has its own matches, ratings and passkey. Needs the admin passcode above.</div><div class="row"><button class="g" ${grp.busy?"disabled":""} onclick="gmLoad()">Show groups</button></div>${rows}
   <div class="msg" style="margin-top:12px">Create a group</div><div class="row"><input class="n" placeholder="Group name" value="${esc(grp.nn)}" oninput="grp.nn=this.value"></div><div class="row"><input class="n" placeholder="Passkey (4+ characters)" value="${esc(grp.nk)}" oninput="grp.nk=this.value" autocomplete="off"></div>
   ${grp.orph>0?`<label class="msg" style="display:block"><input type="checkbox" ${grp.adopt?"checked":""} onchange="grp.adopt=this.checked"> Move the ${grp.orph} existing match${grp.orph==1?"":"es"} that have no group into this one</label>`:""}
-  <div class="row"><button ${grp.busy?"disabled":""} style="flex:1" onclick="gmCreate()">Create group</button></div><div class="msg">${esc(grp.msg)}</div></div>`;
+  <div class="row"><button ${grp.busy?"disabled":""} style="flex:1" onclick="gmCreate()">Create group</button></div><div class="msg${wc(grp.msg)}">${esc(grp.msg)}</div></div>`;
 }
 // ---------- Training data (confirmed scans) ----------
 let scanImg="",scanRaw=null,conf=false,confSnap="",tdMsg="",tdBusy=false;
