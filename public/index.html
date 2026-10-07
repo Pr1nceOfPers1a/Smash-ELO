@@ -83,6 +83,7 @@ input.sm{flex:1;width:0;min-width:0;text-align:center;padding:8px 4px}
 .pixbox{position:relative;display:flex;align-items:flex-end;justify-content:center;gap:6px;height:70px;margin-top:8px;filter:grayscale(1);opacity:.6;overflow:hidden}
 .pixbox i{display:block;width:30%;background:#9c9a90}
 .pixbox::after{content:"";position:absolute;inset:0;background:conic-gradient(#e4e1d2 25%,transparent 0 50%,#e4e1d2 0 75%,transparent 0) 0 0/8px 8px}
+.lgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px 12px;margin-top:8px}.lgrid .pixbox{height:22px;margin-top:4px}.lgrid .pixbox i{width:100%;height:100%}
 .pixrow{display:flex;gap:8px;margin-top:8px}.pixrow .pixbox{flex:1;height:34px;margin:0}.pixrow .pixbox i{width:100%;height:100%}
 .nodata{font:11px/1.5 ui-monospace,Menlo,Consolas,monospace;color:var(--mu);margin-top:8px}
 .gr{background:#e4e1d2!important;color:#8a8878!important;border-style:dashed!important;cursor:pointer}
@@ -122,8 +123,9 @@ const ord=n=>n+(["th","st","nd","rd"][(n%100>10&&n%100<14)?0:(n%10<4?n%10:0)]||"
 function setPlace(i,el){const n=Math.min(8,Math.max(1,parseInt(el.value)||1));draft[i].place=n;el.value=ord(n)}
 const SL={kd:"K/D",kos:"KOs",dmg:"damage",sds:"SDs",streak:"win streak",wr:"win rate"};
 const NOTE="Not tracked in Free groups. These stats start being tracked if you upgrade, and there is no data for them yet.";
-const lockedPod=k=>`<div class="card locked"><span class="tag">Premier Group Feature</span><div><b>${STATS[k].t}</b></div><div class="pixbox"><i style="height:62%"></i><i style="height:100%"></i><i style="height:42%"></i></div><div class="nodata">${NOTE}</div></div>`;
-const lockedStats=(t,n)=>`<div class="card locked"><span class="tag">Premier Group Feature</span><div><b>${t}</b></div><div class="pixrow">${Array.from({length:n},()=>'<div class="pixbox"><i></i></div>').join("")}</div><div class="nodata">${NOTE}</div></div>`;
+const lockedPod=k=>`<div class="card locked"><span class="tag">Premier Group Feature</span><div><b>${STATS[k].t}</b></div><div class="sub" style="margin:2px 0 0">${STATS[k].d} Top 3 all time, plus week, month and 1v1/FFA boards.</div><div class="pixbox"><i style="height:62%"></i><i style="height:100%"></i><i style="height:42%"></i></div><div class="nodata">${NOTE}</div></div>`;
+const lockedStats=(t,items)=>`<div class="card locked"><span class="tag">Premier Group Feature</span><div><b>${t}</b></div><div class="lgrid">${items.map(x=>`<div><div class="sub" style="margin:0">${x}</div><div class="pixbox"><i></i></div></div>`).join("")}</div><div class="nodata">${NOTE}</div></div>`;
+const COMBAT_ITEMS=["K/D, 1v1","K/D, FFA","Total KOs","Total deaths","Total SDs","Total damage"],FIGHTER_ITEMS=["Rating per fighter","Wins and losses per fighter","Win rate per fighter","Pick rate per fighter","Best matchups per fighter","Worst matchups per fighter"];
 function premOnly(){if(document.getElementById("po"))return;const d=document.createElement("div");d.id="po";d.onclick=e=>{if(e.target==d||e.target.tagName=="BUTTON")d.remove()};d.innerHTML=`<div class="card"><b>Premier Groups Only</b><div class="msg">Scanning and fighter stats are part of Premier groups. Text ${PHONE} to get one.</div><button style="width:100%">OK</button></div>`;document.body.appendChild(d)}
 const lockedCard=(t,d)=>`<div class="card locked"><span class="tag">Premier Group Feature</span><div><b>${t}</b></div><div class="msg" style="margin:6px 0 0">${d}</div></div>`;
 const lbLink=(k,m,v)=>`<span class="lbl" data-stat="${k}"${m?` data-sm="${m}"`:""}${v?` data-sv="${v}"`:""}>See ${SL[k]} leaderboard ›</span>`;
@@ -393,7 +395,7 @@ function playerPage(p){
   <div class="card"><div class="hd"><b class="ct">Win rate</b>${lbLink("wr")}</div><div class="tri">${[["Overall","all",p.w,p.l],["1v1","one",wm.one.w,wm.one.l],["FFA","ffa",wm.ffa.w,wm.ffa.l]].map(([t,k,w,l])=>`<div data-stat="wr" data-sm="${k}"><div class="elo">${pct(w,l)}</div><div class="sub">${t} · ${w}W ${l}L</div><div class="sub">${op.avg(k)==null?"":"avg opp "+op.avg(k)}</div></div>`).join("")}</div></div>
   ${op.best>=2?`<div class="card"><div class="hd"><b class="ct">Win streak</b>${lbLink("streak","","best")}</div><div style="margin-top:6px">Longest: <b>${op.best}</b> wins in a row · avg opp ${op.bavg}</div>${p.streak>=2?`<div class="sub">Current: ${p.streak} in a row</div>`:""}</div>`:""}
   ${PREM()?combat(p):""}<div class="card"><b>Rating history</b>${trend(p)}</div>
-  ${PREM()?charCard(p):""}${rivals(p)}${upsets(p)}${PREM()?"":lockedStats("Combat stats",4)+lockedStats("Fighter stats",3)}`;
+  ${PREM()?charCard(p):""}${rivals(p)}${upsets(p)}${PREM()?"":lockedStats("Combat stats",COMBAT_ITEMS)+lockedStats("Fighter stats",FIGHTER_ITEMS)}`;
 }
 const nv=v=>v==null||v===""?undefined:+v;
 function statsOf(x){const o={};for(const k of ["kills","deaths","sds","dmg"])if(Number.isFinite(x[k])&&x[k]>=0)o[k]=x[k];return o}
