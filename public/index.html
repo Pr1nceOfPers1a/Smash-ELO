@@ -73,8 +73,9 @@ const LB={all:"Overall",one:"1v1",ffa:"FFA"};
 const FIGHTERS="Mario,Donkey Kong,Link,Samus,Dark Samus,Yoshi,Kirby,Fox,Pikachu,Luigi,Ness,Captain Falcon,Jigglypuff,Peach,Daisy,Bowser,Ice Climbers,Sheik,Zelda,Dr. Mario,Pichu,Falco,Marth,Lucina,Young Link,Ganondorf,Mewtwo,Roy,Chrom,Mr. Game & Watch,Meta Knight,Pit,Dark Pit,Zero Suit Samus,Wario,Snake,Ike,Pokémon Trainer,Diddy Kong,Lucas,Sonic,King Dedede,Olimar,Lucario,R.O.B.,Toon Link,Wolf,Villager,Mega Man,Wii Fit Trainer,Rosalina & Luma,Little Mac,Greninja,Mii Brawler,Mii Swordfighter,Mii Gunner,Palutena,Pac-Man,Robin,Shulk,Bowser Jr.,Duck Hunt,Ryu,Ken,Cloud,Corrin,Bayonetta,Inkling,Ridley,Simon,Richter,King K. Rool,Isabelle,Incineroar,Piranha Plant,Joker,Hero,Banjo & Kazooie,Terry,Byleth,Min Min,Steve,Sephiroth,Pyra/Mythra,Kazuya,Sora".split(",");
 const ls=(k,v)=>{try{return v===undefined?localStorage.getItem(k)||"":localStorage.setItem(k,v)}catch(e){return""}};
 let ms=[],tab="lb",board="all",sel="",draft=[{name:"",place:1},{name:"",place:2}],note="",D=null;
-let me=ls("me"),pass=ls("pass"),admin=ls("admin"),gid=ls("gid"),gname=ls("gname"),jn=(typeof location!="undefined"&&new URLSearchParams(location.search).get("g")||"").slice(0,24),jk="",jmsg="";
+let me=ls("me"),pass=ls("pass"),admin=ls("admin"),gid=ls("gid"),gname=ls("gname"),jn=(typeof location!="undefined"&&new URLSearchParams(location.search).get("g")||"").slice(0,24),jk="",jmsg="",admOk=false,tdTot=null;
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const isAdm=()=>!!(admin&&admOk);
 const WARN=/enter the admin|wrong|couldn't|can't|wasn't|failed|too many|not signed|no longer valid|invalid|need at least|must be|already|not set up|error|went wrong|partway|nothing to change|each username/i;
 const wc=t=>WARN.test(String(t||""))?" warn":"";
 const ord=n=>n+(["th","st","nd","rd"][(n%100>10&&n%100<14)?0:(n%10<4?n%10:0)]||"th");
@@ -132,18 +133,20 @@ function render(){
   }
   if(tab=="hist"){
     const cnt=ms.length?(()=>{const n1=D.matches.filter(m=>m.mode=="one").length;return`<div class="card" style="padding:9px 12px"><div class="row" style="margin:0"><b class="ct" style="flex:1">Matches logged</b><span class="elo">${ms.length.toLocaleString()}</span></div><div class="sub">${n1.toLocaleString()} 1v1 · ${(ms.length-n1).toLocaleString()} FFA</div></div>`})():"";
-    v.innerHTML=ms.length?cnt+D.matches.slice().reverse().map(m=>`<div class="card"><div class="row"><span class="sub" style="flex:1">${new Date(m.ts).toLocaleString()} · ${LB[m.mode]}</span>${admin?`<button class="x" onclick="del('${esc(m.id)}')">Delete</button>`:""}</div>${m.results.slice().sort((a,b)=>a.place-b.place).map(x=>`<div class="row" style="margin:2px 0"><span class="rk">${x.place}</span><span class="nm">${esc(x.name)}${x.char?` <span class="sub">${esc(x.char)}</span>`:""}</span><span class="${m.d.mode[x.name]>=0?"up":"dn"}">${LB[m.mode]} ${sg(m.d.mode[x.name])}</span><span class="sub">All ${sg(m.d.all[x.name])}</span></div>`).join("")}</div>`).join(""):`<p class="msg">No matches yet.</p>`;
+    v.innerHTML=ms.length?cnt+D.matches.slice().reverse().map(m=>`<div class="card"><div class="row"><span class="sub" style="flex:1">${new Date(m.ts).toLocaleString()} · ${LB[m.mode]}</span>${isAdm()?`<button class="x" onclick="del('${esc(m.id)}')">Delete</button>`:""}</div>${m.results.slice().sort((a,b)=>a.place-b.place).map(x=>`<div class="row" style="margin:2px 0"><span class="rk">${x.place}</span><span class="nm">${esc(x.name)}${x.char?` <span class="sub">${esc(x.char)}</span>`:""}</span><span class="${m.d.mode[x.name]>=0?"up":"dn"}">${LB[m.mode]} ${sg(m.d.mode[x.name])}</span><span class="sub">All ${sg(m.d.all[x.name])}</span></div>`).join("")}</div>`).join(""):`<p class="msg">No matches yet.</p>`;
   }
   if(tab=="set"){
     v.innerHTML=`<div class="card"><b>Group</b><div class="msg">${gid?`You're in <b>${esc(gname)}</b>.`:"You're not in a group yet."}</div><div class="row">${gid?`<button class="g" onclick="leaveGroup()">Switch group</button>`:`<button class="g" onclick="tab='lb';render()">Join a group</button>`}</div></div>
-    <div class="card"><b>Admin passcode</b><div class="msg">Needed to delete or merge matches and to manage groups.</div><div class="row"><input class="n" type="password" value="${esc(admin)}" onchange="admin=this.value.trim();ls('admin',admin)"></div></div>
+    <div class="card"><b>Admin passcode</b><div class="msg${wc(admMsg)}">${isAdm()?"Admin tools unlocked.":admMsg||"Enter the admin passcode to unlock admin tools."}</div><div class="row"><input class="n" type="password" autocomplete="off" value="${esc(admin)}" onchange="setAdmin(this.value)">${isAdm()?`<button class="g" onclick="setAdmin('')">Lock</button>`:""}</div></div>
     <div class="card"><b>You are</b><div class="row" style="margin-top:8px"><select onchange="me=this.value;ls('me',me);render()"><option value="">Choose…</option>${Object.keys(P).sort().map(n=>`<option ${n==me?"selected":""}>${esc(n)}</option>`).join("")}</select><button class="g" ${me&&P[me]?"":"disabled"} onclick="sel=me;stat='';tab='lb';render();scrollTo(0,0)">See stats</button></div></div>
     <div class="card"><button class="g" onclick="csv()">Export matches (CSV)</button></div>
-    <div class="card"><b>Scans</b><div class="msg">Scans you confirm as correct are saved here (needs the admin passcode above).</div><div class="row"><button class="g" ${tdBusy?"disabled":""} onclick="tdCount()">Check count</button><button class="g" ${tdBusy?"disabled":""} onclick="tdDownload()">Download all (.zip)</button></div><div class="msg${wc(tdMsg)}">${esc(tdMsg)}</div></div>${mergeCard(P)}${groupsCard()}`;
+    ${isAdm()?`<div class="card"><b>Scans</b><div class="msg">Scans you confirm as correct are saved here.</div><div class="row"><button class="g" ${tdBusy?"disabled":""} onclick="tdCount()">Check count</button><button class="g" ${tdBusy?"disabled":""} onclick="tdDownload()">Download all (.zip)</button></div><div class="msg${wc(tdMsg)}">${esc(tdMsg)}</div>${tdTot!=null?`<div class="row" style="margin:8px 0 0"><b class="ct" style="flex:1">Total scans (site-wide)</b><span class="elo">${tdTot.toLocaleString()}</span></div><div class="sub">Every scan run, saved or not.</div>`:""}</div>`:""}${mergeCard(P)}${groupsCard()}`;
   }
 }
 document.querySelector("nav").onclick=e=>{if(e.target.dataset.t){tab=e.target.dataset.t;sel="";stat="";if(tab=="tr")RACE.key="";if(tab!="lb"){sopen=false;fq=""}render()}};
 document.getElementById("v").onclick=e=>{const sc=e.target.closest("[data-stat]");if(sc){goStat(sc.dataset.stat,sc.dataset.sr,sc.dataset.sm,sc.dataset.sv);return}const k=e.target.closest("[data-ch]");if(k){pchar=pchar==k.dataset.ch?"":k.dataset.ch;render();return}const f=e.target.closest("[data-fix]");if(f){draft[+f.dataset.fix].name=f.dataset.to;render();return}const c=e.target.closest("[data-n]");if(c&&(tab=="lb"||tab=="tr")){tab="lb";sel=c.dataset.n;pchar="";render();scrollTo(0,0)}};
+let admMsg="";
+async function setAdmin(v){admin=v.trim();ls("admin",admin);admOk=false;tdTot=null;admMsg="";if(!admin){render();return}admMsg="Checking…";render();try{await scansApi({action:"verify"});admOk=true;admMsg="";tdCount(true)}catch(e){admMsg=e.status==401?"Wrong admin passcode.":e.message;if(e.status==401){admin="";ls("admin","")}render()}}
 let mg={from:"",to:""},mgOut="",mgOk=false,CH=[],fchar="",fq="",sopen=false,pchar="",pmode="all",prange="all";
 function lev(a,b){const d=Array.from({length:a.length+1},(_,i)=>[i]);for(let j=1;j<=b.length;j++)d[0][j]=j;for(let i=1;i<=a.length;i++)for(let j=1;j<=b.length;j++)d[i][j]=Math.min(d[i-1][j]+1,d[i][j-1]+1,d[i-1][j-1]+(a[i-1]==b[j-1]?0:1));return d[a.length][b.length]}
 function flag(name,i){
@@ -154,7 +157,7 @@ function flag(name,i){
   return`<div class="flag">NEW player${best&&bd<=lim?` · did you mean <button class="lnk" data-fix="${i}" data-to="${esc(best)}">${esc(best)}</button>?`:""}</div>`;
 }
 function mergeCard(P){
-  if(!admin)return"";
+  if(!isAdm())return"";
   const names=Object.keys(P).sort(),opt=v=>`<option value="">Choose…</option>`+names.map(n=>`<option ${n==v?"selected":""}>${esc(n)}</option>`).join("");
   return`<div class="card"><b>Merge players</b><div class="msg">Moves all matches from the first name into the second. A backup CSV downloads first.</div><div class="row"><select onchange="mg.from=this.value;mgOut='';mgOk=false">${opt(mg.from)}</select><span class="sub">into</span><select onchange="mg.to=this.value;mgOut='';mgOk=false">${opt(mg.to)}</select></div><button class="g" onclick="previewMerge()">Preview</button><div class="msg${wc(mgOut)}">${mgOut}</div>${mgOk?`<button onclick="doMerge()">Merge now</button>`:""}</div>`;
 }
@@ -466,6 +469,7 @@ async function gmEdit(id,what){
   render();
 }
 function groupsCard(){
+  if(!isAdm())return"";
   const base=typeof location!="undefined"?location.origin:"";
   const rows=(grp.list||[]).map(g=>`<div class="card" style="margin:8px 0;padding:9px 12px;box-shadow:none"><div class="nm">${esc(g.name)}</div><div class="sub">Passkey: <b>${esc(g.passkey)}</b> · ${g.matches} match${g.matches==1?"":"es"}</div><div class="sub">Link: ${esc(base)}/?g=${esc(encodeURIComponent(g.name))}</div><div class="row" style="margin:6px 0 0"><button class="g" onclick="gmEdit('${g.id}','name')">Rename</button><button class="g" onclick="gmEdit('${g.id}','key')">New passkey</button></div></div>`).join("");
   return`<div class="card"><b>Manage groups</b><div class="msg">Every group has its own matches, ratings and passkey. Needs the admin passcode above.</div><div class="row"><button class="g" ${grp.busy?"disabled":""} onclick="gmLoad()">Show groups</button></div>${rows}
@@ -490,10 +494,10 @@ function makeZip(files){
   return new Blob([...parts,...cen,eo.buffer],{type:"application/zip"});
 }
 const scansApi=o=>api("scans",{method:"POST",body:JSON.stringify({admin,...o})});
-async function tdCount(){
-  if(!admin){tdMsg="Enter the admin passcode first.";return render()}
-  tdBusy=true;tdMsg="Counting…";render();
-  try{const j=await scansApi({action:"list"});tdMsg=`${j.ids.length} confirmed scan${j.ids.length==1?"":"s"} saved.`}catch(e){tdMsg=e.message}
+async function tdCount(quiet){
+  if(!isAdm()){tdMsg="Enter the admin passcode first.";return render()}
+  if(!quiet){tdBusy=true;tdMsg="Counting…";render()}
+  try{const j=await scansApi({action:"count"});tdTot=j.total;tdMsg=quiet?"":`${j.saved} confirmed scan${j.saved==1?"":"s"} saved.`}catch(e){tdMsg=quiet?"":e.message}
   tdBusy=false;render();
 }
 async function tdDownload(){
@@ -546,5 +550,5 @@ document.getElementById("f").onchange=async e=>{
   }catch(err){note=err.message}
   render();
 };
-load();render();setInterval(()=>{if(!document.hidden)load()},8000);setInterval(updateNow,15000);
+load();render();if(admin)scansApi({action:"verify"}).then(()=>{admOk=true;tdCount(true)}).catch(()=>{});setInterval(()=>{if(!document.hidden)load()},8000);setInterval(updateNow,15000);
 </script></body></html>
