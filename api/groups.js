@@ -1,4 +1,5 @@
 const { sb, auth, same, adminOk, groupAdminOk, UUID } = require('./_lib');
+const PK = require('./_premkeys');
 let fails = [], signups = [];
 const nameOk = (n) => typeof n === 'string' && n.trim().length >= 2 && n.trim().length <= 24;
 const keyOk = (k) => typeof k === 'string' && k.length >= 4 && k.length <= 40 && k === k.trim();
@@ -58,6 +59,21 @@ module.exports = async (req, res) => {
       if (fails.filter((f) => f.ip === ip).length >= 15) return res.status(429).json({ error: 'Too many wrong tries. Wait a few minutes.' });
       if (!groupAdminOk(g, b.gkey)) { fails.push({ ip, t: now }); return res.status(401).json({ error: 'Wrong admin password.' }); }
       return res.status(200).json({ ok: true });
+    }
+    // A one-time Premier group maker key (handed out by the Master) can create exactly one Premier group.
+    if (b.action === 'create' && !adminOk(b.admin) && typeof b.maker === 'string') {
+      if (PK.blocked(req)) return res.status(429).json({ error: 'Too many wrong tries. Wait a few minutes.' });
+      if (!nameOk(b.name)) return res.status(400).json({ error: 'Group name must be 2 to 24 characters.' });
+      if (!keyOk(b.passkey)) return res.status(400).json({ error: 'Group password must be 4 to 40 characters, with no spaces at the ends.' });
+      if (!keyOk(b.adminKey)) return res.status(400).json({ error: 'Admin password must be 4 to 40 characters, with no spaces at the ends.' });
+      if (b.adminKey === b.passkey) return res.status(400).json({ error: 'The admin password must be different from the group password.' });
+      let spent = false;
+      try { spent = await PK.spend(b.maker); } catch (e) { return res.status(503).json({ error: 'Something went wrong. Try again in a moment.' }); }
+      if (!spent) { PK.fail(req); return res.status(401).json({ error: 'That key is wrong, already used or expired.' }); }
+      const r = await sb('groups', { method: 'POST', body: JSON.stringify({ name: b.name.trim(), passkey: b.passkey, admin_key: b.adminKey, tier: 'premier' }) });
+      if (!r.ok) { await PK.unspend(b.maker).catch(() => {}); const [c, m] = await clash(r); return res.status(c).json({ error: m }); } // the key is not spent if the group could not be made
+      const g = (await r.json())[0];
+      return res.status(200).json({ ok: true, id: g.id, name: g.name, tier: 'premier' });
     }
     if (!adminOk(b.admin)) return res.status(401).json({ error: 'Wrong Master Passkey' });
     if (b.action === 'list') {

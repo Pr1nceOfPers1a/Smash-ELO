@@ -1,5 +1,6 @@
 const { adminOk } = require('./_lib');
 const K = require('./_trykeys');
+const PK = require('./_premkeys');
 module.exports = async (req, res) => {
   try {
     res.setHeader('Cache-Control', 'no-store');
@@ -12,6 +13,14 @@ module.exports = async (req, res) => {
       return res.status(200).json({ ok: true, left: k.left, exp: k.exp });
     }
     if (!adminOk(b.admin)) return res.status(401).json({ error: 'Wrong Master Passkey' });
+    if (b.action === 'pk_list') return res.status(200).json({ keys: await PK.list() });
+    if (b.action === 'pk_create') {
+      const days = b.days === 0 ? 0 : b.days;
+      if (!Number.isInteger(days) || days < 0 || days > 365) return res.status(400).json({ error: 'Bad key settings' });
+      const k = await PK.create(days);
+      return k ? res.status(200).json({ key: k }) : res.status(502).json({ error: 'Could not save the key' });
+    }
+    if (b.action === 'pk_delete') { await PK.remove(b.key); return res.status(200).json({ ok: true }); }
     if (b.action === 'list') return res.status(200).json({ keys: await K.list() });
     if (b.action === 'create') {
       const uses = b.uses, hours = b.hours;
