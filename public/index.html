@@ -97,6 +97,7 @@ function render(){
 
 
     const q=fq.trim().toLowerCase();
+    if(ms.length){const n1=D.matches.filter(m=>m.mode=="one").length;h+=`<div class="card" style="padding:9px 12px"><div class="row" style="margin:0"><b class="ct" style="flex:1">Matches logged</b><span class="elo">${ms.length.toLocaleString()}</span></div><div class="sub">${n1.toLocaleString()} 1v1 · ${(ms.length-n1).toLocaleString()} FFA</div></div>`}
     h+=`<div class="seg">${Object.keys(LB).map(t=>`<button class="${board==t?"on":""}" onclick="board='${t}';render()">${LB[t]}</button>`).join("")}<button class="srch${sopen?" on":""}" aria-label="Search players" onclick="${sopen?"sopen=false;fq='';render()":"sopen=true;render();document.getElementById('fq').focus()"}">${sopen?"✕":"🔍"}</button></div>`;
     if(sopen)h+=`<div class="row"><input class="n" id="fq" placeholder="Search player" value="${esc(fq)}" oninput="fq=this.value;render();const e=document.getElementById('fq');e.focus();e.setSelectionRange(fq.length,fq.length)"></div>`;
     const full=boardList(board),L=full.filter(p=>!q||p.name.toLowerCase().includes(q));
