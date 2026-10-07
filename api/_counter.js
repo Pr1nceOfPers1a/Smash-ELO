@@ -5,14 +5,16 @@ const U = () => process.env.SUPABASE_URL, K = () => process.env.SUPABASE_SERVICE
 const st = (p, o = {}) => fetch(`${U()}/storage/v1/${p}`, { ...o, headers: { apikey: K(), Authorization: `Bearer ${K()}`, ...o.headers } });
 // {total, start} or null when counting has not begun yet.
 async function read() {
-  try {
-    const r = await st(`object/authenticated/${BUCKET}/${PATH}`);
-    if (!r.ok) return null;
-    const j = await r.json();
-    return Number.isInteger(j.total) && j.total >= 0 ? { total: j.total, start: Number.isInteger(j.start) && j.start >= 0 ? j.start : 0 } : null;
-  } catch (e) { return null; }
+  const r = await st(`object/authenticated/${BUCKET}/${PATH}`);
+  if (!r.ok) {
+    const tx = await r.text().catch(() => '');
+    if (r.status === 404 || /not.?found|bucket/i.test(tx)) return null; // no counter yet
+    throw new Error('storage read failed'); // never treat a hiccup as "start over"
+  }
+  const j = await r.json();
+  return Number.isInteger(j.total) && j.total >= 0 ? { total: j.total, start: Number.isInteger(j.start) && j.start >= 0 ? j.start : 0 } : null;
 }
-async function total() { return (await read())?.total ?? 0; }
+async function total() { try { return (await read())?.total ?? 0; } catch (e) { return 0; } }
 async function put(n, start) {
   const go = () => st(`object/${BUCKET}/${PATH}`, { method: 'POST', body: JSON.stringify({ total: n, start }), headers: { 'Content-Type': 'application/json', 'x-upsert': 'true' } });
   let r = await go();

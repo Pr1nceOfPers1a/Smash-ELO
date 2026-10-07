@@ -1,6 +1,7 @@
 // Training-data store: confirmed scans (image + correct labels) go into a private Supabase Storage bucket.
 const { auth, adminOk } = require('./_lib');
 const { ensure } = require('./_counter');
+const ACC = require('./_acc');
 const BUCKET = 'scans';
 const U = () => process.env.SUPABASE_URL, K = () => process.env.SUPABASE_SERVICE_KEY;
 const st = (p, o = {}) => fetch(`${U()}/storage/v1/${p}`, { ...o, headers: { apikey: K(), Authorization: `Bearer ${K()}`, ...o.headers } });
@@ -48,7 +49,8 @@ module.exports = async (req, res) => {
       if (b.action === 'verify') return res.status(200).json({ ok: true });
       if (b.action === 'count') {
         const c = await ensure();
-        return res.status(200).json({ saved: (await ids()).length, total: c.total, start: c.start });
+        const acc = await ACC.read().catch(() => null);
+        return res.status(200).json({ saved: (await ids()).length, total: c.total, start: c.start, acc });
       }
       if (b.action === 'list') return res.status(200).json({ ids: await ids() });
       if (!ID.test(b.id || '')) return res.status(400).json({ error: 'Bad id' });
@@ -58,6 +60,7 @@ module.exports = async (req, res) => {
       return res.status(200).json({ id: b.id, image: Buffer.from(await im.arrayBuffer()).toString('base64'), labels: meta.labels, scanned: meta.scanned });
     }
     if (!(await auth(req))) return res.status(401).json({ error: 'Not signed in to a group' });
+    if (b.action === 'acc') { await ACC.bumpAcc(b.kind); return res.status(200).json({ ok: true }); }
     const now = Date.now();
     hits = hits.filter((t) => now - t < 3600e3);
     if (hits.length >= 120) return res.status(429).json({ error: 'Too many saves, try again later' });
