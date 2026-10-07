@@ -65,10 +65,10 @@ const LB={all:"Overall",one:"1v1",ffa:"FFA"};
 const FIGHTERS="Mario,Donkey Kong,Link,Samus,Dark Samus,Yoshi,Kirby,Fox,Pikachu,Luigi,Ness,Captain Falcon,Jigglypuff,Peach,Daisy,Bowser,Ice Climbers,Sheik,Zelda,Dr. Mario,Pichu,Falco,Marth,Lucina,Young Link,Ganondorf,Mewtwo,Roy,Chrom,Mr. Game & Watch,Meta Knight,Pit,Dark Pit,Zero Suit Samus,Wario,Snake,Ike,Pokémon Trainer,Diddy Kong,Lucas,Sonic,King Dedede,Olimar,Lucario,R.O.B.,Toon Link,Wolf,Villager,Mega Man,Wii Fit Trainer,Rosalina & Luma,Little Mac,Greninja,Mii Brawler,Mii Swordfighter,Mii Gunner,Palutena,Pac-Man,Robin,Shulk,Bowser Jr.,Duck Hunt,Ryu,Ken,Cloud,Corrin,Bayonetta,Inkling,Ridley,Simon,Richter,King K. Rool,Isabelle,Incineroar,Piranha Plant,Joker,Hero,Banjo & Kazooie,Terry,Byleth,Min Min,Steve,Sephiroth,Pyra/Mythra,Kazuya,Sora".split(",");
 const ls=(k,v)=>{try{return v===undefined?localStorage.getItem(k)||"":localStorage.setItem(k,v)}catch(e){return""}};
 let ms=[],tab="lb",board="all",sel="",draft=[{name:"",place:1},{name:"",place:2}],note="",D=null;
-let me=ls("me"),pass=ls("pass"),admin=ls("admin");
+let me=ls("me"),pass=ls("pass"),admin=ls("admin"),gid=ls("gid"),gname=ls("gname"),jn=(typeof location!="undefined"&&new URLSearchParams(location.search).get("g")||"").slice(0,24),jk="",jmsg="";
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const sg=x=>(x>=0?"+":"")+x.toFixed(1);
-const api=async(p,o={})=>{const r=await fetch("/api/"+p,{headers:{"content-type":"application/json"},...o});const j=await r.json().catch(()=>({}));if(!r.ok)throw Object.assign(new Error(j.error||"Something went wrong"),{status:r.status});return j};
+const api=async(p,o={})=>{const r=await fetch("/api/"+p,{headers:{"content-type":"application/json",...(gid?{"x-group":gid,"x-key":pass}:{})},...o});const j=await r.json().catch(()=>({}));if(!r.ok&&j.error=="Not signed in to a group"&&gid){leaveGroup("Your group passkey changed or is no longer valid. Join again.")}if(!r.ok)throw Object.assign(new Error(j.error||"Something went wrong"),{status:r.status});return j};
 function updateNow(){
   const el=document.getElementById("now");if(!el)return;
   const t=Date.now(),at=m=>new Date(m.ts).getTime(),recent=ms.filter(m=>t-at(m)<=300000).sort((a,b)=>at(b)-at(a));
@@ -78,7 +78,7 @@ function updateNow(){
   el.style.display="flex";
   el.innerHTML=`<span class="live"><i class="dot blink"></i>PLAYING NOW</span><span class="who">${shown.map(esc).join(", ")}${more>0?` +${more} more`:""}</span><span class="ago">${mins<1?"just now":mins+" min ago"}</span>`;
 }
-async function load(){try{ms=await api("matches");ms.sort((a,b)=>new Date(a.ts)-new Date(b.ts));updateNow();const ae=document.activeElement?.tagName;if(tab!="add"&&ae!="SELECT"&&ae!="INPUT")render();else D=ELO.compute(ms)}catch(e){}}
+async function load(){if(!gid)return;try{ms=await api("matches");ms.sort((a,b)=>new Date(a.ts)-new Date(b.ts));updateNow();const ae=document.activeElement?.tagName;if(tab!="add"&&ae!="SELECT"&&ae!="INPUT")render();else D=ELO.compute(ms)}catch(e){}}
 function spark(h){
   if(h.length<2)return"";const v=h.map(x=>x.r),lo=Math.min(...v),hi=Math.max(...v),sp=Math.max(hi-lo,1);
   const pts=v.map((y,i)=>`${(i/(v.length-1)*296+2).toFixed(1)},${(56-(y-lo)/sp*52).toFixed(1)}`).join(" ");
@@ -88,6 +88,8 @@ const tri=p=>`<div class="tri">${["all","one","ffa"].map(t=>`<div><div class="el
 function render(){
   raceStop();D=ELO.compute(ms);const P=D.players,v=document.getElementById("v");CH=[...new Set([...FIGHTERS,...ms.flatMap(m=>m.results.map(x=>x.char).filter(Boolean))])].sort();
   document.querySelectorAll("nav button").forEach(b=>b.classList.toggle("on",b.dataset.t==tab));
+  {const tl=document.querySelector(".tl");if(tl)tl.innerHTML=`▶ ${esc(gid&&gname?gname:"1UP LEADERBOARD")} <span class="blink">█</span>`}
+  if(!gid&&tab!="set"){v.innerHTML=joinCard();return}
   if(stat&&!(sel&&P[sel])&&(tab=="lb"||tab=="tr")){v.innerHTML=statPage();return}
   if(tab=="lb"){
     if(sel&&P[sel]){v.innerHTML=playerPage(P[sel]);return}
@@ -108,7 +110,7 @@ function render(){
   if(tab=="add"){
     if(!pass){v.innerHTML=`<div class="card"><b>Group passcode</b><div class="msg">Ask the group admin for the passcode to add matches.</div><div class="row"><input class="n" type="password" id="pc" placeholder="Passcode"><button onclick="pass=document.getElementById('pc').value.trim();ls('pass',pass);render()">Save</button></div></div>`;return}
     v.innerHTML=`<datalist id="dl">${Object.keys(P).map(n=>`<option value="${esc(n)}">`).join("")}</datalist><datalist id="dlc">${CH.map(c=>`<option value="${esc(c)}">`).join("")}</datalist>
-    <div class="card"><button class="g" style="width:100%" onclick="document.getElementById('f').click()">📷 Scan result screen</button><div class="msg" id="st">${esc(note)}</div></div>
+    <div class="card"><button class="g" style="width:100%" onclick="document.getElementById('f').click()">📷 Scan result screen</button><div class="msg" id="st">${esc(note)}</div>${scanImg?`<button class="${confOk()?"":"g"}" style="width:100%;margin-top:6px" onclick="conf=!confOk();confSnap=conf?JSON.stringify(draft):'';render()">${confOk()?"✓ All data is correct":conf?"Edited. Tap to confirm again":"Is all data correct?"}</button><div class="msg">Tap once every name, place, character and stat matches the screenshot. Confirmed scans are saved to help train a better scanner.</div>`:""}</div>
     <div class="card">${draft.map((r,i)=>`<div class="row"><input class="p" type="number" min="1" max="8" value="${r.place}" onchange="draft[${i}].place=+this.value||1" aria-label="Place"><input class="n" list="dl" placeholder="Username" value="${esc(r.name)}" onchange="draft[${i}].name=this.value"><button class="x" onclick="draft.splice(${i},1);render()">✕</button></div>${flag(r.name,i)}<div class="row" style="margin:-2px 0 6px 72px"><input class="n" list="dlc" placeholder="Character (optional)" value="${esc(r.char||"")}" onchange="draft[${i}].char=this.value"></div><div class="row" style="margin:0 0 10px 72px;gap:6px">${[["kills","KOs"],["deaths","Deaths"],["sds","SDs"],["dmg","Dmg"]].map(([k,t])=>`<input class="sm" type="number" inputmode="decimal" min="0" placeholder="${t}" value="${r[k]??""}" onchange="draft[${i}].${k}=nv(this.value)" aria-label="${t}">`).join("")}</div>`).join("")}
     <div class="row"><button class="g" onclick="if(draft.length<8){draft.push({name:'',place:draft.length+1});render()}">+ Player</button><button id="sv" style="flex:1" onclick="saveMatch()">Save match</button></div>
     <div class="msg">Place 1 = winner. Tied players share a number. 2 players = 1v1, 3 or more = FFA.</div></div>`;
@@ -118,10 +120,11 @@ function render(){
     v.innerHTML=ms.length?cnt+D.matches.slice().reverse().map(m=>`<div class="card"><div class="row"><span class="sub" style="flex:1">${new Date(m.ts).toLocaleString()} · ${LB[m.mode]}</span>${admin?`<button class="x" onclick="del('${esc(m.id)}')">Delete</button>`:""}</div>${m.results.slice().sort((a,b)=>a.place-b.place).map(x=>`<div class="row" style="margin:2px 0"><span class="rk">${x.place}</span><span class="nm">${esc(x.name)}${x.char?` <span class="sub">${esc(x.char)}</span>`:""}</span><span class="${m.d.mode[x.name]>=0?"up":"dn"}">${LB[m.mode]} ${sg(m.d.mode[x.name])}</span><span class="sub">All ${sg(m.d.all[x.name])}</span></div>`).join("")}</div>`).join(""):`<p class="msg">No matches yet.</p>`;
   }
   if(tab=="set"){
-    v.innerHTML=`<div class="card"><b>Group passcode</b><div class="row" style="margin-top:8px"><input class="n" type="password" value="${esc(pass)}" onchange="pass=this.value.trim();ls('pass',pass)"></div></div>
-    <div class="card"><b>Admin passcode</b><div class="msg">Only needed to delete matches.</div><div class="row"><input class="n" type="password" value="${esc(admin)}" onchange="admin=this.value.trim();ls('admin',admin)"></div></div>
+    v.innerHTML=`<div class="card"><b>Group</b><div class="msg">${gid?`You're in <b>${esc(gname)}</b>.`:"You're not in a group yet."}</div><div class="row">${gid?`<button class="g" onclick="leaveGroup()">Switch group</button>`:`<button class="g" onclick="tab='lb';render()">Join a group</button>`}</div></div>
+    <div class="card"><b>Admin passcode</b><div class="msg">Needed to delete or merge matches and to manage groups.</div><div class="row"><input class="n" type="password" value="${esc(admin)}" onchange="admin=this.value.trim();ls('admin',admin)"></div></div>
     <div class="card"><b>You are</b><div class="row" style="margin-top:8px"><select onchange="me=this.value;ls('me',me)"><option value="">Choose…</option>${Object.keys(P).sort().map(n=>`<option ${n==me?"selected":""}>${esc(n)}</option>`).join("")}</select></div></div>
-    <div class="card"><button class="g" onclick="csv()">Export matches (CSV)</button></div>${mergeCard(P)}`;
+    <div class="card"><button class="g" onclick="csv()">Export matches (CSV)</button></div>
+    <div class="card"><b>Training data</b><div class="msg">Scans you confirm as correct are saved here (needs the admin passcode above).</div><div class="row"><button class="g" ${tdBusy?"disabled":""} onclick="tdCount()">Check count</button><button class="g" ${tdBusy?"disabled":""} onclick="tdDownload()">Download all (.zip)</button></div><div class="msg">${esc(tdMsg)}</div></div>${mergeCard(P)}${groupsCard()}`;
   }
 }
 document.querySelector("nav").onclick=e=>{if(e.target.dataset.t){tab=e.target.dataset.t;sel="";stat="";if(tab=="tr")RACE.key="";if(tab!="lb"){sopen=false;fq=""}render()}};
@@ -410,14 +413,99 @@ function statPage(){
   const list=rows.length?rows.map((r,i)=>`<div class="card lb" data-n="${esc(r.name)}"><div class="rk">${i<3?medal(i):i+1}</div><div class="nm">${esc(r.name)}<div class="sub">${r.sub}</div></div><div class="elo">${r.disp}</div></div>`).join(""):`<div class="card"><div class="msg">${needs?"No stats recorded for this filter. Scan the second results screen, or type KOs, deaths, SDs, and damage when you add a match.":stat=="streak"?(ssv=="cur"?"Nobody is on a streak of 2+ right now.":"No streaks of 2+ for this filter."):"Nobody has enough games for this filter yet."}</div></div>`;
   return`<button class="g" onclick="stat='';tab=sfrom;sel=sfsel;render();scrollTo(0,0)">← Back</button><div style="height:12px"></div>${chips}<div class="card"><b>${S.t}</b><div class="msg">${S.d}${needs?" Only matches with stats recorded count.":""}</div></div>${seg(SR,srange,"srange")}${seg(SM,smode,"smode")}${sv}${list}${podiums()}`;
 }
+// ---------- Groups ----------
+function joinCard(){return`<div class="card"><b>Join your group</b><div class="msg">Ask your group's admin for the group name and passkey.</div><div class="row"><input class="n" placeholder="Group name" value="${esc(jn)}" oninput="jn=this.value" autocapitalize="off"></div><div class="row"><input class="n" type="password" placeholder="Passkey" value="${esc(jk)}" oninput="jk=this.value" autocomplete="off"></div><div class="row"><button style="flex:1" onclick="joinGroup()">Join</button></div><div class="msg">${esc(jmsg)}</div></div>`}
+async function joinGroup(){
+  jmsg="Checking…";render();
+  try{const j=await api("groups",{method:"POST",body:JSON.stringify({action:"join",name:jn,passkey:jk})});
+    gid=j.id;gname=j.name;pass=jk;ls("gid",gid);ls("gname",gname);ls("pass",pass);jk="";jmsg="";ms=[];sel="";tab="lb";await load();render()}
+  catch(e){jmsg=e.message;render()}
+}
+function leaveGroup(msg){tab="lb";gid="";gname="";pass="";ls("gid","");ls("gname","");ls("pass","");ms=[];sel="";stat="";jmsg=typeof msg=="string"?msg:"";render()}
+let grp={list:null,orph:0,msg:"",nn:"",nk:"",adopt:true,busy:false};
+const groupsApi=o=>api("groups",{method:"POST",body:JSON.stringify({admin,...o})});
+async function gmLoad(){
+  if(!admin){grp.msg="Enter the admin passcode first.";return render()}
+  grp.busy=true;grp.msg="Loading…";render();
+  try{const j=await groupsApi({action:"list"});grp.list=j.groups;grp.orph=j.orphans;grp.msg=j.groups.length?"":"No groups yet. Create the first one below."}catch(e){grp.msg=e.message}
+  grp.busy=false;render();
+}
+async function gmCreate(){
+  if(!admin){grp.msg="Enter the admin passcode first.";return render()}
+  grp.busy=true;grp.msg="Creating…";render();
+  try{const j=await groupsApi({action:"create",name:grp.nn,passkey:grp.nk,adopt:grp.adopt&&grp.orph>0});
+    grp.msg=`Created "${grp.nn.trim()}".${j.adopted?` Moved ${j.adopted} existing match${j.adopted==1?"":"es"} into it.`:""}`;grp.nn="";grp.nk="";
+    const l=await groupsApi({action:"list"});grp.list=l.groups;grp.orph=l.orphans}
+  catch(e){grp.msg=e.message}
+  grp.busy=false;render();
+}
+async function gmEdit(id,what){
+  const g=(grp.list||[]).find(x=>x.id==id);if(!g)return;
+  const v=prompt(what=="name"?`New name for "${g.name}":`:`New passkey for "${g.name}":`,what=="name"?g.name:"");
+  if(v==null||!v.trim())return;
+  try{await groupsApi({action:"update",id,[what=="name"?"name":"passkey"]:what=="name"?v:v.trim()});grp.msg="Saved.";const l=await groupsApi({action:"list"});grp.list=l.groups;grp.orph=l.orphans}
+  catch(e){grp.msg=e.message}
+  render();
+}
+function groupsCard(){
+  const base=typeof location!="undefined"?location.origin:"";
+  const rows=(grp.list||[]).map(g=>`<div class="card" style="margin:8px 0;padding:9px 12px;box-shadow:none"><div class="nm">${esc(g.name)}</div><div class="sub">Passkey: <b>${esc(g.passkey)}</b> · ${g.matches} match${g.matches==1?"":"es"}</div><div class="sub">Link: ${esc(base)}/?g=${esc(encodeURIComponent(g.name))}</div><div class="row" style="margin:6px 0 0"><button class="g" onclick="gmEdit('${g.id}','name')">Rename</button><button class="g" onclick="gmEdit('${g.id}','key')">New passkey</button></div></div>`).join("");
+  return`<div class="card"><b>Manage groups</b><div class="msg">Every group has its own matches, ratings and passkey. Needs the admin passcode above.</div><div class="row"><button class="g" ${grp.busy?"disabled":""} onclick="gmLoad()">Show groups</button></div>${rows}
+  <div class="msg" style="margin-top:12px">Create a group</div><div class="row"><input class="n" placeholder="Group name" value="${esc(grp.nn)}" oninput="grp.nn=this.value"></div><div class="row"><input class="n" placeholder="Passkey (4+ characters)" value="${esc(grp.nk)}" oninput="grp.nk=this.value" autocomplete="off"></div>
+  ${grp.orph>0?`<label class="msg" style="display:block"><input type="checkbox" ${grp.adopt?"checked":""} onchange="grp.adopt=this.checked"> Move the ${grp.orph} existing match${grp.orph==1?"":"es"} that have no group into this one</label>`:""}
+  <div class="row"><button ${grp.busy?"disabled":""} style="flex:1" onclick="gmCreate()">Create group</button></div><div class="msg">${esc(grp.msg)}</div></div>`;
+}
+// ---------- Training data (confirmed scans) ----------
+let scanImg="",scanRaw=null,conf=false,confSnap="",tdMsg="",tdBusy=false;
+const confOk=()=>!!scanImg&&conf&&JSON.stringify(draft)===confSnap;
+const crcT=(()=>{const t=new Uint32Array(256);for(let n=0;n<256;n++){let c=n;for(let k=0;k<8;k++)c=c&1?0xEDB88320^(c>>>1):c>>>1;t[n]=c>>>0}return t})();
+const crc32=u=>{let c=-1;for(let i=0;i<u.length;i++)c=crcT[(c^u[i])&255]^(c>>>8);return(c^-1)>>>0};
+function makeZip(files){
+  const enc=new TextEncoder(),parts=[],cen=[],d=new Date();let off=0,csz=0;
+  const dt=((d.getFullYear()-1980)<<9|(d.getMonth()+1)<<5|d.getDate())&0xFFFF,tm=(d.getHours()<<11|d.getMinutes()<<5|d.getSeconds()>>1)&0xFFFF;
+  for(const f of files){const nm=enc.encode(f.name),crc=crc32(f.data),sz=f.data.length;
+    const lh=new DataView(new ArrayBuffer(30));lh.setUint32(0,0x04034b50,true);lh.setUint16(4,20,true);lh.setUint16(6,0x0800,true);lh.setUint16(10,tm,true);lh.setUint16(12,dt,true);lh.setUint32(14,crc,true);lh.setUint32(18,sz,true);lh.setUint32(22,sz,true);lh.setUint16(26,nm.length,true);
+    parts.push(lh.buffer,nm,f.data);
+    const ch=new DataView(new ArrayBuffer(46));ch.setUint32(0,0x02014b50,true);ch.setUint16(4,20,true);ch.setUint16(6,20,true);ch.setUint16(8,0x0800,true);ch.setUint16(12,tm,true);ch.setUint16(14,dt,true);ch.setUint32(16,crc,true);ch.setUint32(20,sz,true);ch.setUint32(24,sz,true);ch.setUint16(28,nm.length,true);ch.setUint32(42,off,true);
+    cen.push(ch.buffer,nm);csz+=46+nm.length;off+=30+nm.length+sz}
+  const eo=new DataView(new ArrayBuffer(22));eo.setUint32(0,0x06054b50,true);eo.setUint16(8,files.length,true);eo.setUint16(10,files.length,true);eo.setUint32(12,csz,true);eo.setUint32(16,off,true);
+  return new Blob([...parts,...cen,eo.buffer],{type:"application/zip"});
+}
+const scansApi=o=>api("scans",{method:"POST",body:JSON.stringify({admin,...o})});
+async function tdCount(){
+  if(!admin){tdMsg="Enter the admin passcode first.";return render()}
+  tdBusy=true;tdMsg="Counting…";render();
+  try{const j=await scansApi({action:"list"});tdMsg=`${j.ids.length} confirmed scan${j.ids.length==1?"":"s"} saved.`}catch(e){tdMsg=e.message}
+  tdBusy=false;render();
+}
+async function tdDownload(){
+  if(!admin){tdMsg="Enter the admin passcode first.";return render()}
+  tdBusy=true;tdMsg="Starting…";render();
+  try{
+    const{ids}=await scansApi({action:"list"});if(!ids.length){tdMsg="No confirmed scans saved yet.";tdBusy=false;return render()}
+    const files=[],lines=[],enc=new TextEncoder();
+    for(let i=0;i<ids.length;i++){
+      tdMsg=`Downloading ${i+1} of ${ids.length}…`;render();
+      const j=await scansApi({action:"get",id:ids[i]});
+      files.push({name:`images/${ids[i]}.jpg`,data:Uint8Array.from(atob(j.image),c=>c.charCodeAt(0))});
+      lines.push(JSON.stringify({image:`images/${ids[i]}.jpg`,players:j.labels,model_output:j.scanned}));
+    }
+    files.push({name:"labels.jsonl",data:enc.encode(lines.join("\n")+"\n")});
+    const a=document.createElement("a");a.href=URL.createObjectURL(makeZip(files));a.download="smash-scans.zip";a.click();
+    tdMsg=`Downloaded ${ids.length} scan${ids.length==1?"":"s"}.`;
+  }catch(e){tdMsg=e.message}
+  tdBusy=false;render();
+}
 async function saveMatch(){
   const known=Object.keys(D.players);
   const r=draft.map(x=>{const n=x.name.trim(),c0=(x.char||"").trim(),c=CH.find(k=>k.toLowerCase()==c0.toLowerCase())||c0;return{name:known.find(k=>k.toLowerCase()==n.toLowerCase())||n,place:x.place,...(c?{char:c.slice(0,30)}:{}),...statsOf(x)}}).filter(x=>x.name);
   if(r.length<2)return alert("Need at least two players.");
   if(new Set(r.map(x=>x.name.toLowerCase())).size<r.length)return alert("Each username must be unique.");
   const b=document.getElementById("sv");b.disabled=true;
-  try{await api("matches",{method:"POST",body:JSON.stringify({passcode:pass,results:r})});draft=[{name:"",place:1},{name:"",place:2}];note="";tab="lb";await load();render()}
-  catch(e){if(e.status==401){pass="";ls("pass","");render()}alert(e.message);b.disabled=false}
+  const keep=confOk()?{image:scanImg,labels:r.map(x=>({name:x.name,place:x.place,character:x.char||"",kills:x.kills??null,deaths:x.deaths??null,sds:x.sds??null,damage:x.dmg??null})),scanned:scanRaw}:null;
+  try{await api("matches",{method:"POST",body:JSON.stringify({passcode:pass,results:r})});draft=[{name:"",place:1},{name:"",place:2}];note="";scanImg="";scanRaw=null;conf=false;confSnap="";tab="lb";await load();render()
+    if(keep)api("scans",{method:"POST",body:JSON.stringify({passcode:pass,...keep})}).catch(e=>alert("Match saved, but the scan couldn't be added to the training set: "+e.message))}
+  catch(e){alert(e.message);b.disabled=false}
 }
 async function del(id){if(!confirm("Delete this match? Ratings will be recalculated."))return;try{await api("matches",{method:"DELETE",body:JSON.stringify({admin,id})});await load()}catch(e){alert(e.message)}}
 function csv(){
@@ -434,10 +522,10 @@ document.getElementById("f").onchange=async e=>{
   const file=e.target.files[0];e.target.value="";if(!file)return;
   document.getElementById("st").textContent="Reading screenshot…";
   try{
-    const j=await api("scan",{method:"POST",body:JSON.stringify({passcode:pass,roster:Object.keys(D.players),chars:CH,image:await shrink(file)})});
+    const img=await shrink(file),j=await api("scan",{method:"POST",body:JSON.stringify({passcode:pass,roster:Object.keys(D.players),chars:CH,image:img})});
     if(j.players.length<2){note=j.problem?"Couldn't read it: "+j.problem:"Couldn't read that screen. Enter results by hand."}
-    else{({draft,note}=fromScan(j.players))}
-  }catch(err){note=err.message;if(err.status==401){pass="";ls("pass","")}}
+    else{({draft,note}=fromScan(j.players));scanImg=img;scanRaw=j.players;conf=false;confSnap=""}
+  }catch(err){note=err.message}
   render();
 };
 load();render();setInterval(()=>{if(!document.hidden)load()},8000);setInterval(updateNow,15000);
