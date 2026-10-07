@@ -52,15 +52,15 @@ input.sm{flex:1;width:0;min-width:0;text-align:center;padding:8px 4px}
 .b0{height:46px;background:#ffd23f}.b1{height:32px;background:#c9ced8}.b2{height:22px;background:#d9894a}
 .pod.list{display:block;min-height:0}.sb{display:flex;align-items:center;gap:6px;margin:5px 0}.sb .rk{width:22px}.sb .nm{font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.sb .pr{font:11px var(--pf)}.sb .pd{font-size:12px;font-weight:700;min-width:56px;text-align:right}
 .warn{color:var(--bad)!important;font-weight:700}
-.pk{border:3px solid var(--gc,var(--ink));background:var(--card);padding:6px 8px 8px;margin:0 4px 14px 0;box-shadow:3px 3px 0 var(--ink)}
+.pk{border:5px solid #111;background:var(--card);padding:6px 8px 8px;margin:0 4px 14px 0;box-shadow:3px 3px 0 var(--ink)}
 .pk .lab{font:8px/1.4 var(--pf);color:var(--gc);margin:0 0 6px;text-transform:uppercase}
 .pk .seg{margin:0}.pk .seg button.on{background:var(--gc)}
 .pk.c1{--gc:#2f6bff}.pk.c2{--gc:#13813a}.pk.c3{--gc:#8a3ffc}.pk.c4{--gc:#d9480f}
 .card .pk{margin:6px 0 10px;box-shadow:none}
 .hd{display:flex;flex-wrap:wrap;gap:2px 10px;align-items:baseline;margin-bottom:4px}.hd .ct{flex:1}
-.lbl{font:700 11px/1.4 ui-monospace,Menlo,Consolas,monospace;color:var(--ac);text-align:right;margin-left:auto}
+.lbl{font:700 11px/1.4 ui-monospace,Menlo,Consolas,monospace;color:#777;text-align:right;margin-left:auto}
 .mini1{padding:10px 12px}.mini1 .elo{margin-top:2px}
-.seg.w{flex-wrap:wrap}.seg.w button{flex:1 0 28%}[data-stat]{cursor:pointer}.pod.mini{min-height:0;margin:8px 0 2px}.mini .b0{height:28px}.mini .b1{height:18px}.mini .b2{height:10px}.mini .slot .pr{font-size:10px}.sw{display:inline-block;width:9px;height:9px;border:2px solid var(--ink);margin-right:4px}
+.av{display:inline-flex;align-items:center;justify-content:center;flex:0 0 auto;background:var(--g);border:2px solid var(--ink);box-shadow:2px 2px 0 var(--ink)}.seg.w{flex-wrap:wrap}.seg.w button{flex:1 0 28%}[data-stat]{cursor:pointer}.pod.mini{min-height:0;margin:8px 0 2px}.mini .b0{height:28px}.mini .b1{height:18px}.mini .b2{height:10px}.mini .slot .pr{font-size:10px}.sw{display:inline-block;width:9px;height:9px;border:2px solid var(--ink);margin-right:4px}
 #now{display:none;align-items:center;gap:6px 10px;flex-wrap:wrap;margin:0 4px 16px 0;background:var(--yel);border:3px solid var(--ink);box-shadow:4px 4px 0 var(--ink);padding:9px 11px}
 #now .live{font:8px/1.5 var(--pf);color:var(--ink);white-space:nowrap}#now .who{font-weight:700;flex:1;min-width:0;overflow-wrap:anywhere}#now .ago{font-size:12px;color:var(--ink)}
 .dot{display:inline-block;width:8px;height:8px;background:var(--ac);border:2px solid var(--ink);margin-right:6px;vertical-align:middle}
@@ -118,7 +118,7 @@ function render(){
     h+=`<div class="seg">${Object.keys(LB).map(t=>`<button class="${board==t?"on":""}" onclick="board='${t}';render()">${LB[t]}</button>`).join("")}<button class="srch${sopen?" on":""}" aria-label="Search players" onclick="${sopen?"sopen=false;fq='';render()":"sopen=true;render();document.getElementById('fq').focus()"}">${sopen?"✕":"🔍"}</button></div>`;
     if(sopen)h+=`<div class="row"><input class="n" id="fq" placeholder="Search player" value="${esc(fq)}" oninput="fq=this.value;render();const e=document.getElementById('fq');e.focus();e.setSelectionRange(fq.length,fq.length)"></div>`;
     const full=boardList(board),L=full.filter(p=>!q||p.name.toLowerCase().includes(q));
-    h+=L.length?L.map(p=>{const i=full.indexOf(p);return`<div class="card lb" data-n="${esc(p.name)}"><div class="rk">${i<3?medal(i):i+1}</div><div class="nm">${esc(p.name)} ${p.streak>=2?"🔥"+p.streak:""}<div class="sub">${p.g[board]} games${prov(p.g[board])}</div></div><div class="elo">${Math.round(p.r[board])}</div></div>`}).join(""):`<p class="msg">No ${LB[board]} matches${q?" for that search":" yet"}.</p>`;
+    h+=L.length?L.map(p=>{const i=full.indexOf(p);return`<div class="card lb" data-n="${esc(p.name)}"><div class="rk">${i<3?medal(i):i+1}</div>${avatar(p)}<div class="nm">${esc(p.name)} ${p.streak>=2?"🔥"+p.streak:""}<div class="sub">${p.g[board]} games${prov(p.g[board])}</div></div><div class="elo">${Math.round(p.r[board])}</div></div>`}).join(""):`<p class="msg">No ${LB[board]} matches${q?" for that search":" yet"}.</p>`;
     if(ms.length&&!q)h+=podiums();
     v.innerHTML=h;
   }
@@ -255,7 +255,7 @@ function oppOf(name){
 function playerPage(p){
   const wm=p.wm,op=oppOf(p.name);
   return`<button class="g" onclick="sel='';render()">← Back</button>
-  <div class="card" style="margin-top:10px"><div class="nm" style="font-size:20px">${esc(p.name)} ${p.streak>=2?`<span data-stat="streak" data-sv="cur">🔥 ${p.streak}</span>`:""}</div><div class="sub">${p.w}W · ${p.l}L · ${p.g.all} games</div>${medalLine(p)}${triP(p)}</div>
+  <div class="card" style="margin-top:10px"><div class="row" style="gap:12px;margin:0 0 6px">${avatar(p,52)}<div style="flex:1;min-width:0"><div class="nm" style="font-size:20px">${esc(p.name)} ${p.streak>=2?`<span data-stat="streak" data-sv="cur">🔥 ${p.streak}</span>`:""}</div><div class="sub">${p.w}W · ${p.l}L · ${p.g.all} games</div>${mainChar(p)?`<div class="sub">Main: ${esc(mainChar(p))} · ${p.cm[mainChar(p)].n} game${p.cm[mainChar(p)].n==1?"":"s"}</div>`:""}</div></div>${medalLine(p)}${triP(p)}</div>
   <div class="card"><div class="hd"><b class="ct">Win rate</b>${lbLink("wr")}</div><div class="tri">${[["Overall","all",p.w,p.l],["1v1","one",wm.one.w,wm.one.l],["FFA","ffa",wm.ffa.w,wm.ffa.l]].map(([t,k,w,l])=>`<div data-stat="wr" data-sm="${k}"><div class="elo">${pct(w,l)}</div><div class="sub">${t} · ${w}W ${l}L</div><div class="sub">${op.avg(k)==null?"":"avg opp "+op.avg(k)}</div></div>`).join("")}</div></div>
   ${op.best>=2?`<div class="card"><div class="hd"><b class="ct">Win streak</b>${lbLink("streak","","best")}</div><div style="margin-top:6px">Longest: <b>${op.best}</b> wins in a row · avg opp ${op.bavg}</div>${p.streak>=2?`<div class="sub">Current: ${p.streak} in a row</div>`:""}</div>`:""}
   ${combat(p)}<div class="card"><b>Rating history</b>${trend(p)}</div>
@@ -274,6 +274,32 @@ function combat(p){
   const big=(t,k,v)=>`<div class="card mini1"><div class="hd" style="margin:0"><b class="ct">${t}</b>${lbLink(k)}</div><div class="elo">${v}</div></div>`;
   return`<div class="card"><div class="hd"><b class="ct">K/D</b>${lbLink("kd")}</div><div class="tri" style="margin-top:4px"><div data-stat="kd" data-sm="one"><div class="elo">${kd(a)}</div><div class="sub">1v1 K/D · ${a.n} games</div></div><div data-stat="kd" data-sm="ffa"><div class="elo">${kd(b)}</div><div class="sub">FFA K/D · ${b.n} games</div></div></div><div class="sub" style="margin-top:8px">Total deaths: ${Dd}</div></div>
   ${big("Total KOs","kos",K)}${big("Total SDs","sds",SD)}${big("Total damage","dmg",Math.round(DM).toLocaleString())}<div class="msg" style="margin:-6px 0 14px">Totals only include matches with stats recorded.</div>`;
+}
+// ---------- Weapon-type avatars (original generic icons, picked by the player's most-used fighter) ----------
+const WC={};[["blade","Link,Young Link,Toon Link,Marth,Lucina,Roy,Chrom,Ike,Meta Knight,Cloud,Sephiroth,Shulk,Corrin,Byleth,Mii Swordfighter,Hero,Pyra/Mythra,Joker,Sheik,Robin,Steve,Sora"],["hammer","King Dedede,Ness,Lucas,Bowser Jr.,Ice Climbers,Mr. Game & Watch"],["bow","Pit,Dark Pit"],["blaster","Samus,Dark Samus,Zero Suit Samus,Fox,Falco,Wolf,Snake,Mega Man,Mii Gunner,R.O.B.,Duck Hunt,Inkling,Bayonetta"],["fist","Mario,Luigi,Dr. Mario,Donkey Kong,Diddy Kong,Captain Falcon,Little Mac,Ryu,Ken,Terry,Kazuya,Mii Brawler,Ganondorf,Bowser,King K. Rool,Incineroar,Wario,Sonic,Ridley"],["wand","Zelda,Palutena,Rosalina & Luma,Peach,Daisy,Mewtwo"],["whip","Simon,Richter"]].forEach(([c,l])=>l.split(",").forEach(n=>WC[n]=c));
+const mainChar=p=>Object.entries(p.cm||{}).sort((a,b)=>b[1].n-a[1].n||a[0].localeCompare(b[0]))[0]?.[0]||"";
+function avGrid(cls){
+  const g=Array.from({length:12},()=>Array(12).fill(".")),put=(x,y,c)=>{if(x>=0&&x<12&&y>=0&&y<12)g[y][x]=c},rect=(x,y,w,h,c)=>{for(let j=0;j<h;j++)for(let i=0;i<w;i++)put(x+i,y+j,c)},
+  line=(x0,y0,x1,y1,c)=>{const n=Math.max(Math.abs(x1-x0),Math.abs(y1-y0))||1;for(let i=0;i<=n;i++)put(Math.round(x0+(x1-x0)*i/n),Math.round(y0+(y1-y0)*i/n),c)},pts=(a,c)=>a.forEach(([x,y])=>put(x,y,c));
+  if(cls=="blade"){line(10,1,5,6,"m");line(11,1,6,6,"x");put(11,0,"x");line(2,5,6,9,"p");line(3,8,1,10,"w");put(0,11,"p");put(1,11,"p")}
+  else if(cls=="hammer"){rect(2,1,8,4,"p");rect(2,1,8,1,"h");rect(2,4,8,1,"s");rect(5,5,2,6,"w");put(6,5,"s");rect(5,10,2,1,"p")}
+  else if(cls=="bow"){pts([[5,0],[6,0],[7,1],[8,2],[8,3],[9,4],[9,5],[9,6],[8,7],[8,8],[7,9],[6,10],[5,10]],"p");line(5,1,5,9,"m");line(0,5,8,5,"w");pts([[1,4],[1,6],[0,5]],"x");pts([[7,4],[7,6]],"m")}
+  else if(cls=="blaster"){rect(1,3,8,3,"p");rect(1,3,8,1,"h");rect(9,3,3,2,"m");rect(2,6,3,4,"w");put(5,6,"s");put(6,6,"s");rect(7,2,1,1,"m")}
+  else if(cls=="fist"){rect(2,2,2,4,"p");rect(4,1,2,5,"p");rect(6,1,2,5,"p");rect(8,2,2,4,"p");rect(2,6,8,5,"p");rect(1,6,2,3,"h");[3,5,7].forEach(x=>rect(x,2,1,3,"s"));rect(2,10,8,1,"s")}
+  else if(cls=="wand"){line(2,10,8,4,"w");pts([[9,1],[8,2],[10,2],[9,3]],"p");put(9,2,"h");pts([[11,0],[11,4],[7,0]],"x")}
+  else if(cls=="whip"){rect(1,8,3,3,"p");pts([[4,8],[5,7],[5,6],[6,5],[7,5],[8,4],[8,3],[7,2],[8,1],[9,1],[10,2]],"w");pts([[11,3]],"x")}
+  else{["....pppp....","..pphhpppp..",".pphhpppppp.",".phhpppppps.","pphpppppppss","pppppppppps.","pppppppppsss","pppppppppsss",".pppppppsss.",".ppppppssss.","..pppsssss..","....ssss...."].forEach((r,y)=>[...r].forEach((c,x)=>{if(c!=".")put(x,y,c)}))}
+  const o=[];for(let y=0;y<12;y++)for(let x=0;x<12;x++)if(g[y][x]=="."&&[[1,0],[-1,0],[0,1],[0,-1]].some(([dx,dy])=>{const c=(g[y+dy]||[])[x+dx];return c&&c!="."}))o.push([x,y]);
+  o.forEach(([x,y])=>g[y][x]="o");return g;
+}
+const hueOf=n=>{let h=0;for(const c of String(n).toLowerCase())h=(h*31+c.charCodeAt(0))>>>0;return h%360};
+const hsl=(h,sa,l)=>{sa/=100;l/=100;const f=n=>{const k=(n+h/30)%12,a=sa*Math.min(l,1-l);return Math.round(255*(l-a*Math.max(-1,Math.min(k-3,9-k,1))))};return"#"+[f(0),f(8),f(4)].map(v=>v.toString(16).padStart(2,"0")).join("")};
+const avCache={};
+function avatar(p,size=30){
+  const ch=mainChar(p),cls=(ch&&WC[ch])||(ch?"orb":"orb"),hue=hueOf(p.name),k=cls+"|"+hue+"|"+size+"|"+ch;if(avCache[k])return avCache[k];
+  const col={p:hsl(hue,65,50),h:hsl(hue,75,72),s:hsl(hue,60,33),m:"#aab1c0",x:"#f4f6fa",w:"#b9824a",o:"#1b1730"};
+  let r="";avGrid(cls).forEach((row,y)=>row.forEach((c,x)=>{if(c!=".")r+=`<rect x="${x}" y="${y}" width="1" height="1" fill="${col[c]}"/>`}));
+  return avCache[k]=`<span class="av" style="width:${size}px;height:${size}px"><svg viewBox="0 0 12 12" width="${size-6}" height="${size-6}" shape-rendering="crispEdges" role="img" aria-label="${cls} icon"><title>${esc(ch?ch+" main":"No fighter recorded yet")}</title>${r}</svg></span>`;
 }
 // ---------- 8-bit medals ----------
 const MG=["..RR....BB..","...RR..BB...","....RRBB....","....RRBB....","...oooooo...","..ommmmmmo..",".ommhhmmmmo.",".ommhmmmmmo.",".ommmmmmmso.",".ommmmmmsso.","..ommmmsso..","...oooooo..."];
@@ -429,7 +455,7 @@ function statPage(){
   const chips=pgrp("c1","Stat",`<div class="seg w">${Object.keys(STATS).map(k=>`<button class="${k==stat?"on":""}" onclick="stat='${k}';render()">${STATS[k].c}</button>`).join("")}</div>`);
   const sv=stat=="streak"?pgrp("c4","Streak view",`<div class="seg"><button class="${ssv=="best"?"on":""}" onclick="ssv='best';render()">Longest run</button><button class="${ssv=="cur"?"on":""}" onclick="ssv='cur';render()">Active now</button></div>`):"";
   const needs=["kd","kos","dmg","sds"].includes(stat);
-  const list=rows.length?rows.map((r,i)=>`<div class="card lb" data-n="${esc(r.name)}"><div class="rk">${i<3?medal(i):i+1}</div><div class="nm">${esc(r.name)}<div class="sub">${r.sub}</div></div><div class="elo">${r.disp}</div></div>`).join(""):`<div class="card"><div class="msg">${needs?"No stats recorded for this filter. Scan the second results screen, or type KOs, deaths, SDs, and damage when you add a match.":stat=="streak"?(ssv=="cur"?"Nobody is on a streak of 2+ right now.":"No streaks of 2+ for this filter."):"Nobody has enough games for this filter yet."}</div></div>`;
+  const list=rows.length?rows.map((r,i)=>`<div class="card lb" data-n="${esc(r.name)}"><div class="rk">${i<3?medal(i):i+1}</div>${D.players[r.name]?avatar(D.players[r.name]):""}<div class="nm">${esc(r.name)}<div class="sub">${r.sub}</div></div><div class="elo">${r.disp}</div></div>`).join(""):`<div class="card"><div class="msg">${needs?"No stats recorded for this filter. Scan the second results screen, or type KOs, deaths, SDs, and damage when you add a match.":stat=="streak"?(ssv=="cur"?"Nobody is on a streak of 2+ right now.":"No streaks of 2+ for this filter."):"Nobody has enough games for this filter yet."}</div></div>`;
   return`<button class="g" onclick="stat='';tab=sfrom;sel=sfsel;render();scrollTo(0,0)">← Back</button><div style="height:12px"></div>${chips}<div class="card"><b>${S.t}</b><div class="msg">${S.d}${needs?" Only matches with stats recorded count.":""}</div></div>${pgrp("c2","Time range",seg(SR,srange,"srange"))}${pgrp("c3","Game mode",seg(SM,smode,"smode"))}${sv}${list}${podiums()}`;
 }
 // ---------- Groups ----------
