@@ -40,13 +40,24 @@ module.exports = async (req, res) => {
   try {
     res.setHeader('Cache-Control', 'no-store');
     const b = req.body || {};
-    const g = await auth(req);
+    let g = await auth(req);
+    // Admin tools can act on any group by id (used by Merge players' group selector).
+    if (req.method === 'POST' && (b.action === 'merge' || b.action === 'adminlist') && adminOk(b.admin) && UUID.test(b.group || '')) {
+      const gr = await sb(`groups?id=eq.${b.group}&select=id,name&limit=1`);
+      g = gr.ok ? (await gr.json())[0] || null : null;
+      if (!g) return res.status(404).json({ error: 'Group not found' });
+    }
     if (!g) return res.status(401).json({ error: 'Not signed in to a group' });
     if (req.method === 'GET') {
       const r = await sb(`matches?select=id,ts,results&group_id=eq.${g.id}&order=ts.asc&limit=5000`);
       return res.status(200).json(await r.json());
     }
     if (req.method === 'POST') {
+      if (b.action === 'adminlist') {
+        if (!adminOk(b.admin)) return res.status(401).json({ error: 'Wrong admin passcode' });
+        const r = await sb(`matches?select=id,ts,results&group_id=eq.${g.id}&order=ts.asc&limit=5000`);
+        return res.status(200).json(await r.json());
+      }
       if (b.action === 'merge') return await merge(b, res, g);
       if (!valid(b.results)) return res.status(400).json({ error: 'Invalid match' });
       const results = b.results.map((x) => ({ name: x.name.trim(), place: x.place, ...(x.char && x.char.trim() ? { char: x.char.trim() } : {}), ...Object.fromEntries(['kills', 'deaths', 'sds', 'dmg'].filter((k) => x[k] !== undefined).map((k) => [k, x[k]])) }));

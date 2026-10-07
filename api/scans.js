@@ -1,6 +1,6 @@
 // Training-data store: confirmed scans (image + correct labels) go into a private Supabase Storage bucket.
 const { auth, adminOk } = require('./_lib');
-const { total } = require('./_counter');
+const { ensure } = require('./_counter');
 const BUCKET = 'scans';
 const U = () => process.env.SUPABASE_URL, K = () => process.env.SUPABASE_SERVICE_KEY;
 const st = (p, o = {}) => fetch(`${U()}/storage/v1/${p}`, { ...o, headers: { apikey: K(), Authorization: `Bearer ${K()}`, ...o.headers } });
@@ -46,7 +46,10 @@ module.exports = async (req, res) => {
     if (b.action === 'list' || b.action === 'get' || b.action === 'count' || b.action === 'verify') {
       if (!adminOk(b.admin)) return res.status(401).json({ error: 'Wrong admin passcode' });
       if (b.action === 'verify') return res.status(200).json({ ok: true });
-      if (b.action === 'count') return res.status(200).json({ saved: (await ids()).length, total: await total() });
+      if (b.action === 'count') {
+        const c = await ensure();
+        return res.status(200).json({ saved: (await ids()).length, total: c.total, start: c.start });
+      }
       if (b.action === 'list') return res.status(200).json({ ids: await ids() });
       if (!ID.test(b.id || '')) return res.status(400).json({ error: 'Bad id' });
       const [im, js] = await Promise.all([st(`object/authenticated/${BUCKET}/${b.id}.jpg`), st(`object/authenticated/${BUCKET}/${b.id}.json`)]);
