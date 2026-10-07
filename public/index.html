@@ -99,7 +99,7 @@ const LB={all:"Overall",one:"1v1",ffa:"FFA"};
 const FIGHTERS="Mario,Donkey Kong,Link,Samus,Dark Samus,Yoshi,Kirby,Fox,Pikachu,Luigi,Ness,Captain Falcon,Jigglypuff,Peach,Daisy,Bowser,Ice Climbers,Sheik,Zelda,Dr. Mario,Pichu,Falco,Marth,Lucina,Young Link,Ganondorf,Mewtwo,Roy,Chrom,Mr. Game & Watch,Meta Knight,Pit,Dark Pit,Zero Suit Samus,Wario,Snake,Ike,Pokémon Trainer,Diddy Kong,Lucas,Sonic,King Dedede,Olimar,Lucario,R.O.B.,Toon Link,Wolf,Villager,Mega Man,Wii Fit Trainer,Rosalina & Luma,Little Mac,Greninja,Mii Brawler,Mii Swordfighter,Mii Gunner,Palutena,Pac-Man,Robin,Shulk,Bowser Jr.,Duck Hunt,Ryu,Ken,Cloud,Corrin,Bayonetta,Inkling,Ridley,Simon,Richter,King K. Rool,Isabelle,Incineroar,Piranha Plant,Joker,Hero,Banjo & Kazooie,Terry,Byleth,Min Min,Steve,Sephiroth,Pyra/Mythra,Kazuya,Sora".split(",");
 const ls=(k,v)=>{try{return v===undefined?localStorage.getItem(k)||"":localStorage.setItem(k,v)}catch(e){return""}};
 let ms=[],tab="lb",board="all",sel="",draft=[{name:"",place:1},{name:"",place:2}],note="",D=null;
-let me=ls("me"),pass=ls("pass"),admin=ls("admin"),gid=ls("gid"),gname=ls("gname"),jn=(typeof location!="undefined"&&new URLSearchParams(location.search).get("g")||"").slice(0,24),jk="",jmsg="",admOk=false,gtier=(typeof localStorage!="undefined"&&localStorage.getItem("gtier"))||"premier",gk="",gAdm=false,ml={open:false,step:"",key:"",code:"",chal:"",email:"",msg:"",busy:false},pkList=[],pkDays=30,pkMsg="",cg={open:false,pick:"",name:"",pw:"",ak:"",ak2:"",key:"",msg:"",busy:false,done:null},tdTot=null,tdStart=0,tdAcc=null,demo=false,tryOpen=false,tryKey="",tryMsg="",tryStage="",tryRes=null,tryBusy=false,tryLeft=0,pubN=null,howto=-1,howCtx="add",scanBase="",tkList=[],tkUses=1,tkHrs=24,tkMsg="",mgG="",mgMs=null,mgD=null;
+let me=ls("me"),pass=ls("pass"),admin=ls("admin"),gid=ls("gid"),gname=ls("gname"),jn=(typeof location!="undefined"&&new URLSearchParams(location.search).get("g")||"").slice(0,24),jk="",jmsg="",admOk=false,gtier=(typeof localStorage!="undefined"&&localStorage.getItem("gtier"))||"premier",gk="",gAdm=false,ml={open:false,step:"",key:"",code:"",chal:"",email:"",msg:"",busy:false},pkList=[],pkDays=30,pkMsg="",cg={open:false,pick:"",name:"",pw:"",ak:"",ak2:"",key:"",msg:"",busy:false,done:null},tdTot=null,tdStart=0,tdAcc=null,demo=false,tryOpen=false,tryKey="",tryMsg="",tryStage="",tryRes=null,tryBusy=false,tryLeft=0,pubN=null,pubAcc=null,howto=-1,howCtx="add",scanBase="",tkList=[],tkUses=1,tkHrs=24,tkMsg="",mgG="",mgMs=null,mgD=null;
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const isAdm=()=>!!(admin&&admOk&&!demo);
 const PREM=()=>demo||gtier!="free";
@@ -677,17 +677,16 @@ document.getElementById("f").onchange=async e=>{
 // ---------- Login page: demo + try scan ----------
 const PHONE="(323) 434-6498";
 function loginPage(){
-  return joinCard()+(ml.open&&!isAdm()?`<div class="card"><b>Master sign-in</b>${masterBox()}</div>`:"")+`<div class="tiles" style="margin-top:4px"><button class="tile" onclick="startDemo()"><b>See demo</b></button><button class="tile ${tryOpen?"on":""}" onclick="openTry()"><b>Try scan</b></button><button class="tile blue" onclick="openCg()"><b>Create group</b></button></div>
+  return joinCard()+(ml.open&&!isAdm()?`<div class="card"><b>Master sign-in</b>${masterBox()}</div>`:"")+`<div class="tiles" style="margin-top:4px"><button class="tile" onclick="startDemo()"><b>See demo</b></button><button class="tile ${tryOpen?"on":""}" onclick="openTry()"><b>Try scan</b>${pubAcc!=null&&pubAcc>95?`<span style="font-size:9px">Scans accuracy: <b style="color:#0a8f2f">${pubAcc}%</b></span>`:""}</button><button class="tile blue" onclick="openCg()"><b>Create group</b></button></div>
   <div class="info"><span>Text ${PHONE} for inquiries</span>${pubN==null?"":`<span><b>${pubN.toLocaleString()}</b> matches logged</span>`}</div>
   ${tryOpen?`<div class="card"><b>Scan key</b><div class="row" style="margin-top:8px"><input class="n" id="tk" placeholder="XXXX-XXXX" autocapitalize="characters" autocomplete="off" value="${esc(tryKey)}" oninput="tryKey=this.value" onkeydown="if(event.key=='Enter')tryCheck()"><button ${tryBusy?"disabled":""} onclick="tryCheck()">Continue</button></div><div class="msg">Text ${PHONE} for test keys</div><div class="msg${wc(tryMsg)}">${esc(tryMsg)}</div></div>`:""}`;
 }
 
 // ---------- Create a group (Free or Premier) ----------
 const FEATS=[
-  ["Ratings and leaderboards (overall, 1v1, FFA)",1,1],["Type in matches: player names and placements",1,1],["Match history and CSV export",1,1],
-  ["Win rate, win streaks, average opponent rating",1,1],["Trends: climbers, race, rivalries, upsets",1,1],["Rating medals and streak podiums",1,1],
-  ["Group admin tools: delete matches, merge players",1,1],["Screenshot scanning",0,1],["Fighters per match and fighter stats",0,1],
-  ["Combat stats: KOs, deaths, SDs, damage, K/D",0,1],["Combat leaderboards and all-time podiums",0,1],["Combat leaders on the Trends page",0,1]
+  ["Ratings and leaderboards",1,1],["Manual match entry",1,1],["History and CSV export",1,1],
+  ["Streaks and win rates",1,1],["Trends and rivalries",1,1],["Medals and podiums",1,1],
+  ["Admin tools",1,1],["Screenshot scanning",0,1],["Fighter stats",0,1],["Combat stats and leaderboards",0,1]
 ];
 const cb=y=>`<span class="cb ${y?"y":"n"}" aria-label="${y?"included":"not included"}">${y?"✓":"·"}</span>`;
 function featTable(){return`<div class="card"><b>What's included</b><table class="ft"><tr><th></th><th>Free</th><th>Premier</th></tr>${FEATS.map(([l,f,pr])=>`<tr><td>${l}</td><td>${cb(f)}</td><td>${cb(pr)}</td></tr>`).join("")}</table></div>`}
@@ -695,21 +694,21 @@ function openCg(){cg={open:true,pick:"",name:"",pw:"",ak:"",ak2:"",key:"",msg:""
 function cgBack(){if(cg.pick&&!cg.done){cg.pick="";cg.msg=""}else cg.open=false;render();scrollTo(0,0)}
 function cgPick(k){cg.pick=k;cg.msg="";render();scrollTo(0,0)}
 function cgPage(){
-  if(cg.done)return`<div class="card" style="background:var(--yel)"><div class="big">✓ Group created</div><div class="msg" style="margin:0 0 8px"><b>${esc(cg.done.name)}</b> is ready (${cg.done.tier=="free"?"Free":"Premier"}). Share the group name and group password with your players. Keep the admin password to yourself.</div><div class="sub">Group password: <b>${esc(cg.done.pw)}</b></div><div class="sub">Admin password: <b>${esc(cg.done.ak)}</b></div></div><div class="row"><button style="flex:1" onclick="cgOpen()">Open my group</button></div>`;
+  if(cg.done)return`<div class="card" style="background:var(--yel)"><div class="big">✓ Group created</div><div class="msg" style="margin:0 0 8px"><b>${esc(cg.done.name)}</b> is ready. Share the name and group password with players; keep the admin password private.</div><div class="sub">Group password: <b>${esc(cg.done.pw)}</b></div><div class="sub">Admin password: <b>${esc(cg.done.ak)}</b></div></div><div class="row"><button style="flex:1" onclick="cgOpen()">Open my group</button></div>`;
   if(!cg.pick)return`<button class="g" onclick="cgBack()">← Back</button><div style="height:12px"></div>
-  <div class="opts"><div class="card opt"><h3>Free group</h3><div class="msg">Type in each match with player names and placements. You still get ratings, trends, streaks, history and more. No scanning or fighter and combat stats.</div><button style="width:100%" onclick="cgPick('free')">Create free group</button></div>
-  <div class="card opt"><h3>Premier group</h3><div class="msg">Everything in Free, plus screenshot scanning, fighters and combat stats. Premier groups are set up by the site Master.<br><br><b>Text ${PHONE} to get a Premier group.</b></div><button class="g" style="width:100%" onclick="cgPick('premier')">Create premier group</button></div></div>
+  <div class="opts"><div class="card opt"><h3>Free group</h3><div class="msg">Type in matches by hand. Ratings, trends, history and more. No scanning or combat stats.</div><button style="width:100%" onclick="cgPick('free')">Create free group</button></div>
+  <div class="card opt"><h3>Premier group</h3><div class="msg">Everything in Free, plus scanning, fighters and combat stats.<br><br><b>Text ${PHONE} to get one.</b></div><button class="g" style="width:100%" onclick="cgPick('premier')">Create premier group</button></div></div>
   ${featTable()}`;
   const prem=cg.pick=="premier";
   return`<button class="g" onclick="cgBack()">← Back</button><div style="height:12px"></div>
-  <div class="card"><b>${prem?"Create premier group":"Create free group"}</b><div class="msg">${prem?"Enter the one-time Premier group key you were given. Text "+PHONE+" to get one.":"Pick a name nobody else is using, then two passwords."}</div>
+  <div class="card"><b>${prem?"Create premier group":"Create free group"}</b><div class="msg">${prem?"Enter your one-time Premier key. Text "+PHONE+" for one.":"Pick a unique name and two passwords."}</div>
   <form onsubmit="event.preventDefault();cgSubmit();return false" autocomplete="off">
   ${prem?`<div class="row"><input class="n" placeholder="Premier group key (XXXX-XXXX)" maxlength="12" autocapitalize="characters" value="${esc(cg.key)}" oninput="cg.key=this.value"></div>`:""}
   <div class="row"><input class="n" placeholder="Group name (must be unique)" maxlength="24" autocapitalize="off" value="${esc(cg.name)}" oninput="cg.name=this.value"></div>
   <div class="row"><input class="n" placeholder="Group password (shared with players)" maxlength="40" autocapitalize="off" value="${esc(cg.pw)}" oninput="cg.pw=this.value"></div>
   <div class="row"><input class="n" type="password" placeholder="Admin password (keep private)" maxlength="40" value="${esc(cg.ak)}" oninput="cg.ak=this.value"></div>
   <div class="row"><input class="n" type="password" placeholder="Repeat admin password" maxlength="40" value="${esc(cg.ak2)}" oninput="cg.ak2=this.value"></div>
-  <div class="msg">The group password lets players join. The admin password lets you delete matches and merge players.</div>
+  <div class="msg">Players join with the group password. The admin password manages matches.</div>
   <div class="row"><button type="submit" style="flex:1" ${cg.busy?"disabled":""}>${prem?"Create premier group":"Create free group"}</button></div></form>
   <div class="msg${wc(cg.msg)}">${esc(cg.msg)}</div></div>`;
 }
@@ -798,6 +797,6 @@ function makeDemo(){
 }
 function startDemo(){demo=true;gid="demo";gname="Demo Squad";pass="";ms=makeDemo();ms.sort((a,b)=>new Date(a.ts)-new Date(b.ts));tab="lb";sel="";stat="";tryOpen=false;tryStage="";render();scrollTo(0,0)}
 function exitDemo(){demo=false;gid=ls("gid");gname=ls("gname");pass=ls("pass");ms=[];sel="";stat="";tab="lb";if(gid)load();render();scrollTo(0,0)}
-fetch("/api/pub").then(r=>r.json()).then(j=>{pubN=j.matches;if(!gid)render()}).catch(()=>{});
+fetch("/api/pub").then(r=>r.json()).then(j=>{pubN=j.matches;pubAcc=j.acc;if(!gid)render()}).catch(()=>{});
 load();render();if(admin)MP({action:"check",token:admin}).then(j=>{if(j.ok){admOk=true;tdCount(true);gmLoad(true);tkLoad(true);pkLoad(true)}else{admin="";ls("admin","")}render()}).catch(()=>{});if(gid)gaResume();setInterval(()=>{if(!document.hidden)load()},8000);setInterval(updateNow,15000);
 </script></body></html>
