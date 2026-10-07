@@ -78,7 +78,7 @@ input.sm{flex:1;width:0;min-width:0;text-align:center;padding:8px 4px}
 #ov ul{margin:6px 0 0;padding-left:20px;line-height:1.5}
 .big{font:11px/1.6 var(--pf);margin:0 0 8px}
 .tile.blue{background:#4d8dff}.tile.blue.on{background:#2f6bff}
-.tiles{width:80%}
+.tiles{width:100%;margin-right:0}.tiles .tile{flex:1 1 0}.tiles .tile.blue{flex:2 1 0}.tiles .tile{justify-content:center;min-height:52px}
 .info{display:flex;justify-content:space-between;align-items:baseline;gap:4px 10px;flex-wrap:wrap;font:11px/1.5 ui-monospace,Menlo,Consolas,monospace;color:var(--mu);margin:0 4px 8px 0}
 .locked{position:relative;opacity:.55;filter:grayscale(1);background:#e4e1d2;box-shadow:none;pointer-events:none}
 .tag{display:inline-block;font:7px/1 var(--pf);background:var(--ink);color:#fff;padding:5px 6px;margin-bottom:8px}
@@ -87,7 +87,9 @@ input.sm{flex:1;width:0;min-width:0;text-align:center;padding:8px 4px}
 .ft td{padding:7px 2px;border-top:2px solid var(--ln)}.ft td+td{text-align:center;width:64px}
 .cb{display:inline-block;width:18px;height:18px;border:3px solid var(--ink);background:var(--in);font:11px/12px var(--pf);color:var(--ink);text-align:center}
 .cb.y{background:var(--ok);color:#fff;border-color:var(--ink)}.cb.n{background:#d9d4c0;color:#d9d4c0}
-.opt{margin-bottom:14px}.opt h3{font:10px/1.6 var(--pf);margin:0 0 6px}
+.opts{display:flex;gap:10px;margin:0 4px 16px 0;align-items:stretch}.opts .opt{flex:1;min-width:0;margin:0;display:flex;flex-direction:column}.opts .opt .msg{flex:1}.opt{margin-bottom:14px}.opt h3{font:10px/1.6 var(--pf);margin:0 0 6px}
+.tiles .tile{align-items:center;text-align:center}
+.hid{all:unset;cursor:text}.hid:active{transform:none!important}
 </style></head><body><main><h1>SMASH <span>ELO</span></h1><div class="tl">▶ 1UP LEADERBOARD <span class="blink">█</span></div><div id="now"></div><div id="v"></div></main>
 <nav><button data-t="lb">Ranks</button><button data-t="tr">Trends</button><button data-t="add">Add</button><button data-t="hist">History</button><button data-t="set">Settings</button></nav>
 <input type="file" id="f" accept="image/*" hidden><input type="file" id="tf" accept="image/*" hidden><div id="ov"></div>
@@ -97,7 +99,7 @@ const LB={all:"Overall",one:"1v1",ffa:"FFA"};
 const FIGHTERS="Mario,Donkey Kong,Link,Samus,Dark Samus,Yoshi,Kirby,Fox,Pikachu,Luigi,Ness,Captain Falcon,Jigglypuff,Peach,Daisy,Bowser,Ice Climbers,Sheik,Zelda,Dr. Mario,Pichu,Falco,Marth,Lucina,Young Link,Ganondorf,Mewtwo,Roy,Chrom,Mr. Game & Watch,Meta Knight,Pit,Dark Pit,Zero Suit Samus,Wario,Snake,Ike,Pokémon Trainer,Diddy Kong,Lucas,Sonic,King Dedede,Olimar,Lucario,R.O.B.,Toon Link,Wolf,Villager,Mega Man,Wii Fit Trainer,Rosalina & Luma,Little Mac,Greninja,Mii Brawler,Mii Swordfighter,Mii Gunner,Palutena,Pac-Man,Robin,Shulk,Bowser Jr.,Duck Hunt,Ryu,Ken,Cloud,Corrin,Bayonetta,Inkling,Ridley,Simon,Richter,King K. Rool,Isabelle,Incineroar,Piranha Plant,Joker,Hero,Banjo & Kazooie,Terry,Byleth,Min Min,Steve,Sephiroth,Pyra/Mythra,Kazuya,Sora".split(",");
 const ls=(k,v)=>{try{return v===undefined?localStorage.getItem(k)||"":localStorage.setItem(k,v)}catch(e){return""}};
 let ms=[],tab="lb",board="all",sel="",draft=[{name:"",place:1},{name:"",place:2}],note="",D=null;
-let me=ls("me"),pass=ls("pass"),admin=ls("admin"),gid=ls("gid"),gname=ls("gname"),jn=(typeof location!="undefined"&&new URLSearchParams(location.search).get("g")||"").slice(0,24),jk="",jmsg="",admOk=false,gtier=(typeof localStorage!="undefined"&&localStorage.getItem("gtier"))||"premier",gk="",gAdm=false,ml={step:"",key:"",code:"",chal:"",email:"",msg:"",busy:false},cg={open:false,pick:"",name:"",pw:"",ak:"",ak2:"",msg:"",busy:false,done:null},tdTot=null,tdStart=0,tdAcc=null,demo=false,tryOpen=false,tryKey="",tryMsg="",tryStage="",tryRes=null,tryBusy=false,tryLeft=0,pubN=null,howto=-1,howCtx="add",scanBase="",tkList=[],tkUses=1,tkHrs=24,tkMsg="",mgG="",mgMs=null,mgD=null;
+let me=ls("me"),pass=ls("pass"),admin=ls("admin"),gid=ls("gid"),gname=ls("gname"),jn=(typeof location!="undefined"&&new URLSearchParams(location.search).get("g")||"").slice(0,24),jk="",jmsg="",admOk=false,gtier=(typeof localStorage!="undefined"&&localStorage.getItem("gtier"))||"premier",gk="",gAdm=false,ml={open:false,step:"",key:"",code:"",chal:"",email:"",msg:"",busy:false},pkList=[],pkDays=30,pkMsg="",cg={open:false,pick:"",name:"",pw:"",ak:"",ak2:"",key:"",msg:"",busy:false,done:null},tdTot=null,tdStart=0,tdAcc=null,demo=false,tryOpen=false,tryKey="",tryMsg="",tryStage="",tryRes=null,tryBusy=false,tryLeft=0,pubN=null,howto=-1,howCtx="add",scanBase="",tkList=[],tkUses=1,tkHrs=24,tkMsg="",mgG="",mgMs=null,mgD=null;
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const isAdm=()=>!!(admin&&admOk&&!demo);
 const PREM=()=>demo||gtier!="free";
@@ -132,6 +134,7 @@ function spark(h){
 const tri=p=>`<div class="tri">${["all","one","ffa"].map(t=>`<div><div class="elo">${p.g[t]?Math.round(p.r[t]):"—"}</div><div class="sub">${LB[t]}</div></div>`).join("")}</div>`;
 function render(){
   renderCore();
+  {const nv=document.querySelector("nav");if(nv)nv.style.display=gid?"":"none"}
   if(demo){const v=document.getElementById("v");v.insertAdjacentHTML("afterbegin",`<div class="card" style="background:var(--yel)"><b class="ct">DEMO</b><div class="msg" style="margin:4px 0 8px">Sample players and matches. None of this is real data.</div><button onclick="exitDemo()">Exit demo</button></div>`)}
   drawHow();
 }
@@ -176,7 +179,7 @@ function renderCore(){
     ${gid&&!demo?groupAdminCard():""}${masterCard()}
     <div class="card"><b>You are</b><div class="row" style="margin-top:8px"><select onchange="me=this.value;ls('me',me);render()"><option value="">Choose…</option>${Object.keys(P).sort().map(n=>`<option ${n==me?"selected":""}>${esc(n)}</option>`).join("")}</select><button class="g" ${me&&P[me]?"":"disabled"} onclick="sel=me;stat='';tab='lb';render();scrollTo(0,0)">See stats</button></div></div>
     <div class="card"><button class="g" onclick="csv()">Export matches (CSV)</button></div>
-    ${isAdm()?`<div class="card"><b>Scans</b><div class="msg">Scans you confirm as correct are saved here.</div><div class="row"><button class="g" ${tdBusy?"disabled":""} onclick="tdCount()">Check count</button><button class="g" ${tdBusy?"disabled":""} onclick="tdDownload()">Download all (.zip)</button></div><div class="msg${wc(tdMsg)}">${esc(tdMsg)}</div>${tdTot!=null?`<div class="row" style="margin:8px 0 0"><b class="ct" style="flex:1">Total scans (site-wide)</b><span class="elo">${tdTot.toLocaleString()}</span></div><div class="sub">Every scan run, saved or not. Counting began at ${tdStart.toLocaleString()} (one per match logged before then).</div>${accLine()}`:""}</div>`:""}${tryKeysCard()}${mergeCard(P)}${groupsCard()}`;
+    ${isAdm()?`<div class="card"><b>Scans</b><div class="msg">Scans you confirm as correct are saved here.</div><div class="row"><button class="g" ${tdBusy?"disabled":""} onclick="tdCount()">Check count</button><button class="g" ${tdBusy?"disabled":""} onclick="tdDownload()">Download all (.zip)</button></div><div class="msg${wc(tdMsg)}">${esc(tdMsg)}</div>${tdTot!=null?`<div class="row" style="margin:8px 0 0"><b class="ct" style="flex:1">Total scans (site-wide)</b><span class="elo">${tdTot.toLocaleString()}</span></div><div class="sub">Every scan run, saved or not. Counting began at ${tdStart.toLocaleString()} (one per match logged before then).</div>${accLine()}`:""}</div>`:""}${premKeysCard()}${tryKeysCard()}${mergeCard(P)}${groupsCard()}`;
   }
 }
 document.querySelector("nav").onclick=e=>{if(e.target.dataset.t){tab=e.target.dataset.t;sel="";stat="";if(tab=="tr")RACE.key="";if(tab!="lb"){sopen=false;fq=""}render()}};
@@ -191,6 +194,16 @@ async function tkLoad(quiet){try{tkList=(await tkApi({action:"list"})).keys||[]}
 async function tkNew(){tkMsg="Making key…";render();try{const k=(await tkApi({action:"create",uses:tkUses,hours:tkHrs})).key;tkMsg=`New key ${k.code}`;await tkLoad(true)}catch(e){tkMsg=e.message;render()}}
 async function tkDel(c){if(!confirm("Delete key "+c+"?"))return;try{await tkApi({action:"delete",key:c});await tkLoad(true)}catch(e){tkMsg=e.message;render()}}
 function tkCopy(c,hrs){const s=`Try the Smash ELO scanner: open ${location.origin}, tap Try scan and enter key ${c}. It works for a limited time.`;try{navigator.clipboard.writeText(s);tkMsg="Invite text copied."}catch(e){tkMsg=s}render()}
+async function pkLoad(quiet){try{pkList=(await tkApi({action:"pk_list"})).keys||[]}catch(e){if(!quiet)pkMsg=e.message}render()}
+async function pkNew(){pkMsg="Making key…";render();try{const k=(await tkApi({action:"pk_create",days:pkDays})).key;pkMsg=`New key ${k.code}`;await pkLoad(true)}catch(e){pkMsg=e.message;render()}}
+async function pkDel(c){if(!confirm("Delete key "+c+"?"))return;try{await tkApi({action:"pk_delete",key:c});await pkLoad(true)}catch(e){pkMsg=e.message;render()}}
+function pkCopy(c){const s=`Your Premier group key is ${c}. Open ${location.origin}, tap Create group, then Create premier group, and enter the key. It works once.`;try{navigator.clipboard.writeText(s);pkMsg="Invite text copied."}catch(e){pkMsg=s}render()}
+function premKeysCard(){
+  if(!isAdm())return"";
+  const when=k=>k.used?"used":!k.active?"expired":k.exp?Math.max(1,Math.round((Date.parse(k.exp)-Date.now())/864e5))+" days left":"no expiry";
+  const rows=pkList.map(k=>`<div class="row" style="margin:6px 0"><span style="flex:1;min-width:0"><b>${esc(k.code)}</b><div class="sub">${when(k)}</div></span>${k.active?`<button class="g" onclick="pkCopy('${esc(k.code)}')">Copy</button>`:""}<button class="x" onclick="pkDel('${esc(k.code)}')">Delete</button></div>`).join("");
+  return`<div class="card"><b>Premier group keys</b><div class="msg">One-time keys that let someone create a Premier group. Text a key to the person; it stops working once used.</div><div class="row"><select onchange="pkDays=+this.value">${[[7,"Expires in 7 days"],[30,"Expires in 30 days"],[0,"Never expires"]].map(([d,l])=>`<option value="${d}" ${d==pkDays?"selected":""}>${l}</option>`).join("")}</select><button onclick="pkNew()">New key</button></div><div class="msg${wc(pkMsg)}">${esc(pkMsg)}</div>${rows||`<div class="sub">No keys yet.</div>`}</div>`;
+}
 function tryKeysCard(){
   if(!isAdm())return"";
   const when=k=>{const h=Math.round((Date.parse(k.exp)-Date.now())/36e5);return k.active?(h>=48?Math.round(h/24)+" days":h>=1?h+" h":"under 1 h")+" left":k.left<=0?"used up":"expired"};
@@ -198,8 +211,8 @@ function tryKeysCard(){
   return`<div class="card"><b>Try-scan keys</b><div class="msg">Temporary keys let someone outside a group test the scanner. Nothing they scan is saved or counted.</div><div class="row"><select onchange="tkUses=+this.value">${[1,3,5,10].map(n=>`<option value="${n}" ${n==tkUses?"selected":""}>${n} scan${n>1?"s":""}</option>`).join("")}</select><select onchange="tkHrs=+this.value">${[[24,"24 hours"],[72,"3 days"],[168,"7 days"]].map(([h,l])=>`<option value="${h}" ${h==tkHrs?"selected":""}>${l}</option>`).join("")}</select><button onclick="tkNew()">New key</button></div><div class="msg${wc(tkMsg)}">${esc(tkMsg)}</div>${rows||`<div class="sub">No keys yet.</div>`}</div>`;
 }
 const MP=async o=>{const r=await fetch("/api/master",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify(o)}),j=await r.json().catch(()=>({}));if(!r.ok)throw Object.assign(new Error(j.error||"Something went wrong"),{status:r.status});return j};
-function setMaster(tok){admin=tok;ls("admin",tok);admOk=true;ml={step:"",key:"",code:"",chal:"",email:"",msg:"",busy:false};admMsg="";tdCount(true);gmLoad(true);tkLoad(true);render()}
-function masterOut(){admin="";admOk=false;ls("admin","");tdTot=null;tdAcc=null;tkList=[];grp.list=null;mgG="";mgMs=null;mgD=null;render()}
+function setMaster(tok){admin=tok;ls("admin",tok);admOk=true;if(!gid&&!cg.open){tab="set";scrollTo(0,0)}ml={open:false,step:"",key:"",code:"",chal:"",email:"",msg:"",busy:false};admMsg="";tdCount(true);gmLoad(true);tkLoad(true);pkLoad(true);render()}
+function masterOut(){admin="";admOk=false;ls("admin","");tdTot=null;tdAcc=null;tkList=[];pkList=[];grp.list=null;mgG="";mgMs=null;mgD=null;render()}
 async function mlStart(){
   if(!ml.key.trim()){ml.msg="Enter the Master Passkey.";return render()}
   ml.busy=true;ml.msg="Checking…";render();
@@ -216,7 +229,8 @@ async function mlVerify(){
   catch(e){ml.msg=e.message}
   ml.busy=false;render();
 }
-function mlReset(){ml={step:"",key:"",code:"",chal:"",email:"",msg:"",busy:false};render()}
+function mlOpen(){if(isAdm()){tab="set";render();scrollTo(0,0);return}ml.open=!ml.open;ml.msg="";render()}
+function mlReset(){ml={open:ml.open,open:false,step:"",key:"",code:"",chal:"",email:"",msg:"",busy:false};render()}
 function masterBox(){
   if(ml.step=="code")return`<form onsubmit="event.preventDefault();mlVerify();return false"><div class="msg">We emailed a 6-digit code to <b>${esc(ml.email)}</b>. It lasts 10 minutes.</div><div class="row"><input class="n" inputmode="numeric" maxlength="6" autocomplete="one-time-code" placeholder="6-digit code" value="${esc(ml.code)}" oninput="ml.code=this.value"><button type="submit" ${ml.busy?"disabled":""}>Verify</button></div><div class="row"><button type="button" class="g" onclick="mlReset()">Start over</button></div><div class="msg${wc(ml.msg)}">${esc(ml.msg)}</div></form>`;
   return`<form onsubmit="event.preventDefault();mlStart();return false"><div class="row"><input class="n" type="password" autocomplete="off" placeholder="Master Passkey" value="${esc(ml.key)}" oninput="ml.key=this.value"><button type="submit" ${ml.busy?"disabled":""}>Continue</button></div><div class="msg${wc(ml.msg)}">${esc(ml.msg)}</div></form>`;
@@ -539,7 +553,7 @@ function statPage(){
   return`<button class="g" onclick="stat='';tab=sfrom;sel=sfsel;render();scrollTo(0,0)">← Back</button><div style="height:12px"></div>${chips}<div class="card"><b>${S.t}</b><div class="msg">${S.d}${needs?" Only matches with stats recorded count.":""}</div></div>${pgrp("c2","Time range",seg(SR,srange,"srange"))}${pgrp("c3","Game mode",seg(SM,smode,"smode"))}${sv}${list}${podiums()}`;
 }
 // ---------- Groups ----------
-function joinCard(){return`<div class="card"><b>Join your group</b><div class="msg">Ask your group's admin for the group name and passkey.</div><form onsubmit="event.preventDefault();joinGroup();return false" autocomplete="on"><div class="row"><input class="n" name="username" id="gname" placeholder="Group name" value="${esc(jn)}" oninput="jn=this.value" autocapitalize="off" autocomplete="username"></div><div class="row"><input class="n" type="password" name="password" id="gkey" placeholder="Passkey" value="${esc(jk)}" oninput="jk=this.value" autocomplete="current-password"></div><div class="row"><button type="submit" style="flex:1">Join</button></div></form><div class="msg${wc(jmsg)}">${esc(jmsg)}</div></div>`}
+function joinCard(){return`<div class="card"><b>Join your group</b><div class="msg">Ask your group's admin for the group name and <button class="hid" onclick="mlOpen()">passkey</button>.</div><form onsubmit="event.preventDefault();joinGroup();return false" autocomplete="on"><div class="row"><input class="n" name="username" id="gname" placeholder="Group name" value="${esc(jn)}" oninput="jn=this.value" autocapitalize="off" autocomplete="username"></div><div class="row"><input class="n" type="password" name="password" id="gkey" placeholder="Passkey" value="${esc(jk)}" oninput="jk=this.value" autocomplete="current-password"></div><div class="row"><button type="submit" style="flex:1">Join</button></div></form><div class="msg${wc(jmsg)}">${esc(jmsg)}</div></div>`}
 async function joinGroup(){
   jmsg="Checking…";render();
   try{const j=await api("groups",{method:"POST",body:JSON.stringify({action:"join",name:jn,passkey:jk})});
@@ -663,7 +677,7 @@ document.getElementById("f").onchange=async e=>{
 // ---------- Login page: demo + try scan ----------
 const PHONE="(323) 434-6498";
 function loginPage(){
-  return joinCard()+`<div class="tiles" style="margin-top:4px"><button class="tile" onclick="startDemo()"><b>See demo</b><span>Sample group</span></button><button class="tile ${tryOpen?"on":""}" onclick="openTry()"><b>Try scan</b><span>Scan a match</span></button><button class="tile blue" onclick="openCg()"><b>Create group</b><span>Free or Premier</span></button></div>
+  return joinCard()+(ml.open&&!isAdm()?`<div class="card"><b>Master sign-in</b>${masterBox()}</div>`:"")+`<div class="tiles" style="margin-top:4px"><button class="tile" onclick="startDemo()"><b>See demo</b></button><button class="tile ${tryOpen?"on":""}" onclick="openTry()"><b>Try scan</b></button><button class="tile blue" onclick="openCg()"><b>Create group</b></button></div>
   <div class="info"><span>Text ${PHONE} for inquiries</span>${pubN==null?"":`<span><b>${pubN.toLocaleString()}</b> matches logged</span>`}</div>
   ${tryOpen?`<div class="card"><b>Scan key</b><div class="row" style="margin-top:8px"><input class="n" id="tk" placeholder="XXXX-XXXX" autocapitalize="characters" autocomplete="off" value="${esc(tryKey)}" oninput="tryKey=this.value" onkeydown="if(event.key=='Enter')tryCheck()"><button ${tryBusy?"disabled":""} onclick="tryCheck()">Continue</button></div><div class="msg">Text ${PHONE} for test keys</div><div class="msg${wc(tryMsg)}">${esc(tryMsg)}</div></div>`:""}`;
 }
@@ -677,30 +691,31 @@ const FEATS=[
 ];
 const cb=y=>`<span class="cb ${y?"y":"n"}" aria-label="${y?"included":"not included"}">${y?"✓":"·"}</span>`;
 function featTable(){return`<div class="card"><b>What's included</b><table class="ft"><tr><th></th><th>Free</th><th>Premier</th></tr>${FEATS.map(([l,f,pr])=>`<tr><td>${l}</td><td>${cb(f)}</td><td>${cb(pr)}</td></tr>`).join("")}</table></div>`}
-function openCg(){cg={open:true,pick:"",name:"",pw:"",ak:"",ak2:"",msg:"",busy:false,done:null};tryStage="";tryOpen=false;render();scrollTo(0,0)}
+function openCg(){cg={open:true,pick:"",name:"",pw:"",ak:"",ak2:"",key:"",msg:"",busy:false,done:null};tryStage="";tryOpen=false;render();scrollTo(0,0)}
 function cgBack(){if(cg.pick&&!cg.done){cg.pick="";cg.msg=""}else cg.open=false;render();scrollTo(0,0)}
 function cgPick(k){cg.pick=k;cg.msg="";render();scrollTo(0,0)}
 function cgPage(){
   if(cg.done)return`<div class="card" style="background:var(--yel)"><div class="big">✓ Group created</div><div class="msg" style="margin:0 0 8px"><b>${esc(cg.done.name)}</b> is ready (${cg.done.tier=="free"?"Free":"Premier"}). Share the group name and group password with your players. Keep the admin password to yourself.</div><div class="sub">Group password: <b>${esc(cg.done.pw)}</b></div><div class="sub">Admin password: <b>${esc(cg.done.ak)}</b></div></div><div class="row"><button style="flex:1" onclick="cgOpen()">Open my group</button></div>`;
   if(!cg.pick)return`<button class="g" onclick="cgBack()">← Back</button><div style="height:12px"></div>
-  <div class="card opt"><h3>Free group</h3><div class="msg">Type in each match with player names and placements. You still get ratings, trends, streaks, history and more. No scanning or fighter and combat stats.</div><button style="width:100%" onclick="cgPick('free')">Create free group</button></div>
-  <div class="card opt"><h3>Premier group</h3><div class="msg">Everything in Free, plus screenshot scanning, fighters and combat stats. Premier groups are set up by the site Master.</div><button class="g" style="width:100%" onclick="cgPick('premier')">Create premier group</button></div>
-  ${featTable()}<div class="msg">Text ${PHONE} to ask about a Premier group.</div>`;
-  const prem=cg.pick=="premier",ready=!prem||isAdm();
+  <div class="opts"><div class="card opt"><h3>Free group</h3><div class="msg">Type in each match with player names and placements. You still get ratings, trends, streaks, history and more. No scanning or fighter and combat stats.</div><button style="width:100%" onclick="cgPick('free')">Create free group</button></div>
+  <div class="card opt"><h3>Premier group</h3><div class="msg">Everything in Free, plus screenshot scanning, fighters and combat stats. Premier groups are set up by the site Master.<br><br><b>Text ${PHONE} to get a Premier group.</b></div><button class="g" style="width:100%" onclick="cgPick('premier')">Create premier group</button></div></div>
+  ${featTable()}`;
+  const prem=cg.pick=="premier";
   return`<button class="g" onclick="cgBack()">← Back</button><div style="height:12px"></div>
-  <div class="card"><b>${prem?"Create premier group":"Create free group"}</b><div class="msg">${prem?"Premier groups can only be created by the Master.":"Pick a name nobody else is using, then two passwords."}</div>
-  ${prem?`<div class="card" style="box-shadow:none;margin:8px 0">${ready?`<div class="msg" style="margin:0">✓ Signed in as Master.</div><div class="row" style="margin:6px 0 0"><button class="g" onclick="masterOut()">Sign out</button></div>`:`<b>Master sign-in</b>${masterBox()}`}</div>`:""}
+  <div class="card"><b>${prem?"Create premier group":"Create free group"}</b><div class="msg">${prem?"Enter the one-time Premier group key you were given. Text "+PHONE+" to get one.":"Pick a name nobody else is using, then two passwords."}</div>
   <form onsubmit="event.preventDefault();cgSubmit();return false" autocomplete="off">
+  ${prem?`<div class="row"><input class="n" placeholder="Premier group key (XXXX-XXXX)" maxlength="12" autocapitalize="characters" value="${esc(cg.key)}" oninput="cg.key=this.value"></div>`:""}
   <div class="row"><input class="n" placeholder="Group name (must be unique)" maxlength="24" autocapitalize="off" value="${esc(cg.name)}" oninput="cg.name=this.value"></div>
   <div class="row"><input class="n" placeholder="Group password (shared with players)" maxlength="40" autocapitalize="off" value="${esc(cg.pw)}" oninput="cg.pw=this.value"></div>
   <div class="row"><input class="n" type="password" placeholder="Admin password (keep private)" maxlength="40" value="${esc(cg.ak)}" oninput="cg.ak=this.value"></div>
   <div class="row"><input class="n" type="password" placeholder="Repeat admin password" maxlength="40" value="${esc(cg.ak2)}" oninput="cg.ak2=this.value"></div>
   <div class="msg">The group password lets players join. The admin password lets you delete matches and merge players.</div>
-  <div class="row"><button type="submit" style="flex:1" ${cg.busy||!ready?"disabled":""}>${prem?"Create premier group":"Create free group"}</button></div></form>
+  <div class="row"><button type="submit" style="flex:1" ${cg.busy?"disabled":""}>${prem?"Create premier group":"Create free group"}</button></div></form>
   <div class="msg${wc(cg.msg)}">${esc(cg.msg)}</div></div>`;
 }
 async function cgSubmit(){
   const prem=cg.pick=="premier",n=cg.name.trim(),pw=cg.pw.trim(),ak=cg.ak.trim();
+  if(prem&&cg.key.replace(/[^a-z0-9]/gi,"").length<8)return cgMsg("Enter your Premier group key.");
   if(n.length<2)return cgMsg("Group name must be 2 to 24 characters.");
   if(pw.length<4)return cgMsg("Group password must be at least 4 characters.");
   if(ak.length<4)return cgMsg("Admin password must be at least 4 characters.");
@@ -708,14 +723,14 @@ async function cgSubmit(){
   if(ak===pw)return cgMsg("The admin password must be different from the group password.");
   cg.busy=true;cg.msg="Creating…";render();
   try{
-    const j=await api("groups",{method:"POST",body:JSON.stringify(prem?{action:"create",admin,name:n,passkey:pw,adminKey:ak,tier:"premier"}:{action:"signup",name:n,passkey:pw,adminKey:ak})});
+    const j=await api("groups",{method:"POST",body:JSON.stringify(prem?{action:"create",maker:cg.key.trim(),name:n,passkey:pw,adminKey:ak}:{action:"signup",name:n,passkey:pw,adminKey:ak})});
     cg.done={id:j.id,name:n,pw,ak,tier:prem?"premier":"free"};cg.msg=""}
   catch(e){cg.msg=e.message}
   cg.busy=false;render();
 }
 function cgMsg(m){cg.msg=m;render()}
 async function cgOpen(){
-  const d=cg.done;cg={open:false,pick:"",name:"",pw:"",ak:"",ak2:"",msg:"",busy:false,done:null};
+  const d=cg.done;cg={open:false,pick:"",name:"",pw:"",ak:"",ak2:"",key:"",msg:"",busy:false,done:null};
   gid=d.id;gname=d.name;gtier=d.tier;pass=d.pw;ls("gid",gid);ls("gname",gname);ls("gtier",gtier);ls("pass",pass);
   gAdm=false;gk="";ms=[];sel="";tab="lb";await load();render();
   try{await api("groups",{method:"POST",body:JSON.stringify({action:"gadmin",gkey:d.ak})});gk=d.ak;gAdm=true;ls("gk_"+gid,gk);render()}catch(e){}
@@ -784,5 +799,5 @@ function makeDemo(){
 function startDemo(){demo=true;gid="demo";gname="Demo Squad";pass="";ms=makeDemo();ms.sort((a,b)=>new Date(a.ts)-new Date(b.ts));tab="lb";sel="";stat="";tryOpen=false;tryStage="";render();scrollTo(0,0)}
 function exitDemo(){demo=false;gid=ls("gid");gname=ls("gname");pass=ls("pass");ms=[];sel="";stat="";tab="lb";if(gid)load();render();scrollTo(0,0)}
 fetch("/api/pub").then(r=>r.json()).then(j=>{pubN=j.matches;if(!gid)render()}).catch(()=>{});
-load();render();if(admin)MP({action:"check",token:admin}).then(j=>{if(j.ok){admOk=true;tdCount(true);gmLoad(true);tkLoad(true)}else{admin="";ls("admin","")}render()}).catch(()=>{});if(gid)gaResume();setInterval(()=>{if(!document.hidden)load()},8000);setInterval(updateNow,15000);
+load();render();if(admin)MP({action:"check",token:admin}).then(j=>{if(j.ok){admOk=true;tdCount(true);gmLoad(true);tkLoad(true);pkLoad(true)}else{admin="";ls("admin","")}render()}).catch(()=>{});if(gid)gaResume();setInterval(()=>{if(!document.hidden)load()},8000);setInterval(updateNow,15000);
 </script></body></html>
