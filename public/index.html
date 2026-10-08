@@ -1,10 +1,10 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Smash ELO">
+<meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="BroElo">
 <meta name="theme-color" content="#fff6d6"><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet"><link rel="manifest" href="/manifest.webmanifest">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎮</text></svg>">
-<title>Smash ELO</title>
+<title>BroElo</title>
 <style>
 :root{--bg:#fff6d6;--card:#fffdf4;--tx:#1b1730;--ink:#1b1730;--mu:#6b6590;--ac:#e5322d;--ok:#13813a;--bad:#c41e3a;--ln:#d9cfa3;--in:#fff;--g:#ffe9a8;--blue:#2f6bff;--yel:#ffd23f;--pf:"Press Start 2P",ui-monospace,Menlo,Consolas,monospace;color-scheme:light}
 *{box-sizing:border-box}
@@ -88,8 +88,12 @@ input.sm{flex:1;width:0;min-width:0;text-align:center;padding:8px 4px}
 .nodata{font:11px/1.5 ui-monospace,Menlo,Consolas,monospace;color:var(--mu);margin-top:8px}
 .gr{background:#e4e1d2!important;color:#8a8878!important;border-style:dashed!important;cursor:pointer}
 .gbtn{opacity:.55;filter:grayscale(1);cursor:pointer}
-#po{position:fixed;inset:0;background:rgba(26,22,48,.55);display:flex;align-items:center;justify-content:center;z-index:99;padding:20px}
+#po,#cf{position:fixed;inset:0;background:rgba(26,22,48,.55);display:flex;align-items:center;justify-content:center;z-index:99;padding:20px}
 #po .card{max-width:320px;text-align:center;margin:0}
+#cf .card{max-width:340px;width:100%;margin:0;max-height:90vh;overflow:auto}
+.q{flex:0 0 38px;width:38px;padding:0;font-weight:700}
+.rl{display:flex;align-items:center;gap:6px;font:11px/1.3 ui-monospace,Menlo,Consolas,monospace;color:var(--ink);white-space:nowrap;cursor:pointer}
+.rl input{width:18px;height:18px;accent-color:#e5322d;margin:0;flex:none}
 .locked{position:relative;opacity:.55;filter:grayscale(1);background:#e4e1d2;box-shadow:none;pointer-events:none}
 .tag{display:inline-block;font:7px/1 var(--pf);background:var(--ink);color:#fff;padding:5px 6px;margin-bottom:8px}
 .ft{width:100%;border-collapse:collapse;font:12px/1.35 ui-monospace,Menlo,Consolas,monospace}
@@ -100,7 +104,7 @@ input.sm{flex:1;width:0;min-width:0;text-align:center;padding:8px 4px}
 .opts{display:flex;gap:10px;margin:0 4px 16px 0;align-items:stretch}.opts .opt{flex:1;min-width:0;margin:0;display:flex;flex-direction:column}.opts .opt .msg{flex:1}.opt{margin-bottom:14px}.opt h3{font:10px/1.6 var(--pf);margin:0 0 6px}
 .tiles .tile{align-items:center;text-align:center}
 .hid{all:unset;cursor:text}.hid:active{transform:none!important}
-</style></head><body><main><h1>SMASH <span>ELO</span></h1><div class="tl">▶ 1UP LEADERBOARD <span class="blink">█</span></div><div id="now"></div><div id="v"></div></main>
+</style></head><body><main><h1>BRO <span>ELO</span></h1><div class="tl">▶ 1UP LEADERBOARD <span class="blink">█</span></div><div id="now"></div><div id="v"></div></main>
 <nav><button data-t="lb">Ranks</button><button data-t="tr">Trends</button><button data-t="add">Add</button><button data-t="hist">History</button><button data-t="set">Settings</button></nav>
 <input type="file" id="f" accept="image/*" hidden><input type="file" id="tf" accept="image/*" hidden><div id="ov"></div>
 <script src="/elo.js"></script>
@@ -116,12 +120,15 @@ const isAdm=()=>!!(admin&&admOk&&!demo&&!peep);
 const PREM=()=>demo||gtier!="free";
 const isGA=()=>isAdm()||(gAdm&&!demo&&!peep);
 const strip=m=>({...m,results:m.results.map(({char,kills,deaths,sds,dmg,...r})=>r)});
-const calc=m=>ELO.compute(PREM()?m:m.map(strip));
+const rz=m=>({...m,results:m.results.map(x=>x.rnd?{...x,char:"Random"}:x)});
+const calc=m=>ELO.compute(PREM()?m.map(rz):m.map(strip));
 const WARN=/premier|not match|different|expired|enter the admin|wrong|couldn't|can't|wasn't|failed|too many|not signed|no longer valid|invalid|need at least|must be|already|not set up|error|went wrong|partway|nothing to change|each username/i;
 const wc=t=>WARN.test(String(t||""))?" warn":"";
 const ord=n=>n+(["th","st","nd","rd"][(n%100>10&&n%100<14)?0:(n%10<4?n%10:0)]||"th");
+function setRnd(i,v){const r=draft[i];r.rnd=!!v;if(v)r.char="Random";else if((r.char||"")=="Random")r.char="";render()}
+function setChar(i,v){draft[i].char=v;if(v.trim().toLowerCase()=="random"){draft[i].rnd=true;draft[i].char="Random";render()}}
 function setPlace(i,el){const n=Math.min(8,Math.max(1,parseInt(el.value)||1));draft[i].place=n;el.value=ord(n)}
-const SL={kd:"K/D",kos:"KOs",dmg:"damage",sds:"SDs",streak:"win streak",wr:"win rate"};
+const SL={kd:"K/D",kos:"KOs",dmg:"damage",sds:"SDs",taken:"damage taken",streak:"win streak",wr:"win rate"};
 const NOTE="Not tracked in Free groups. These stats start being tracked if you upgrade, and there is no data for them yet.";
 const lockedPod=k=>`<div class="card locked"><span class="tag">Premier Group Feature</span><div><b>${STATS[k].t}</b></div><div class="sub" style="margin:2px 0 0">${STATS[k].d} Top 3 all time, plus week, month and 1v1/FFA boards.</div><div class="pixbox"><i style="height:62%"></i><i style="height:100%"></i><i style="height:42%"></i></div><div class="nodata">${NOTE}</div></div>`;
 const lockedStats=(t,items)=>`<div class="card locked"><span class="tag">Premier Group Feature</span><div><b>${t}</b></div><div class="lgrid">${items.map(x=>`<div><div class="sub" style="margin:0">${x}</div><div class="pixbox"><i></i></div></div>`).join("")}</div><div class="nodata">${NOTE}</div></div>`;
@@ -153,10 +160,10 @@ function render(){
   {const nv=document.querySelector("nav");if(nv)nv.style.display=gid?"":"none"}
   if(demo){const v=document.getElementById("v");v.insertAdjacentHTML("afterbegin",`<div class="card" style="background:var(--yel)"><b class="ct">DEMO</b><div class="msg" style="margin:4px 0 8px">Sample players and matches. None of this is real data.</div><button onclick="exitDemo()">Exit demo</button></div>`)}
   if(peep){const v=document.getElementById("v");v.insertAdjacentHTML("afterbegin",`<div class="card" style="background:var(--yel)"><b class="ct">PEEKING</b><div class="msg" style="margin:4px 0 8px">You are viewing <b>${esc(gname)}</b> as a player. View only: nothing can be added or changed.</div><button onclick="peepExit()">Exit peek</button></div>`)}
-  drawHow();
+  drawHow();drawConfirm();
 }
 function renderCore(){
-  raceStop();D=calc(ms);const P=D.players,v=document.getElementById("v");CH=[...new Set([...FIGHTERS,...ms.flatMap(m=>m.results.map(x=>x.char).filter(Boolean))])].sort();
+  raceStop();D=calc(ms);const P=D.players,v=document.getElementById("v");CH=[...new Set([...FIGHTERS,"Random",...ms.flatMap(m=>m.results.map(x=>x.char).filter(Boolean))])].sort();
   document.querySelectorAll("nav button").forEach(b=>b.classList.toggle("on",b.dataset.t==tab));
   {const tl=document.querySelector(".tl");if(tl)tl.innerHTML=`▶ ${esc(gid&&gname?gname:"1UP LEADERBOARD")} <span class="blink">█</span>`}
   if(!gid&&tab!="set"){v.innerHTML=cg.open?cgPage():tryStage?tryPage():loginPage();return}
@@ -182,8 +189,8 @@ function renderCore(){
   if(tab=="add"){
     if(!pass){v.innerHTML=`<div class="card"><b>Group passcode</b><div class="msg">Ask the group admin for the passcode to add matches.</div><div class="row"><input class="n" type="password" id="pc" placeholder="Passcode"><button onclick="pass=document.getElementById('pc').value.trim();ls('pass',pass);render()">Save</button></div></div>`;return}
     v.innerHTML=`<datalist id="dl">${Object.keys(P).map(n=>`<option value="${esc(n)}">`).join("")}</datalist><datalist id="dlc">${CH.map(c=>`<option value="${esc(c)}">`).join("")}</datalist>
-    ${PREM()?`<div class="card"><div class="row" style="margin:0"><button class="g" style="flex:1" onclick="document.getElementById('f').click()">📷 Scan result screen</button><button class="g" onclick="showHow('add')">How to scan</button></div><div class="msg${wc(note)}" id="st">${esc(note)}</div>${scanImg?`<button class="${confOk()?"":"g"}" style="width:100%;margin-top:6px" onclick="conf=!confOk();confSnap=conf?JSON.stringify(draft):'';render()">${confOk()?"✓ All data is correct":conf?"Edited. Tap to confirm again":"Is all data correct?"}</button><div class="msg">Tap once every name, place, character and stat matches the screenshot. Confirmed scans are saved to help train a better scanner.</div>`:""}</div>`:`<div class="card"><div class="row" style="margin:0"><button class="g gbtn" style="flex:1" onclick="premOnly()">📷 Scan result screen</button></div></div>`}
-    <div class="card">${draft.map((r,i)=>`<div class="row"><input class="p" type="text" inputmode="numeric" maxlength="4" value="${ord(r.place)}" onfocus="this.select()" onchange="setPlace(${i},this)" aria-label="Place"><input class="n" list="dl" placeholder="Username" value="${esc(r.name)}" onchange="draft[${i}].name=this.value"><button class="x" onclick="draft.splice(${i},1);render()">✕</button></div>${flag(r.name,i)}${PREM()?`<div class="row" style="margin:-2px 0 6px 72px"><input class="n" list="dlc" placeholder="Character (optional)" value="${esc(r.char||"")}" onchange="draft[${i}].char=this.value"></div><div class="row" style="margin:0 0 10px 72px;gap:6px">${[["kills","KOs"],["deaths","Deaths"],["sds","SDs"],["dmg","Dmg"]].map(([k,t])=>`<input class="sm" type="number" inputmode="decimal" min="0" placeholder="${t}" value="${r[k]??""}" onchange="draft[${i}].${k}=nv(this.value)" aria-label="${t}">`).join("")}</div>`:`<div class="row" style="margin:-2px 0 10px 72px"><input class="n gr" readonly placeholder="Character (Premier only)" onclick="premOnly()"></div>`}`).join("")}
+    ${PREM()?`<div class="card"><div class="row" style="margin:0"><button class="g" style="flex:1" onclick="document.getElementById('f').click()">📷 Scan result screen</button><button class="g q" aria-label="How to scan" title="How to scan" onclick="showHow('add')">?</button></div><div class="msg${wc(note)}" id="st">${esc(note)}</div>${scanImg?`<button style="width:100%;margin-top:6px" onclick="cfOpen=true;render()">Is all data correct?</button><div class="msg">Check the scan against your screenshot. Yes saves the match, and confirmed scans help train a better scanner.</div>`:""}</div>`:`<div class="card"><div class="row" style="margin:0"><button class="g gbtn" style="flex:1" onclick="premOnly()">📷 Scan result screen</button></div></div>`}
+    <div class="card">${draft.map((r,i)=>`<div class="row"><input class="p" type="text" inputmode="numeric" maxlength="4" value="${ord(r.place)}" onfocus="this.select()" onchange="setPlace(${i},this)" aria-label="Place"><input class="n" list="dl" placeholder="Username" value="${esc(r.name)}" onchange="draft[${i}].name=this.value"><button class="x" onclick="draft.splice(${i},1);render()">✕</button></div>${flag(r.name,i)}${PREM()?`<div class="row" style="margin:-2px 0 6px 72px"><label class="rl"><input type="checkbox" ${r.rnd?"checked":""} onchange="setRnd(${i},this.checked)">Went random?</label><input class="n" list="dlc" placeholder="Character (optional)" ${r.rnd?"disabled":""} value="${esc(r.rnd?"Random":r.char||"")}" onchange="setChar(${i},this.value)"></div><div class="row" style="margin:0 0 10px 72px;gap:6px">${[["kills","KOs"],["deaths","Deaths"],["sds","SDs"],["dmg","Dmg"]].map(([k,t])=>`<input class="sm" type="number" inputmode="decimal" min="0" placeholder="${t}" value="${r[k]??""}" onchange="draft[${i}].${k}=nv(this.value)" aria-label="${t}">`).join("")}</div>`:`<div class="row" style="margin:-2px 0 10px 72px"><label class="rl"><input type="checkbox" ${r.rnd?"checked":""} onchange="setRnd(${i},this.checked)">Went random?</label><input class="n gr" readonly placeholder="Character (Premier only)" onclick="premOnly()"></div>`}`).join("")}
     <div class="row"><button class="g" onclick="if(draft.length<8){draft.push({name:'',place:draft.length+1});render()}">+ Player</button><button id="sv" style="flex:1" onclick="saveMatch()">Save match</button></div>
     <div class="msg">Type 1 to 8 for placement (1st = winner). Tied players share a place. 2 players = 1v1, 3 or more = FFA.</div></div>`;
   }
@@ -210,7 +217,7 @@ const tkApi=o=>api("trykeys",{method:"POST",body:JSON.stringify({admin,...o})});
 async function tkLoad(quiet){try{tkList=(await tkApi({action:"list"})).keys||[]}catch(e){if(!quiet)tkMsg=e.message}render()}
 async function tkNew(){tkMsg="Making key…";render();try{const k=(await tkApi({action:"create",uses:tkUses,hours:tkHrs})).key;tkMsg=`New key ${k.code}`;await tkLoad(true)}catch(e){tkMsg=e.message;render()}}
 async function tkDel(c){if(!confirm("Delete key "+c+"?"))return;try{await tkApi({action:"delete",key:c});await tkLoad(true)}catch(e){tkMsg=e.message;render()}}
-function tkCopy(c,hrs){const s=`Try the Smash ELO scanner: open ${location.origin}, tap Try scan and enter key ${c}. It works for a limited time.`;try{navigator.clipboard.writeText(s);tkMsg="Invite text copied."}catch(e){tkMsg=s}render()}
+function tkCopy(c,hrs){const s=`Try the BroElo scanner: open ${location.origin}, tap Try scan and enter key ${c}. It works for a limited time.`;try{navigator.clipboard.writeText(s);tkMsg="Invite text copied."}catch(e){tkMsg=s}render()}
 async function pkLoad(quiet){try{pkList=(await tkApi({action:"pk_list"})).keys||[]}catch(e){if(!quiet)pkMsg=e.message}render()}
 async function pkNew(){pkMsg="Making key…";render();try{const k=(await tkApi({action:"pk_create",days:pkDays})).key;pkMsg=`New key ${k.code}`;await pkLoad(true)}catch(e){pkMsg=e.message;render()}}
 async function pkDel(c){if(!confirm("Delete key "+c+"?"))return;try{await tkApi({action:"pk_delete",key:c});await pkLoad(true)}catch(e){pkMsg=e.message;render()}}
@@ -370,14 +377,14 @@ function rivals(p){
   const line=(t,r)=>r?`<div class="sub">${t}: <b>${esc(r.label)}</b> · ${rec(r)} (${Math.round(100*wr(r))}%)</div>`:`<div class="sub">${t}: not enough games yet</div>`;
   const blk=(title,f)=>`<div style="margin-top:10px"><b>${title}</b>${line("Player",f(P1))}${line("Pair",f(P2))}</div>`;
   const col=L=>L.slice().sort((a,b)=>wr(b)-wr(a)||gm(b)-gm(a)).map(r=>`<div style="margin:6px 0${gm(r)<3?";opacity:.55":""}"><div class="mn">${esc(r.label)}</div><div class="sub">${rec(r)} · ${Math.round(100*wr(r))}%</div></div>`).join("")||`<div class="sub">None yet</div>`;
-  return`<div class="card"><b>Rivalries</b><div class="sub">Needs 3+ meetings. Pairs are your character vs their player's character.</div>${blk("Nemesis",nem)}${blk("Favorite victim",vic)}${blk("Twin (most even)",twin)}<details style="margin-top:12px"><summary><b>See all matchups</b></summary><div class="cols"><div><div class="sub" style="font-weight:700">Players</div>${col(P1)}</div><div><div class="sub" style="font-weight:700">Player-character pairs</div>${col(P2)}</div></div></details></div>`;
+  return`<div class="card"><b>Rivalries</b><div class="sub">Needs 3+ meetings. Biggest Op is your worst matchup and Nemesis your most even one. Pairs are your character vs their player's character.</div>${blk("Biggest Op",nem)}${blk("Favorite victim",vic)}${blk("Nemesis",twin)}<details style="margin-top:12px"><summary><b>See all matchups</b></summary><div class="cols"><div><div class="sub" style="font-weight:700">Players</div>${col(P1)}</div><div><div class="sub" style="font-weight:700">Player-character pairs</div>${col(P2)}</div></div></details></div>`;
 }
 function upsets(p){
   const d=u=>new Date(u.ts).toLocaleDateString(),nm=u=>esc(u.opp)+(u.oc?` (${esc(u.oc)})`:"");
   const top=w=>p.ups.filter(u=>u.won==w).sort((a,b)=>b.gap-a.gap).slice(0,3);
   const W=top(true),L=top(false);
-  if(!W.length&&!L.length)return`<div class="card"><b>Biggest upsets</b><div class="sub">None yet. An upset is a result against someone rated 50+ points apart.</div></div>`;
-  return`<div class="card"><b>Biggest upsets</b>${W.length?`<div class="sub" style="margin-top:6px">Wins</div>`+W.map(u=>`<div style="margin:6px 0"><span class="up">Beat ${nm(u)}</span><div class="sub">${d(u)} · rated ${Math.round(u.gap)} higher · you had a ${Math.round(u.pr*100)}% chance</div></div>`).join(""):""}${L.length?`<div class="sub" style="margin-top:8px">Losses</div>`+L.map(u=>`<div style="margin:6px 0"><span class="dn">Lost to ${nm(u)}</span><div class="sub">${d(u)} · rated ${Math.round(u.gap)} lower · you were a ${Math.round((1-u.pr)*100)}% favorite</div></div>`).join(""):""}</div>`;
+  if(!W.length&&!L.length)return`<div class="card"><b>Underdog</b><div class="sub">None yet. An underdog result is against someone rated 50+ points apart.</div></div>`;
+  return`<div class="card"><b>Underdog</b>${W.length?`<div class="sub" style="margin-top:6px">Wins</div>`+W.map(u=>`<div style="margin:6px 0"><span class="up">Beat ${nm(u)}</span><div class="sub">${d(u)} · rated ${Math.round(u.gap)} higher · you had a ${Math.round(u.pr*100)}% chance</div></div>`).join(""):""}${L.length?`<div class="sub" style="margin-top:8px">Losses</div>`+L.map(u=>`<div style="margin:6px 0"><span class="dn">Lost to ${nm(u)}</span><div class="sub">${d(u)} · rated ${Math.round(u.gap)} lower · you were a ${Math.round((1-u.pr)*100)}% favorite</div></div>`).join(""):""}</div>`;
 }
 function oppOf(name){
   const R={},o={all:{os:0,g:0},one:{os:0,g:0},ffa:{os:0,g:0}};let run=0,rs=0,rn=0,best=0,bs=0,bn=0;
@@ -432,7 +439,7 @@ const DAY=864e5,tms=x=>new Date(x.ts).getTime();
 function rAt(p,t,m="all"){let r=null;for(const x of p.h[m]){if(tms(x)<=t)r=x.r;else break}return r}
 function stepPts(p,t0,t1){const r0=rAt(p,t0)??1000,pts=[[t0,r0]];let last=r0;for(const x of p.h.all){const t=tms(x);if(t<=t0)continue;if(t>t1)break;pts.push([t,last]);pts.push([t,x.r]);last=x.r}pts.push([t1,last]);return pts}
 function trendsData(days){
-  const P=D.players,lastT=D.matches.length?tms(D.matches[D.matches.length-1]):0,t1=Math.max(Date.now(),lastT),t0=t1-days*DAY;
+  const P=D.players,lastT=D.matches.length?tms(D.matches[D.matches.length-1]):0,t1=Math.max(Date.now(),lastT),t0=days?t1-days*DAY:(D.matches.length?Math.min(...D.matches.map(tms))-1:t1-DAY);
   const inP=D.matches.filter(m=>tms(m)>t0);
   const rank=a=>{const o={};a.forEach((x,i)=>o[x.name]=i+1);return o};
   const nowL=Object.values(P).filter(p=>p.g.all).sort((a,b)=>b.r.all-a.r.all),nowR=rank(nowL);
@@ -452,19 +459,24 @@ function trendsData(days){
     e.n++;x.place<y.place?e.aw++:x.place>y.place?e.bw++:e.t++;
   }
   const rival=Object.values(pr).sort((a,b)=>b.n-a.n||Math.abs(a.aw-a.bw)-Math.abs(b.aw-b.bw))[0]||null;
-  const cs={};for(const m of inP)for(const x of m.results){const c=(cs[x.name]??={name:x.name,k:0,d:0,n:0,sd:0,dmg:0});
+  const cs={};for(const m of inP)for(const x of m.results){const c=(cs[x.name]??={name:x.name,k:0,d:0,n:0,sd:0,dmg:0,tk:0});
     if(Number.isFinite(x.kills)&&Number.isFinite(x.deaths)){c.k+=x.kills;c.d+=x.deaths;c.n++}
-    if(Number.isFinite(x.sds))c.sd+=x.sds;if(Number.isFinite(x.dmg))c.dmg+=x.dmg}
+    if(Number.isFinite(x.sds))c.sd+=x.sds;if(Number.isFinite(x.dmg))c.dmg+=x.dmg;
+    {const od=m.results.filter(y=>y!==x&&Number.isFinite(y.dmg)).map(y=>y.dmg);if(od.length)c.tk+=od.reduce((a,b)=>a+b,0)/od.length}}
   const ca=Object.values(cs),kdOf=c=>c.d?c.k/c.d:c.k?Infinity:0,top=(L,f)=>L.sort(f)[0]||null;
-  const cmb={any:ca.some(c=>c.n||c.sd||c.dmg),
+  const cmb={any:ca.some(c=>c.n||c.sd||c.dmg||c.tk),taken:top(ca.filter(c=>c.tk>0).slice(),(a,b)=>b.tk-a.tk),
     kd:top(ca.filter(c=>c.n>=3).map(c=>({...c,kd:kdOf(c)})),(a,b)=>a.kd===b.kd?b.k-a.k:b.kd>a.kd?1:-1),
     kos:top(ca.filter(c=>c.k>0),(a,b)=>b.k-a.k||b.n-a.n),dmg:top(ca.filter(c=>c.dmg>0),(a,b)=>b.dmg-a.dmg),sds:top(ca.filter(c=>c.sd>0),(a,b)=>b.sd-a.sd||b.dmg-a.dmg)};
+  const rm={};for(const m of inP)for(const x of m.results)if(x.rnd||x.char=="Random"){const e=(rm[x.name]??={name:x.name,n:0,w:0});e.n++;if(x.place===1)e.w++}
+  const mys=top(Object.values(rm).filter(e=>e.n>=3),(a,b)=>b.w/b.n-a.w/a.n||b.n-a.n);
+  const nt={};for(const m of inP)if(new Date(tms(m)).getHours()<4)for(const x of m.results)nt[x.name]=(nt[x.name]||0)+1;
+  const ins=top(Object.entries(nt).map(([name,n])=>({name,n})),(a,b)=>b.n-a.n);
   const lead={};for(const t of ["one","ffa"]){
     const cur=Object.values(P).filter(p=>p.g[t]).sort((a,b)=>b.r[t]-a.r[t]);
     const st=Object.values(P).map(p=>({name:p.name,r:rAt(p,t0,t)})).filter(x=>x.r!=null).sort((a,b)=>b.r-a.r);
     lead[t]={cur:cur[0]||null,prev:st[0]?st[0].name:null};
   }
-  return{t0,t1,inP,rows,climber,faller,active,cur,longest,upset,rival,cmb,lead,top3:nowL.slice(0,3),top5:nowL.slice(0,5)};
+  return{t0,t1,inP,rows,climber,faller,active,cur,longest,upset,rival,cmb,mys,ins,lead,top3:nowL.slice(0,3),top5:nowL.slice(0,5)};
 }
 const RACE={key:"",f:0,raf:0,done:false,start:0,s:[],g:null};
 const RDUR=6000,RCOL=["#e0a400","#7d8596","#b8672a"],RPAL=["#e5322d","#2f6bff","#13813a","#8a3ffc","#00a3a3","#d6336c","#ff7a00","#5c6b00","#1b1730"];
@@ -504,31 +516,35 @@ function raceCard(T,days){
   const ticks=Array.from({length:k+1},(_,i)=>T.t0+i*(T.t1-T.t0)/k).map(t=>`<line x1="${X(t).toFixed(1)}" y1="118" x2="${X(t).toFixed(1)}" y2="122" stroke="var(--ink)"/><text x="${X(t).toFixed(1)}" y="134" text-anchor="middle" font-size="8" style="fill:var(--mu)">${fmt(new Date(t))}</text>`).join("");
   const yl=[hi,(hi+lo)/2,lo].map(v=>`<text x="2" y="${(Y(v)+3).toFixed(1)}" font-size="8" style="fill:var(--mu)">${Math.round(v)}</text><line x1="26" y1="${Y(v).toFixed(1)}" x2="290" y2="${Y(v).toFixed(1)}" stroke="var(--ln)" stroke-dasharray="2 3"/>`).join("");
   const lines=RACE.s.map((s,i)=>`<polyline id="rl${i}" fill="none" stroke="${s.col}" stroke-width="${all?2:3}" stroke-linejoin="miter" shape-rendering="crispEdges" points=""/>`).join(""),heads=RACE.s.map((s,i)=>`<rect id="rh${i}" width="${all?5:6}" height="${all?5:6}" fill="${s.col}" stroke="var(--ink)" stroke-width="1"/>`).join("");
-  return`<div class="card"><div class="row"><b class="ct" style="flex:1">Rating race</b><button class="g" onclick="replayRace()">▶ Replay</button></div>${pgrp("c4","Race view",`<div class="seg"><button class="${all?"":"on"}" onclick="rview='top3';render()">Podium race</button><button class="${all?"on":""}" onclick="rview='top5';render()">Top 5</button></div>`)}<div class="sub" id="rt">&nbsp;</div><div class="pod${all?" list":""}" id="pod"></div><svg viewBox="0 0 300 140" width="100%" role="img" aria-label="Rating of the top three players over the last ${days} days"><line x1="26" y1="118" x2="290" y2="118" stroke="var(--ink)"/>${yl}${ticks}${lines}${heads}</svg></div>`;
+  return`<div class="card"><div class="row"><b class="ct" style="flex:1">Rating race</b><button class="g" onclick="replayRace()">▶ Replay</button></div>${pgrp("c4","Race view",`<div class="seg"><button class="${all?"":"on"}" onclick="rview='top3';render()">Podium race</button><button class="${all?"on":""}" onclick="rview='top5';render()">Top 5</button></div>`)}<div class="sub" id="rt">&nbsp;</div><div class="pod${all?" list":""}" id="pod"></div><svg viewBox="0 0 300 140" width="100%" role="img" aria-label="Rating of the top three players ${days?"over the last "+days+" days":"over all time"}"><line x1="26" y1="118" x2="290" y2="118" stroke="var(--ink)"/>${yl}${ticks}${lines}${heads}</svg></div>`;
 }
 function trendsPage(){
-  const days=tper=="week"?7:30,w=tper,T=trendsData(days),R0=Math.round;
-  const seg=pgrp("c2","Time range",`<div class="seg"><button class="${tper=="week"?"on":""}" onclick="tper='week';render()">Week</button><button class="${tper=="month"?"on":""}" onclick="tper='month';render()">Month</button></div>`);
+  const days=tper=="week"?7:tper=="month"?30:0,w=tper,pt=days?`the last ${days} days`:"all time",T=trendsData(days),R0=Math.round;
+  const seg=pgrp("c2","Time range",`<div class="seg"><button class="${tper=="week"?"on":""}" onclick="tper='week';render()">Week</button><button class="${tper=="month"?"on":""}" onclick="tper='month';render()">Month</button><button class="${tper=="all"?"on":""}" onclick="tper='all';render()">All time</button></div>`);
   RACE.g=null;RACE.s=[];
-  if(!T.inP.length)return seg+`<div class="card"><b>Quiet here</b><div class="msg">No matches in the last ${days} days.</div></div>`;
+  if(!T.inP.length)return seg+`<div class="card"><b>Quiet here</b><div class="msg">${days?`No matches in the last ${days} days.`:"No matches yet."}</div></div>`;
   const cf=(t,r,good)=>`<div class="card"${r?` data-n="${esc(r.name)}" style="cursor:pointer"`:""}><div class="ct">${t}</div>${r?`<div class="nm" style="margin-top:8px">${esc(r.name)}</div><div class="elo ${good?"up":"dn"}">${r.d>=0?"+":""}${R0(r.d)}</div><div class="sub">${R0(r.s)} → ${R0(r.e)} · ${r.n} games</div>`:`<div class="sub" style="margin-top:8px">Nobody yet (needs 2+ games)</div>`}</div>`;
   const mv=T.rows.map(r=>{const d=R0(r.d),rc=r.rs==null?"NEW":r.rs-r.rn>0?"▲"+(r.rs-r.rn):r.rs-r.rn<0?"▼"+(r.rn-r.rs):"–";return`<div class="mv" data-n="${esc(r.name)}"><span class="rk">${r.rn<=3?medal(r.rn-1,20):r.rn}</span><span class="nm">${esc(r.name)}<div class="sub">${r.n} game${r.n>1?"s":""} · now ${R0(r.e)}</div></span><span class="dl ${d>0?"up":d<0?"dn":""}">${d>0?"▲":d<0?"▼":"–"} ${Math.abs(d)}</span><span class="rc">#${r.rn} ${rc}</span></div>`}).join("");
   const mx=Math.max(...T.active.map(r=>r.n));
   const act=T.active.map(r=>`<div style="margin:8px 0" data-n="${esc(r.name)}"><div class="row" style="margin:0"><span class="nm">${esc(r.name)}</span><span class="sub">${r.n} games · ${r.opp} opponent${r.opp==1?"":"s"}</span></div><div class="bar" style="width:${Math.max(4,r.n/mx*100)}%"></div></div>`).join("");
-  const st=(T.cur.length?T.cur.map(p=>`<div class="row" style="margin:6px 0" data-stat="streak" data-sv="cur" data-sr="all"><span class="nm">🔥 ${esc(p.name)}</span><span class="elo up">${p.streak}</span><span class="sub">in a row</span></div>`).join(""):`<div class="sub">No active streaks of 2 or more.</div>`)+(T.longest?`<div class="sub" style="margin-top:8px" data-stat="streak" data-sv="best" data-sr="${tper}">Longest this ${w}: <b>${esc(T.longest.name)}</b> · ${T.longest.n} wins in a row ›</div>`:"");
-  const u=T.upset,up=u?`<div class="nm" style="margin-top:8px"><span class="up">${esc(u.name)}</span> beat ${esc(u.opp)}</div><div class="sub">${u.mc||u.oc?`${esc(u.mc||"?")} vs ${esc(u.oc||"?")} · `:""}rated ${R0(u.gap)} lower · only a ${R0(u.pr*100)}% chance · ${new Date(u.ts).toLocaleDateString()}</div>`:`<div class="sub" style="margin-top:8px">No upsets this ${w}. An upset needs a 50+ point rating gap.</div>`;
-  const rv=T.rival,riv=rv?`<div class="nm" style="margin-top:8px">${esc(rv.a)} vs ${esc(rv.b)}</div><div class="sub">${rv.n} meetings · ${rv.aw}–${rv.bw}${rv.t?"–"+rv.t:""} (${esc(rv.a)} first)</div>`:`<div class="sub" style="margin-top:8px">No rivalries yet.</div>`;
+  const st=(T.cur.length?T.cur.map(p=>`<div class="row" style="margin:6px 0" data-stat="streak" data-sv="cur" data-sr="all"><span class="nm">🔥 ${esc(p.name)}</span><span class="elo up">${p.streak}</span><span class="sub">in a row</span></div>`).join(""):`<div class="sub">No active streaks of 2 or more.</div>`)+(T.longest?`<div class="sub" style="margin-top:8px" data-stat="streak" data-sv="best" data-sr="${tper}">Longest ${tper=="all"?"ever":"this "+w}: <b>${esc(T.longest.name)}</b> · ${T.longest.n} wins in a row ›</div>`:"");
+  const u=T.upset,rv=T.rival,M=T.mys,I=T.ins;
+  const slot=(t,body,n)=>`<div class="card"${n?` data-n="${esc(n)}" style="cursor:pointer"`:""}><div class="ct">${t}</div>${body}</div>`,none=m=>`<div class="sub" style="margin-top:8px">${m}</div>`;
+  const rivC=slot("Biggest rivals",rv?`<div class="nm" style="margin-top:8px">${esc(rv.a)} vs ${esc(rv.b)}</div><div class="sub">${rv.n} meetings · ${rv.aw}–${rv.bw}${rv.t?"–"+rv.t:""}</div>`:none("No rivalries yet"));
+  const udC=slot("Underdog",u?`<div class="nm" style="margin-top:8px">${esc(u.name)}</div><div class="sub">beat ${esc(u.opp)} · rated ${R0(u.gap)} lower · ${R0(u.pr*100)}% chance</div>`:none("None yet. Needs a 50+ rating gap"),u&&u.name);
+  const myC=slot("Man of Mystery",M?`<div class="nm" style="margin-top:8px">${esc(M.name)}</div><div class="elo up">${R0(100*M.w/M.n)}%</div><div class="sub">${M.w}W ${M.n-M.w}L going random</div>`:none("Needs 3+ games going random"),M&&M.name);
+  const inC=slot("Insomniac",I?`<div class="nm" style="margin-top:8px">${esc(I.name)}</div><div class="elo">${I.n}</div><div class="sub">game${I.n==1?"":"s"} between midnight and 4am</div>`:none("No games between midnight and 4am"),I&&I.name);
   const lr=t=>{const L=T.lead[t];if(!L.cur)return`<div class="row" style="margin:8px 0"><span class="sub" style="flex:0 0 52px">${LB[t]}</span><span class="sub">No games yet</span></div>`;
     const note=!L.prev?"new board":L.prev==L.cur.name?"held the lead":`took the lead from ${esc(L.prev)}`;
     return`<div class="row" data-n="${esc(L.cur.name)}" style="margin:8px 0;cursor:pointer"><span class="sub" style="flex:0 0 52px">${LB[t]}</span><span class="rk">${medal(0,18)}</span><span class="nm">${esc(L.cur.name)}<div class="sub">${note}</div></span><span class="elo">${R0(L.cur.r[t])}</span></div>`};
   const leadCard=`<div class="card"><b>Rating leaders</b>${lr("one")}${lr("ffa")}</div>`;
-  const C=T.cmb,cr=(label,key,c,val,sub)=>c?`<div class="row" data-stat="${key}" data-sr="${tper}" style="margin:8px 0"><span class="sub" style="flex:0 0 96px">${label}</span><span class="nm">${esc(c.name)}${sub?`<div class="sub">${sub}</div>`:""}</span><span class="elo">${val}</span><span class="sub">›</span></div>`:`<div class="row" style="margin:8px 0"><span class="sub" style="flex:0 0 96px">${label}</span><span class="sub">—</span></div>`;
-  const cmbCard=C.any?`<div class="card"><b>Combat leaders</b><div class="msg">Only matches with stats recorded count. Best K/D needs 3+. Tap a stat to see everyone ranked.</div>${cr("Best K/D","kd",C.kd,C.kd&&(C.kd.kd===Infinity?"∞":C.kd.kd.toFixed(2)),C.kd&&`${C.kd.k} KOs · ${C.kd.d} deaths · ${C.kd.n} games`)}${cr("Most KOs","kos",C.kos,C.kos&&C.kos.k)}${cr("Most damage","dmg",C.dmg,C.dmg&&Math.round(C.dmg.dmg).toLocaleString())}${cr("Most SDs","sds",C.sds,C.sds&&C.sds.sd)}</div>`:`<div class="card"><b>Combat leaders</b><div class="msg">No stats recorded in the last ${days} days. Scan the second results screen, or type KOs, deaths, SDs, and damage when you add a match.</div></div>`;
-  return seg+raceCard(T,days)+`<div class="pair">${cf("Top climber",T.climber,true)}${cf("Biggest drop",T.faller,false)}</div><div class="card"><b>Who's moving</b><div class="msg">Rating change over the last ${days} days. Tap a player for their page.</div>${mv}</div><div class="card"><b>Most active</b>${act}</div><div class="card"><b>Hot streaks</b><div style="margin-top:6px">${st}</div></div>${leadCard}${PREM()?cmbCard:""}<div class="card"><b>Upset of the ${w}</b>${up}</div><div class="card"><b>Rivalry of the ${w}</b>${riv}</div>${PREM()?"":lockedCard("Combat leaders","Best K/D, most KOs, damage and SDs for the week or month.")}`;
+  const C=T.cmb,cr=(label,key,c,val,sub)=>c?`<div class="row" data-stat="${key}" data-sr="${tper}" style="margin:8px 0"><span class="sub" style="flex:0 0 104px">${label}</span><span class="nm">${esc(c.name)}${sub?`<div class="sub">${sub}</div>`:""}</span><span class="elo">${val}</span><span class="sub">›</span></div>`:`<div class="row" style="margin:8px 0"><span class="sub" style="flex:0 0 96px">${label}</span><span class="sub">—</span></div>`;
+  const cmbCard=C.any?`<div class="card"><b>Combat leaders</b><div class="msg">Only matches with stats recorded count. Best K/D needs 3+. Tap a stat to see everyone ranked.</div>${cr("Best K/D","kd",C.kd,C.kd&&(C.kd.kd===Infinity?"∞":C.kd.kd.toFixed(2)),C.kd&&`${C.kd.k} KOs · ${C.kd.d} deaths · ${C.kd.n} games`)}${cr("Most KOs","kos",C.kos,C.kos&&C.kos.k)}${cr("Most damage","dmg",C.dmg,C.dmg&&Math.round(C.dmg.dmg).toLocaleString())}${cr("Needs Help","sds",C.sds,C.sds&&C.sds.sd,C.sds&&"most self-destructs")}${cr("Punching bag","taken",C.taken,C.taken&&Math.round(C.taken.tk).toLocaleString(),C.taken&&"damage taken, avg opp damage in FFA")}</div>`:`<div class="card"><b>Combat leaders</b><div class="msg">No stats recorded ${days?"in the last "+days+" days":"yet"}. Scan the second results screen, or type KOs, deaths, SDs, and damage when you add a match.</div></div>`;
+  return seg+raceCard(T,days)+`<div class="pair">${cf("Top climber",T.climber,true)}${cf("Biggest drop",T.faller,false)}</div><div class="pair">${rivC}${udC}</div><div class="pair">${myC}${inC}</div><div class="card"><b>Who's moving</b><div class="msg">Rating change over ${pt}. Tap a player for their page.</div>${mv}</div><div class="card"><b>Most active</b>${act}</div><div class="card"><b>Hot streaks</b><div style="margin-top:6px">${st}</div></div>${leadCard}${PREM()?cmbCard:""}${PREM()?"":lockedStats("Combat leaders",["Best K/D","Most KOs","Most damage","Needs Help (most SDs)","Punching bag (damage taken)"])}`;
 }
 
 // ---------- Stat ranking pages ----------
-const STATS={kd:{c:"K/D",t:"K/D ratio",d:"Kills per death. Needs 3+ games with stats."},kos:{c:"KOs",t:"Most KOs",d:"Total kills."},dmg:{c:"Damage",t:"Most damage",d:"Total damage dealt."},sds:{c:"SDs",t:"Most SDs",d:"Total self-destructs."},streak:{c:"Streak",t:"Win streaks",d:"Wins in a row. Avg opp = average rating of the opponents in that streak."},wr:{c:"Win %",t:"Win rate",d:"Needs 5+ games. Avg opp = average rating of opponents faced."}};
+const STATS={kd:{c:"K/D",t:"K/D ratio",d:"Kills per death. Needs 3+ games with stats."},kos:{c:"KOs",t:"Most KOs",d:"Total kills."},dmg:{c:"Damage",t:"Most damage",d:"Total damage dealt."},sds:{c:"SDs",t:"Needs Help",d:"Most self-destructs."},taken:{c:"Taken",t:"Punching bag",d:"Most damage taken. In free-for-alls this uses the average damage of your opponents."},streak:{c:"Streak",t:"Win streaks",d:"Wins in a row. Avg opp = average rating of the opponents in that streak."},wr:{c:"Win %",t:"Win rate",d:"Needs 5+ games. Avg opp = average rating of opponents faced."}};
 const SR={week:"Week",month:"Month",all:"All time"},SM={all:"Overall",one:"1v1",ffa:"FFA"};
 let stat="",sfrom="lb",sfsel="",srange="all",smode="all",ssv="best";
 function goStat(k,r,m,v){if(!PREM()&&!FREEST.includes(k))return;if(!stat){sfrom=tab;sfsel=sel}stat=STATS[k]?k:"kd";srange=SR[r]?r:"all";smode=SM[m]?m:"all";ssv=v=="cur"?"cur":"best";sel="";render();scrollTo(0,0)}
@@ -536,11 +552,12 @@ function statRows(key,range,mode,sv){
   const lastT=D.matches.length?tms(D.matches[D.matches.length-1]):0,days=range=="week"?7:range=="month"?30:0,t0=days?Math.max(Date.now(),lastT)-days*DAY:-1;
   const S={},R={};
   for(const m of D.matches){const inW=!(tms(m)<=t0||(mode!="all"&&m.mode!=mode));
-    if(inW)for(const x of m.results){const c=(S[x.name]??={name:x.name,k:0,d:0,n:0,sd:0,dmg:0,g:0,w:0,run:0,best:0,os:0,rs:0,rn:0,bs:0,bn:0});
+    if(inW)for(const x of m.results){const c=(S[x.name]??={name:x.name,k:0,d:0,n:0,sd:0,dmg:0,tk:0,tn:0,g:0,w:0,run:0,best:0,os:0,rs:0,rn:0,bs:0,bn:0});
       const op=m.results.filter(y=>y!==x).map(y=>R[y.name]??1000),oa=op.reduce((a,b)=>a+b,0)/op.length;
       c.g++;c.os+=oa;if(x.place===1){c.w++;c.run++;c.rs+=oa;c.rn++;if(c.run>c.best){c.best=c.run;c.bs=c.rs;c.bn=c.rn}}else{c.run=0;c.rs=0;c.rn=0}
       if(Number.isFinite(x.kills)&&Number.isFinite(x.deaths)){c.k+=x.kills;c.d+=x.deaths;c.n++}
-      if(Number.isFinite(x.sds))c.sd+=x.sds;if(Number.isFinite(x.dmg))c.dmg+=x.dmg}
+      if(Number.isFinite(x.sds))c.sd+=x.sds;if(Number.isFinite(x.dmg))c.dmg+=x.dmg;
+      {const od=m.results.filter(y=>y!==x&&Number.isFinite(y.dmg)).map(y=>y.dmg);if(od.length){c.tk+=od.reduce((a,b)=>a+b,0)/od.length;c.tn++}}}
     for(const x of m.results)R[x.name]=(R[x.name]??1000)+m.d.all[x.name]}
   const A=Object.values(S),L=n=>n.toLocaleString(),out=[];
   const add=(c,val,disp,sub)=>out.push({name:c.name,val,disp,sub,k:c.k,g:c.g});
@@ -549,6 +566,7 @@ function statRows(key,range,mode,sv){
     if(key=="kos"&&c.k>0)add(c,c.k,String(c.k),`${c.n} games with stats`);
     if(key=="dmg"&&c.dmg>0)add(c,c.dmg,L(Math.round(c.dmg)),`${c.g} games`);
     if(key=="sds"&&c.sd>0)add(c,c.sd,String(c.sd),`${c.g} games`);
+    if(key=="taken"&&c.tk>0)add(c,c.tk,L(Math.round(c.tk)),`${c.tn} games with stats`);
     if(key=="wr"&&c.g>=5)add(c,c.w/c.g,Math.round(100*c.w/c.g)+"%",`${c.w}W ${c.g-c.w}L · avg opp ${Math.round(c.os/c.g)}`);
     if(key=="streak"){const v=sv=="cur"?c.run:c.best;if(v>=2)add(c,v,String(v),sv=="cur"?`longest ${c.best} · avg opp ${Math.round(c.rs/c.rn)}`:`${c.w}W of ${c.g} · now ${c.run} · avg opp ${Math.round(c.bs/c.bn)}`)}
   }
@@ -565,7 +583,7 @@ function statPage(){
   const S=STATS[stat],rows=statRows(stat,srange,smode,ssv),seg=(o,cur,fn)=>`<div class="seg">${Object.keys(o).map(k=>`<button class="${k==cur?"on":""}" onclick="${fn}='${k}';render()">${o[k]}</button>`).join("")}</div>`;
   const chips=pgrp("c1","Stat",`<div class="seg w">${Object.keys(STATS).filter(k=>PREM()||FREEST.includes(k)).map(k=>`<button class="${k==stat?"on":""}" onclick="stat='${k}';render()">${STATS[k].c}</button>`).join("")}</div>`);
   const sv=stat=="streak"?pgrp("c4","Streak view",`<div class="seg"><button class="${ssv=="best"?"on":""}" onclick="ssv='best';render()">Longest run</button><button class="${ssv=="cur"?"on":""}" onclick="ssv='cur';render()">Active now</button></div>`):"";
-  const needs=["kd","kos","dmg","sds"].includes(stat);
+  const needs=["kd","kos","dmg","sds","taken"].includes(stat);
   const list=rows.length?rows.map((r,i)=>`<div class="card lb" data-n="${esc(r.name)}"><div class="rk">${i<3?medal(i):i+1}</div><div class="nm">${esc(r.name)}<div class="sub">${r.sub}</div></div><div class="elo">${r.disp}</div></div>`).join(""):`<div class="card"><div class="msg">${needs?"No stats recorded for this filter. Scan the second results screen, or type KOs, deaths, SDs, and damage when you add a match.":stat=="streak"?(ssv=="cur"?"Nobody is on a streak of 2+ right now.":"No streaks of 2+ for this filter."):"Nobody has enough games for this filter yet."}</div></div>`;
   return`<button class="g" onclick="stat='';tab=sfrom;sel=sfsel;render();scrollTo(0,0)">← Back</button><div style="height:12px"></div>${chips}<div class="card"><b>${S.t}</b><div class="msg">${S.d}${needs?" Only matches with stats recorded count.":""}</div></div>${pgrp("c2","Time range",seg(SR,srange,"srange"))}${pgrp("c3","Game mode",seg(SM,smode,"smode"))}${sv}${list}${podiums()}`;
 }
@@ -615,7 +633,19 @@ function groupsCard(){
   <div class="row"><button ${grp.busy?"disabled":""} style="flex:1" onclick="gmCreate()">Create group</button></div><div class="msg${wc(grp.msg)}">${esc(grp.msg)}</div></div>`;
 }
 // ---------- Training data (confirmed scans) ----------
-let scanImg="",scanRaw=null,conf=false,confSnap="",tdMsg="",tdBusy=false;
+let cfOpen=false,scanImg="",scanRaw=null,conf=false,confSnap="",tdMsg="",tdBusy=false;
+function cfNo(){cfOpen=false;render()}
+function cfYes(){conf=true;confSnap=JSON.stringify(draft);cfOpen=false;render();saveMatch()}
+function drawConfirm(){
+  const o=document.getElementById("cf");if(o&&o.remove)o.remove();
+  if(cfOpen&&(!scanImg||tab!="add"||peep||demo))cfOpen=false;
+  if(!cfOpen||!document.createElement||!document.body)return;
+  const st=r=>PREM()?[["kills","KOs"],["deaths","deaths"],["sds","SDs"],["dmg","dmg"]].filter(([k])=>Number.isFinite(r[k])).map(([k,t])=>` · ${r[k]} ${t}`).join(""):"";
+  const rows=draft.map(r=>`<div class="sub" style="margin:4px 0"><b>${ord(r.place)}</b> ${esc(r.name||"?")}${r.char?" · "+esc(r.char):""}${st(r)}</div>`).join("");
+  const d=document.createElement("div");d.id="cf";d.onclick=e=>{if(e.target==d)cfNo()};
+  d.innerHTML=`<div class="card"><b>Is all data correct?</b><img alt="Your screenshot" src="data:image/jpeg;base64,${scanImg}" style="width:100%;max-height:170px;object-fit:contain;border:3px solid var(--ink);margin:8px 0;background:#000">${rows}<div class="msg" style="margin-top:8px">Yes saves this match now.</div><div class="row"><button class="g" style="flex:1" onclick="cfNo()">No, edit</button><button style="flex:1" onclick="cfYes()">Yes, save</button></div></div>`;
+  document.body.appendChild(d);
+}
 const confOk=()=>!!scanImg&&conf&&JSON.stringify(draft)===confSnap;
 const crcT=(()=>{const t=new Uint32Array(256);for(let n=0;n<256;n++){let c=n;for(let k=0;k<8;k++)c=c&1?0xEDB88320^(c>>>1):c>>>1;t[n]=c>>>0}return t})();
 const crc32=u=>{let c=-1;for(let i=0;i<u.length;i++)c=crcT[(c^u[i])&255]^(c>>>8);return(c^-1)>>>0};
@@ -650,7 +680,7 @@ async function tdDownload(){
       lines.push(JSON.stringify({image:`images/${ids[i]}.jpg`,players:j.labels,model_output:j.scanned}));
     }
     files.push({name:"labels.jsonl",data:enc.encode(lines.join("\n")+"\n")});
-    const a=document.createElement("a");a.href=URL.createObjectURL(makeZip(files));a.download="smash-scans.zip";a.click();
+    const a=document.createElement("a");a.href=URL.createObjectURL(makeZip(files));a.download="broelo-scans.zip";a.click();
     tdMsg=`Downloaded ${ids.length} scan${ids.length==1?"":"s"}.`;
   }catch(e){tdMsg=e.message}
   tdBusy=false;render();
@@ -671,7 +701,7 @@ function peepExit(){
 async function saveMatch(){
   if(peep)return alert("Peek mode is view only.");
   const known=Object.keys(D.players);
-  const r=draft.map(x=>{const n=x.name.trim(),c0=(x.char||"").trim(),c=CH.find(k=>k.toLowerCase()==c0.toLowerCase())||c0;return{name:known.find(k=>k.toLowerCase()==n.toLowerCase())||n,place:x.place,...(PREM()&&c?{char:c.slice(0,30)}:{}),...(PREM()?statsOf(x):{})}}).filter(x=>x.name);
+  const r=draft.map(x=>{const n=x.name.trim(),c0=(x.char||"").trim(),rn=!!x.rnd||c0.toLowerCase()=="random",c=rn?"Random":CH.find(k=>k.toLowerCase()==c0.toLowerCase())||c0;return{name:known.find(k=>k.toLowerCase()==n.toLowerCase())||n,place:x.place,...(rn?{rnd:true}:{}),...(PREM()&&c?{char:c.slice(0,30)}:{}),...(PREM()?statsOf(x):{})}}).filter(x=>x.name);
   if(r.length<2)return alert("Need at least two players.");
   if(new Set(r.map(x=>x.name.toLowerCase())).size<r.length)return alert("Each username must be unique.");
   const b=document.getElementById("sv");b.disabled=true;
@@ -683,9 +713,9 @@ async function saveMatch(){
 }
 async function del(id){if(!confirm("Delete this match? Ratings will be recalculated."))return;try{await api("matches",{method:"DELETE",body:JSON.stringify({admin,gkey:gk,id})});await load()}catch(e){alert(e.message)}}
 function csv(list){
-  const rows=["match_id,date,mode,place,player,character,kills,deaths,sds,damage"];
-  (list||D.matches).forEach(m=>m.results.forEach(x=>rows.push([m.id,new Date(m.ts).toISOString(),LB[m.mode],x.place,'"'+x.name.replace(/"/g,'""')+'"','"'+(x.char||"").replace(/"/g,'""')+'"',x.kills??"",x.deaths??"",x.sds??"",x.dmg??""].join(","))));
-  const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([rows.join("\n")],{type:"text/csv"}));a.download="smash-elo-matches.csv";a.click();
+  const rows=["match_id,date,mode,place,player,character,kills,deaths,sds,damage,random"];
+  (list||D.matches).forEach(m=>m.results.forEach(x=>rows.push([m.id,new Date(m.ts).toISOString(),LB[m.mode],x.place,'"'+x.name.replace(/"/g,'""')+'"','"'+(x.char||"").replace(/"/g,'""')+'"',x.kills??"",x.deaths??"",x.sds??"",x.dmg??"",x.rnd?"yes":""].join(","))));
+  const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([rows.join("\n")],{type:"text/csv"}));a.download="broelo-matches.csv";a.click();
 }
 async function shrink(file){
   const bm=await createImageBitmap(file).catch(()=>{throw new Error("Couldn't open that image. Try a screenshot or a JPEG/PNG photo.")}),s=Math.min(1,1568/Math.max(bm.width,bm.height));
@@ -698,7 +728,7 @@ document.getElementById("f").onchange=async e=>{if(peep){e.target.value="";retur
   try{
     const img=await shrink(file),j=await api("scan",{method:"POST",body:JSON.stringify({passcode:pass,roster:Object.keys(D.players),chars:CH,image:img})});
     if(j.players.length<2){note=j.problem?"Couldn't read it: "+j.problem:"Couldn't read that screen. Enter results by hand."}
-    else{if(scanImg)trackAcc("missed");({draft,note}=fromScan(j.players));scanImg=img;scanRaw=j.players;conf=false;confSnap="";scanBase=sig(draft)}
+    else{if(scanImg)trackAcc("missed");({draft,note}=fromScan(j.players));scanImg=img;scanRaw=j.players;conf=false;confSnap="";scanBase=sig(draft);cfOpen=true}
   }catch(err){note=err.message}
   render();
 };
@@ -776,7 +806,7 @@ async function tryCheck(){
 }
 function tryExit(){tryStage="";tryRes=null;tryMsg="";tryBusy=false;render()}
 function tryPage(){
-  if(tryStage=="scan")return`<div class="card"><b>Try scan</b><div class="msg">Pick a screenshot or photo of a Super Smash Bros. results screen. It is read and shown to you, and nothing is saved.</div><div class="row"><button style="flex:1" ${tryBusy?"disabled":""} onclick="document.getElementById('tf').click()">📷 Choose picture</button><button class="g" onclick="showHow('try')">How to scan</button></div><div class="sub">${tryLeft} scan${tryLeft==1?"":"s"} left on this key</div><div class="msg${wc(tryMsg)}">${esc(tryMsg)}</div><div class="row"><button class="g" onclick="tryExit()">Back</button></div></div>`;
+  if(tryStage=="scan")return`<div class="card"><b>Try scan</b><div class="msg">Pick a screenshot or photo of a Super Smash Bros. results screen. It is read and shown to you, and nothing is saved.</div><div class="row"><button style="flex:1" ${tryBusy?"disabled":""} onclick="document.getElementById('tf').click()">📷 Choose picture</button><button class="g q" aria-label="How to scan" title="How to scan" onclick="showHow('try')">?</button></div><div class="sub">${tryLeft} scan${tryLeft==1?"":"s"} left on this key</div><div class="msg${wc(tryMsg)}">${esc(tryMsg)}</div><div class="row"><button class="g" onclick="tryExit()">Back</button></div></div>`;
   if(tryStage=="review")return`<div class="card"><b>Is this right?</b><div class="msg">Here's what the scan read. Accept it to see the finished results.</div>${tryList().map(p=>`<div class="row" style="margin:8px 0"><span class="rk">${ord(p.place)}</span><span class="nm">${esc(p.name)}${p.character?` <span class="sub">${esc(p.character)}</span>`:""}</span></div>`).join("")}<div class="row"><button style="flex:1" onclick="tryStage='result';render();scrollTo(0,0)">Accept scan</button></div><div class="row"><button class="g" ${tryLeft>0?"":"disabled"} onclick="tryStage='scan';tryMsg='';render()">Scan again</button><button class="g" onclick="tryExit()">Cancel</button></div></div>`;
   const L=tryList(),groups=[];L.forEach(p=>{const g=groups.find(x=>x.place==p.place);g?g.p.push(p):groups.push({place:p.place,p:[p]})});
   return`<div class="card" style="background:var(--yel)"><div class="big">✓ The scan worked</div><div class="msg" style="margin:0">Here are the results it read from your picture. Nothing was saved.</div></div>`+
@@ -820,7 +850,7 @@ function makeDemo(){
   for(let i=0;i<64;i++){
     const n=rnd()<.55?2:rnd()<.5?3:4,pool=pl.slice().sort(()=>rnd()-.5).slice(0,n);
     const sc=pool.map(p=>({p,v:p[1]*(.5+rnd())})).sort((a,b)=>b.v-a.v),stats=rnd()<.8;
-    out.push({id:"demo"+i,ts:new Date(now-(40*DAY)*(1-i/64)).toISOString(),results:sc.map((x,k)=>({name:x.p[0],place:k+1,char:rnd()<.8?x.p[2]:["Fox","Link","Mario","Kirby","Ness"][Math.floor(rnd()*5)],...(stats?{kills:Math.max(0,Math.round((n-k)*1.4+rnd()*3-1)),deaths:Math.max(0,Math.round(k*1.5+rnd()*2)),sds:rnd()<.15?1:0,dmg:Math.round(60+rnd()*140+(n-k)*25)}:{})}))});
+    out.push({id:"demo"+i,ts:new Date(now-(40*DAY)*(1-i/64)).toISOString(),results:sc.map((x,k)=>({name:x.p[0],place:k+1,char:rnd()<.8?x.p[2]:["Fox","Link","Mario","Kirby","Ness"][Math.floor(rnd()*5)],...(rnd()<.07?{rnd:true,char:"Random"}:{}),...(stats?{kills:Math.max(0,Math.round((n-k)*1.4+rnd()*3-1)),deaths:Math.max(0,Math.round(k*1.5+rnd()*2)),sds:rnd()<.15?1:0,dmg:Math.round(60+rnd()*140+(n-k)*25)}:{})}))});
   }
   return out;
 }
