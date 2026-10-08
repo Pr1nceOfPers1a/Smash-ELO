@@ -28,7 +28,7 @@ button.lnk{background:none;border:0;box-shadow:none;color:var(--ac);padding:0;te
 .seg{display:flex;gap:6px;margin:0 4px 14px 0}.seg button{flex:1;background:#fff;color:var(--ink);padding:10px 2px;font-size:8px;white-space:nowrap}.seg button.on{background:var(--blue);color:#fff}.seg button.srch{flex:0 0 46px;padding:8px 0;font-size:14px}.seg button.srch.on{background:var(--ac)}
 .lb{display:flex;align-items:center;gap:10px;cursor:pointer}.rk{width:28px;display:inline-flex;justify-content:center;align-items:center;color:var(--mu);font:10px var(--pf)}
 .nm{flex:1;font-weight:700;min-width:0}.sub{color:var(--mu);font-size:13px}.elo{font:15px/1.3 var(--pf)}
-.tri{display:flex;justify-content:space-around;text-align:center;margin-top:8px}.tri .elo{font-size:14px}
+.tri{display:flex;justify-content:space-around;gap:6px;text-align:center;margin-top:8px}.tri>div{flex:1 1 0;min-width:0}.tri .elo{font-size:14px}
 .up{color:var(--ok)}.dn{color:var(--bad)}.msg{color:var(--mu);font-size:14px;margin:6px 0}
 nav{position:fixed;bottom:0;left:0;right:0;display:flex;background:var(--card);border-top:3px solid var(--ink);padding-bottom:env(safe-area-inset-bottom)}
 nav button{flex:1;background:none;border:0;box-shadow:none;color:var(--mu);padding:16px 0 14px;font-size:8px}
@@ -73,8 +73,9 @@ input.sm{flex:1;width:0;min-width:0;text-align:center;padding:8px 4px}
 .pl.p1{border-left-color:#ffd23f}.pl.p2{border-left-color:#c9ced8}.pl.p3{border-left-color:#d9894a}
 .chips{display:flex;flex-wrap:wrap;gap:4px 10px;margin-top:4px;font:12px/1.3 ui-monospace,Menlo,Consolas,monospace;color:var(--mu)}
 #ov{display:none;position:fixed;inset:0;z-index:50;background:rgba(27,23,48,.6);align-items:center;justify-content:center;padding:16px}
-#ov .box{background:var(--card);border:4px solid var(--ink);box-shadow:6px 6px 0 var(--ink);padding:16px;max-width:420px;width:100%;max-height:90vh;overflow:auto}
-#ov .dots{display:flex;gap:6px;margin:0 0 10px}#ov .dots i{width:10px;height:10px;border:2px solid var(--ink);background:var(--in)}#ov .dots i.on{background:var(--ac)}
+#ov .box{position:relative;background:var(--card);border:4px solid var(--ink);box-shadow:6px 6px 0 var(--ink);padding:16px;max-width:420px;width:100%;max-height:90vh;overflow:auto}
+#ov .cl{position:absolute;top:8px;right:8px;width:30px;height:30px;padding:0;font:12px/1 var(--pf);background:var(--yel);color:var(--ink);box-shadow:2px 2px 0 var(--ink)}
+#ov .dots{padding-right:40px;display:flex;gap:6px;margin:0 0 10px}#ov .dots i{width:10px;height:10px;border:2px solid var(--ink);background:var(--in)}#ov .dots i.on{background:var(--ac)}
 #ov ul{margin:6px 0 0;padding-left:20px;line-height:1.5}
 .big{font:11px/1.6 var(--pf);margin:0 0 8px}
 .tile.blue{background:#4d8dff}.tile.blue.on{background:#2f6bff}
@@ -91,7 +92,7 @@ input.sm{flex:1;width:0;min-width:0;text-align:center;padding:8px 4px}
 #po,#cf{position:fixed;inset:0;background:rgba(26,22,48,.55);display:flex;align-items:center;justify-content:center;z-index:99;padding:20px}
 #po .card{max-width:320px;text-align:center;margin:0}
 #cf .card{max-width:340px;width:100%;margin:0;max-height:90vh;overflow:auto}
-.q{flex:0 0 38px;width:38px;padding:0;font-weight:700}
+.q{flex:0 0 auto;align-self:stretch;width:39px;padding:0;font-weight:700}
 .rl{display:flex;align-items:center;gap:6px;font:11px/1.3 ui-monospace,Menlo,Consolas,monospace;color:var(--ink);white-space:nowrap;cursor:pointer}
 .rl input{width:18px;height:18px;accent-color:#e5322d;margin:0;flex:none}
 .locked{position:relative;opacity:.55;filter:grayscale(1);background:#e4e1d2;box-shadow:none;pointer-events:none}
@@ -112,6 +113,8 @@ input.sm{flex:1;width:0;min-width:0;text-align:center;padding:8px 4px}
 const LB={all:"Overall",one:"1v1",ffa:"FFA"};
 const FIGHTERS="Mario,Donkey Kong,Link,Samus,Dark Samus,Yoshi,Kirby,Fox,Pikachu,Luigi,Ness,Captain Falcon,Jigglypuff,Peach,Daisy,Bowser,Ice Climbers,Sheik,Zelda,Dr. Mario,Pichu,Falco,Marth,Lucina,Young Link,Ganondorf,Mewtwo,Roy,Chrom,Mr. Game & Watch,Meta Knight,Pit,Dark Pit,Zero Suit Samus,Wario,Snake,Ike,Pokémon Trainer,Diddy Kong,Lucas,Sonic,King Dedede,Olimar,Lucario,R.O.B.,Toon Link,Wolf,Villager,Mega Man,Wii Fit Trainer,Rosalina & Luma,Little Mac,Greninja,Mii Brawler,Mii Swordfighter,Mii Gunner,Palutena,Pac-Man,Robin,Shulk,Bowser Jr.,Duck Hunt,Ryu,Ken,Cloud,Corrin,Bayonetta,Inkling,Ridley,Simon,Richter,King K. Rool,Isabelle,Incineroar,Piranha Plant,Joker,Hero,Banjo & Kazooie,Terry,Byleth,Min Min,Steve,Sephiroth,Pyra/Mythra,Kazuya,Sora".split(",");
 const ls=(k,v)=>{try{return v===undefined?localStorage.getItem(k)||"":localStorage.setItem(k,v)}catch(e){return""}};
+const gms=n=>n==1?"game":"games";
+function resetDraft(){draft=[{name:"",place:1},{name:"",place:2}];note="";scanImg="";scanRaw=null;conf=false;confSnap="";cfOpen=false}
 let ms=[],tab="lb",board="all",sel="",draft=[{name:"",place:1},{name:"",place:2}],note="",D=null;
 let me=ls("me"),pass=ls("pass"),admin=ls("admin"),gid=ls("gid"),gname=ls("gname"),jn=(typeof location!="undefined"&&new URLSearchParams(location.search).get("g")||"").slice(0,24),jk="",jmsg="",admOk=false,gtier=(typeof localStorage!="undefined"&&localStorage.getItem("gtier"))||"premier",gk="",gAdm=false,ml={open:false,step:"",key:"",code:"",chal:"",email:"",msg:"",busy:false},pkList=[],pkDays=30,pkMsg="",cg={open:false,pick:"",name:"",pw:"",ak:"",ak2:"",key:"",msg:"",busy:false,done:null},tdTot=null,tdStart=0,tdAcc=null,demo=false,tryOpen=false,tryKey="",tryMsg="",tryStage="",tryRes=null,tryBusy=false,tryLeft=0,pubN=null,pubAcc=null,howto=-1,howCtx="add",scanBase="",tkList=[],tkUses=1,tkHrs=24,tkMsg="",mgG="",mgMs=null,mgD=null;
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
@@ -182,7 +185,7 @@ function renderCore(){
     h+=`<div class="seg">${Object.keys(LB).map(t=>`<button class="${board==t?"on":""}" onclick="board='${t}';render()">${LB[t]}</button>`).join("")}<button class="srch${sopen?" on":""}" aria-label="Search players" onclick="${sopen?"sopen=false;fq='';render()":"sopen=true;render();document.getElementById('fq').focus()"}">${sopen?"✕":"🔍"}</button></div>`;
     if(sopen)h+=`<div class="row"><input class="n" id="fq" placeholder="Search player" value="${esc(fq)}" oninput="fq=this.value;render();const e=document.getElementById('fq');e.focus();e.setSelectionRange(fq.length,fq.length)"></div>`;
     const full=boardList(board),L=full.filter(p=>!q||p.name.toLowerCase().includes(q));
-    h+=L.length?L.map(p=>{const i=full.indexOf(p);return`<div class="card lb" data-n="${esc(p.name)}"><div class="rk">${i<3?medal(i):i+1}</div><div class="nm">${esc(p.name)} ${p.streak>=2?"🔥"+p.streak:""}<div class="sub">${p.g[board]} games${prov(p.g[board])}</div></div><div class="elo">${Math.round(p.r[board])}</div></div>`}).join(""):`<p class="msg">No ${LB[board]} matches${q?" for that search":" yet"}.</p>`;
+    h+=L.length?L.map(p=>{const i=full.indexOf(p);return`<div class="card lb" data-n="${esc(p.name)}"><div class="rk">${i<3?medal(i):i+1}</div><div class="nm">${esc(p.name)} ${p.streak>=2?"🔥"+p.streak:""}<div class="sub">${p.g[board]} ${gms(p.g[board])}${prov(p.g[board])}</div></div><div class="elo">${Math.round(p.r[board])}</div></div>`}).join(""):`<p class="msg">No ${LB[board]} matches${q?" for that search":" yet"}.</p>`;
     if(ms.length&&!q)h+=podiums();
     v.innerHTML=h;
   }
@@ -193,7 +196,7 @@ function renderCore(){
     if(!pass){v.innerHTML=`<div class="card"><b>Group passcode</b><div class="msg">Ask the group admin for the passcode to add matches.</div><div class="row"><input class="n" type="password" id="pc" placeholder="Passcode"><button onclick="pass=document.getElementById('pc').value.trim();ls('pass',pass);render()">Save</button></div></div>`;return}
     v.innerHTML=`<datalist id="dl">${Object.keys(P).map(n=>`<option value="${esc(n)}">`).join("")}</datalist><datalist id="dlc">${CH.map(c=>`<option value="${esc(c)}">`).join("")}</datalist>
     ${PREM()?`<div class="card"><div class="row" style="margin:0"><button class="g" style="flex:1" onclick="document.getElementById('f').click()">📷 Scan result screen</button><button class="g q" aria-label="How to scan" title="How to scan" onclick="showHow('add')">?</button></div><div class="msg${wc(note)}" id="st">${esc(note)}</div>${scanImg?`<button style="width:100%;margin-top:6px" onclick="cfOpen=true;render()">Is all data correct?</button><div class="msg">Check the scan against your screenshot. Yes saves the match, and confirmed scans help train a better scanner.</div>`:""}</div>`:`<div class="card"><div class="row" style="margin:0"><button class="g gbtn" style="flex:1" onclick="premOnly()">📷 Scan result screen</button></div></div>`}
-    <div class="card">${draft.map((r,i)=>`<div class="row"><input class="p" type="text" inputmode="numeric" maxlength="4" value="${ord(r.place)}" onfocus="this.select()" onchange="setPlace(${i},this)" aria-label="Place"><input class="n" list="dl" placeholder="Username" value="${esc(r.name)}" onchange="nameSet(${i},this.value)"><button class="x" onclick="draft.splice(${i},1);render()">✕</button></div>${flag(r.name,i)}${PREM()?`<div class="row" style="margin:-2px 0 6px 72px"><label class="rl"><input type="checkbox" id="rc${i}" ${r.rnd?"checked":""} onchange="setRnd(${i},this.checked)">Went random?</label><input class="n" id="ch${i}" list="dlc" placeholder="Character (optional)" ${r.rnd?"disabled":""} value="${esc(r.rnd?"Random":r.char||"")}" onchange="setChar(${i},this.value)"></div><div class="row" style="margin:0 0 10px 72px;gap:6px">${[["kills","KOs"],["deaths","Deaths"],["sds","SDs"],["dmg","Dmg"]].map(([k,t])=>`<input class="sm" type="number" inputmode="decimal" min="0" placeholder="${t}" value="${r[k]??""}" onchange="draft[${i}].${k}=nv(this.value)" aria-label="${t}">`).join("")}</div>`:`<div class="row" style="margin:-2px 0 10px 72px"><label class="rl"><input type="checkbox" id="rc${i}" ${r.rnd?"checked":""} onchange="setRnd(${i},this.checked)">Went random?</label><input class="n gr" readonly placeholder="Character (Premier only)" onclick="premOnly()"></div>`}`).join("")}
+    <div class="card">${draft.map((r,i)=>`<div class="row"><input class="p" type="text" inputmode="numeric" maxlength="4" value="${ord(r.place)}" onfocus="this.select()" onchange="setPlace(${i},this)" aria-label="Place"><input class="n" list="dl" placeholder="Username" value="${esc(r.name)}" onchange="nameSet(${i},this.value)"><button class="x" onclick="draft.splice(${i},1);render()">✕</button></div>${flag(r.name,i)}${PREM()?`<div class="row" style="margin:-2px 0 6px 72px"><label class="rl"><input type="checkbox" id="rc${i}" ${r.rnd?"checked":""} onchange="setRnd(${i},this.checked)">Went random?</label><input class="n" id="ch${i}" list="dlc" placeholder="Character" ${r.rnd?"disabled":""} value="${esc(r.rnd?"Random":r.char||"")}" onchange="setChar(${i},this.value)"></div><div class="row" style="margin:0 0 10px 72px;gap:6px">${[["kills","KOs"],["deaths","Deaths"],["sds","SDs"],["dmg","Dmg"]].map(([k,t])=>`<input class="sm" type="number" inputmode="decimal" min="0" placeholder="${t}" value="${r[k]??""}" onchange="draft[${i}].${k}=nv(this.value)" aria-label="${t}">`).join("")}</div>`:`<div class="row" style="margin:-2px 0 10px 72px"><label class="rl"><input type="checkbox" id="rc${i}" ${r.rnd?"checked":""} onchange="setRnd(${i},this.checked)">Went random?</label><input class="n gr" readonly placeholder="Character 🔒" onclick="premOnly()"></div>`}`).join("")}
     <div class="row"><button class="g" onclick="if(draft.length<8){draft.push({name:'',place:draft.length+1});render()}">+ Player</button><button id="sv" style="flex:1" onclick="saveMatch()">Save match</button></div>
     <div class="msg">Type 1 to 8 for placement (1st = winner). Tied players share a place. 2 players = 1v1, 3 or more = FFA.</div></div>`;
   }
@@ -401,7 +404,7 @@ function oppOf(name){
 function playerPage(p){
   const wm=p.wm,op=oppOf(p.name);
   return`<button class="g" onclick="sel='';render()">← Back</button>
-  <div class="card" style="margin-top:10px"><div class="row" style="gap:12px;margin:0 0 6px"><div style="flex:1;min-width:0"><div class="nm" style="font-size:20px">${esc(p.name)} ${p.streak>=2?`<span data-stat="streak" data-sv="cur">🔥 ${p.streak}</span>`:""}</div><div class="sub">${p.w}W · ${p.l}L · ${p.g.all} games</div></div></div>${medalLine(p)}${triP(p)}</div>
+  <div class="card" style="margin-top:10px"><div class="row" style="gap:12px;margin:0 0 6px"><div style="flex:1;min-width:0"><div class="nm" style="font-size:20px">${esc(p.name)} ${p.streak>=2?`<span data-stat="streak" data-sv="cur">🔥 ${p.streak}</span>`:""}</div><div class="sub">${p.w}W · ${p.l}L · ${p.g.all} ${gms(p.g.all)}</div></div></div>${medalLine(p)}${triP(p)}</div>
   <div class="card"><div class="hd"><b class="ct">Win rate</b>${lbLink("wr")}</div><div class="tri">${[["Overall","all",p.w,p.l],["1v1","one",wm.one.w,wm.one.l],["FFA","ffa",wm.ffa.w,wm.ffa.l]].map(([t,k,w,l])=>`<div data-stat="wr" data-sm="${k}"><div class="elo">${pct(w,l)}</div><div class="sub">${t} · ${w}W ${l}L</div><div class="sub">${op.avg(k)==null?"":"avg opp "+op.avg(k)}</div></div>`).join("")}</div></div>
   ${op.best>=2?`<div class="card"><div class="hd"><b class="ct">Win streak</b>${lbLink("streak","","best")}</div><div style="margin-top:6px">Longest: <b>${op.best}</b> wins in a row · avg opp ${op.bavg}</div>${p.streak>=2?`<div class="sub">Current: ${p.streak} in a row</div>`:""}</div>`:""}
   ${PREM()?combat(p):""}<div class="card"><b>Rating history</b>${trend(p)}</div>
@@ -411,14 +414,14 @@ const nv=v=>v==null||v===""?undefined:+v;
 function statsOf(x){const o={};for(const k of ["kills","deaths","sds","dmg"])if(Number.isFinite(x[k])&&x[k]>=0)o[k]=x[k];return o}
 function fromScan(pl){
   const noPlace=pl.some(p=>!(+p.place)),miss=pl.reduce((n,p)=>n+["kills","deaths","sds","damage"].filter(k=>!Number.isFinite(nv(p[k]))).length,0);
-  return{draft:pl.map((p,i)=>({name:String(p.name||""),place:+p.place||i+1,char:String(p.character||""),...statsOf({kills:nv(p.kills),deaths:nv(p.deaths),sds:nv(p.sds),dmg:nv(p.damage)})})),note:(noPlace?"Placement wasn't shown, so I used the order listed. Check it, then save.":"Check the names, places, and stats, then save.")+(miss>0&&miss<pl.length*4?` ${miss} stat value${miss>1?"s":""} couldn't be read. Fill ${miss>1?"them":"it"} in.`:"")};
+  return{draft:pl.map((p,i)=>({name:String(p.name||""),place:+p.place||i+1,char:String(p.character||""),...statsOf({kills:nv(p.kills),deaths:nv(p.deaths),sds:nv(p.sds),dmg:nv(p.damage)})})),note:(noPlace?"Placement wasn't shown, so I used the order listed. Check it, then save.":"Check the names, places and stats below.")+(miss>0&&miss<pl.length*4?` ${miss} stat value${miss>1?"s":""} couldn't be read. Fill ${miss>1?"them":"it"} in.`:"")};
 }
 function combat(p){
   const a=p.cs.one,b=p.cs.ffa,K=a.k+b.k,Dd=a.d+b.d,SD=a.sd+b.sd,DM=a.dmg+b.dmg,N=a.n+b.n;
   if(!N&&!SD&&!DM)return`<div class="card"><b>Combat stats</b><div class="sub">No stats yet. Scan the second results screen, or type KOs, deaths, SDs, and damage when you add a match.</div></div>`;
   const kd=c=>c.n?(c.d?(c.k/c.d).toFixed(2):c.k?"∞":"—"):"—";
   const big=(t,k,v)=>`<div class="card mini1"><div class="hd" style="margin:0"><b class="ct">${t}</b>${lbLink(k)}</div><div class="elo">${v}</div></div>`;
-  return`<div class="card"><div class="hd"><b class="ct">K/D</b>${lbLink("kd")}</div><div class="tri" style="margin-top:4px"><div data-stat="kd" data-sm="one"><div class="elo">${kd(a)}</div><div class="sub">1v1 K/D · ${a.n} games</div></div><div data-stat="kd" data-sm="ffa"><div class="elo">${kd(b)}</div><div class="sub">FFA K/D · ${b.n} games</div></div></div><div class="sub" style="margin-top:8px">Total deaths: ${Dd}</div></div>
+  return`<div class="card"><div class="hd"><b class="ct">K/D</b>${lbLink("kd")}</div><div class="tri" style="margin-top:4px"><div data-stat="kd" data-sm="one"><div class="elo">${kd(a)}</div><div class="sub">1v1 K/D · ${a.n} ${gms(a.n)}</div></div><div data-stat="kd" data-sm="ffa"><div class="elo">${kd(b)}</div><div class="sub">FFA K/D · ${b.n} ${gms(b.n)}</div></div></div><div class="sub" style="margin-top:8px">Total deaths: ${Dd}</div></div>
   ${big("Total KOs","kos",K)}${big("Total SDs","sds",SD)}${big("Total damage","dmg",Math.round(DM).toLocaleString())}<div class="msg" style="margin:-6px 0 14px">Totals only include matches with stats recorded.</div>`;
 }
 // ---------- 8-bit medals ----------
@@ -476,12 +479,26 @@ function trendsData(days){
   const pony=top(Object.values(cc).filter(e=>e.n>10).map(e=>{const L=Object.entries(e.by).sort((a,b)=>b[1]-a[1]);return{name:e.name,n:e.n,v:L.length,ch:L[0][0],pct:Math.round(100*L[0][1]/e.n)}}),(a,b)=>a.v-b.v||b.pct-a.pct||b.n-a.n);
   const nt={};for(const m of inP)if(new Date(tms(m)).getHours()<4)for(const x of m.results)nt[x.name]=(nt[x.name]||0)+1;
   const ins=top(Object.entries(nt).map(([name,n])=>({name,n})),(a,b)=>b.n-a.n);
+  const hrs={};for(const m of inP){const h=new Date(tms(m)).getHours();if(h>=9&&h<17)for(const x of m.results)hrs[x.name]=(hrs[x.name]||0)+1}
+  const nol=top(Object.entries(hrs).map(([name,n])=>({name,n})),(a,b)=>b.n-a.n);
+  const sb=top(rows.filter(r=>r.opp>=2).map(r=>({name:r.name,n:r.opp})),(a,b)=>b.n-a.n);
+  const gsC={};for(const p of Object.values(P))for(const u of p.ups)if(u.won&&tms(u)>t0)gsC[p.name]=(gsC[p.name]||0)+1;
+  const slayer=top(Object.entries(gsC).map(([name,n])=>({name,n})).filter(e=>e.n>=1),(a,b)=>b.n-a.n);
+  const sec={};for(const m of inP)if(m.results.length>=3)for(const x of m.results)if(x.place===2)sec[x.name]=(sec[x.name]||0)+1;
+  const bride=top(Object.entries(sec).map(([name,n])=>({name,n})),(a,b)=>b.n-a.n);
+  const lr2={},lb={};for(const m of inP)for(const x of m.results){lr2[x.name]=x.place===1?0:(lr2[x.name]||0)+1;if(lr2[x.name]>(lb[x.name]||0))lb[x.name]=lr2[x.name]}
+  const cursed=top(Object.entries(lb).map(([name,n])=>({name,n})).filter(e=>e.n>=3),(a,b)=>b.n-a.n);
+  const sw={};for(const m of inP)for(const x of m.results){const e=(sw[x.name]??={name:x.name,n:0,t:0});e.n++;e.t+=Math.abs(m.d.all[x.name]||0)}
+  const coaster=top(Object.values(sw).filter(e=>e.n>=3).map(e=>({name:e.name,n:e.n,v:e.t/e.n})),(a,b)=>b.v-a.v);
+  let bully=null;for(const e of Object.values(pr))for(const [w,l,c] of [[e.a,e.b,e.aw],[e.b,e.a,e.bw]])if(c>=3&&(!bully||c>bully.n))bully={name:w,opp:l,n:c,of:e.n};
+  const jk=top(Object.values(cc).map(e=>({name:e.name,v:Object.keys(e.by).length,n:e.n})).filter(e=>e.v>=3),(a,b)=>b.v-a.v||b.n-a.n);
+  const gc=top(ca.filter(c=>c.n>=3).map(c=>({...c,v:(c.k+c.d)/c.n})),(a,b)=>b.v-a.v);
   const lead={};for(const t of ["one","ffa"]){
     const cur=Object.values(P).filter(p=>p.g[t]).sort((a,b)=>b.r[t]-a.r[t]);
     const st=Object.values(P).map(p=>({name:p.name,r:rAt(p,t0,t)})).filter(x=>x.r!=null).sort((a,b)=>b.r-a.r);
     lead[t]={cur:cur[0]||null,prev:st[0]?st[0].name:null};
   }
-  return{t0,t1,inP,rows,climber,faller,active,cur,longest,upset,rival,cmb,mys,ins,pony,lead,top3:nowL.slice(0,3),top5:nowL.slice(0,5)};
+  return{t0,t1,inP,rows,climber,faller,active,cur,longest,upset,rival,cmb,mys,ins,pony,nol,sb,slayer,bride,cursed,coaster,bully,jk,gc,lead,top3:nowL.slice(0,3),top5:nowL.slice(0,5)};
 }
 const RACE={key:"",f:0,raf:0,done:false,start:0,s:[],g:null};
 const RDUR=6000,RCOL=["#e0a400","#7d8596","#b8672a"],RPAL=["#e5322d","#2f6bff","#13813a","#8a3ffc","#00a3a3","#d6336c","#ff7a00","#5c6b00","#1b1730"];
@@ -528,14 +545,14 @@ function trendsPage(){
   const seg=pgrp("c2","Time range",`<div class="seg"><button class="${tper=="week"?"on":""}" onclick="tper='week';render()">Week</button><button class="${tper=="month"?"on":""}" onclick="tper='month';render()">Month</button><button class="${tper=="all"?"on":""}" onclick="tper='all';render()">All time</button></div>`);
   RACE.g=null;RACE.s=[];
   if(!T.inP.length)return seg+`<div class="card"><b>Quiet here</b><div class="msg">${days?`No matches in the last ${days} days.`:"No matches yet."}</div></div>`;
-  const cf=(t,r,good)=>`<div class="card"${r?` data-n="${esc(r.name)}" style="cursor:pointer"`:""}><div class="ct">${t}</div>${r?`<div class="nm" style="margin-top:8px">${esc(r.name)}</div><div class="elo ${good?"up":"dn"}">${r.d>=0?"+":""}${R0(r.d)}</div><div class="sub">${R0(r.s)} → ${R0(r.e)} · ${r.n} games</div>`:`<div class="sub" style="margin-top:8px">Nobody yet (needs 2+ games)</div>`}</div>`;
+  const cf=(t,r,good)=>`<div class="card"${r?` data-n="${esc(r.name)}" style="cursor:pointer"`:""}><div class="ct">${t}</div>${r?`<div class="nm" style="margin-top:8px">${esc(r.name)}</div><div class="elo ${good?"up":"dn"}">${r.d>=0?"+":""}${R0(r.d)}</div><div class="sub">${R0(r.s)} → ${R0(r.e)} · ${r.n} ${gms(r.n)}</div>`:`<div class="sub" style="margin-top:8px">Nobody yet (needs 2+ games)</div>`}</div>`;
   const mv=T.rows.map(r=>{const d=R0(r.d),rc=r.rs==null?"NEW":r.rs-r.rn>0?"▲"+(r.rs-r.rn):r.rs-r.rn<0?"▼"+(r.rn-r.rs):"–";return`<div class="mv" data-n="${esc(r.name)}"><span class="rk">${r.rn<=3?medal(r.rn-1,20):r.rn}</span><span class="nm">${esc(r.name)}<div class="sub">${r.n} game${r.n>1?"s":""} · now ${R0(r.e)}</div></span><span class="dl ${d>0?"up":d<0?"dn":""}">${d>0?"▲":d<0?"▼":"–"} ${Math.abs(d)}</span><span class="rc">#${r.rn} ${rc}</span></div>`}).join("");
   const mx=Math.max(...T.active.map(r=>r.n));
-  const act=T.active.map(r=>`<div style="margin:8px 0" data-n="${esc(r.name)}"><div class="row" style="margin:0"><span class="nm">${esc(r.name)}</span><span class="sub">${r.n} games · ${r.opp} opponent${r.opp==1?"":"s"}</span></div><div class="bar" style="width:${Math.max(4,r.n/mx*100)}%"></div></div>`).join("");
+  const act=T.active.map(r=>`<div style="margin:8px 0" data-n="${esc(r.name)}"><div class="row" style="margin:0"><span class="nm">${esc(r.name)}</span><span class="sub">${r.n} ${gms(r.n)} · ${r.opp} opponent${r.opp==1?"":"s"}</span></div><div class="bar" style="width:${Math.max(4,r.n/mx*100)}%"></div></div>`).join("");
   const st=(T.cur.length?T.cur.map(p=>`<div class="row" style="margin:6px 0" data-stat="streak" data-sv="cur" data-sr="all"><span class="nm">🔥 ${esc(p.name)}</span><span class="elo up">${p.streak}</span><span class="sub">in a row</span></div>`).join(""):`<div class="sub">No active streaks of 2 or more.</div>`)+(T.longest?`<div class="sub" style="margin-top:8px" data-stat="streak" data-sv="best" data-sr="${tper}">Longest ${tper=="all"?"ever":"this "+w}: <b>${esc(T.longest.name)}</b> · ${T.longest.n} wins in a row ›</div>`:"");
   const u=T.upset,rv=T.rival,M=T.mys,I=T.ins;
   const slot=(t,body,n)=>`<div class="card"${n?` data-n="${esc(n)}" style="cursor:pointer"`:""}><div class="ct">${t}</div>${body}</div>`,none=m=>`<div class="sub" style="margin-top:8px">${m}</div>`;
-  const rivC=slot("Biggest rivals",rv?`<div class="nm" style="margin-top:8px">${esc(rv.a)} vs ${esc(rv.b)}</div><div class="sub">${rv.n} meetings · ${rv.aw}–${rv.bw}${rv.t?"–"+rv.t:""}</div>`:none("No rivalries yet"));
+  const rivC=slot("Biggest rivals",rv?`<div class="nm" style="margin-top:8px">${esc(rv.a)} vs ${esc(rv.b)}</div><div class="sub">${rv.n} meeting${rv.n==1?"":"s"} · ${rv.aw}–${rv.bw}${rv.t?"–"+rv.t:""}</div>`:none("No rivalries yet"));
   const udC=slot("Underdog",u?`<div class="nm" style="margin-top:8px">${esc(u.name)}</div><div class="sub">beat ${esc(u.opp)} · rated ${R0(u.gap)} lower · ${R0(u.pr*100)}% chance</div>`:none("None yet. Needs a 50+ rating gap"),u&&u.name);
   const myC=slot("Man of Mystery",M?`<div class="nm" style="margin-top:8px">${esc(M.name)}</div><div class="elo up">${R0(100*M.w/M.n)}%</div><div class="sub">${M.w}W ${M.n-M.w}L going random</div>`:none("Needs 3+ games going random"),M&&M.name);
   const inC=slot("Insomniac",I?`<div class="nm" style="margin-top:8px">${esc(I.name)}</div><div class="elo">${I.n}</div><div class="sub">game${I.n==1?"":"s"} between midnight and 4am</div>`:none("No games between midnight and 4am"),I&&I.name);
@@ -544,14 +561,25 @@ function trendsPage(){
   const stC=(t,key,c,val,sub)=>`<div class="card"${c?` data-stat="${key}" data-sr="${tper}" style="cursor:pointer"`:""}><div class="ct">${t}</div>${c?`<div class="nm" style="margin-top:8px">${esc(c.name)}</div><div class="elo">${val}</div><div class="sub">${sub}</div>`:none("Nobody yet")}</div>`;
   const nhC=PREM()?stC("Needs Help","sds",C0.sds,C0.sds&&C0.sds.sd,"self-destructs"):lk("Needs Help","Most self-destructs. Not tracked in Free groups.");
   const pbC=PREM()?stC("Punching bag","taken",C0.taken,C0.taken&&R0(C0.taken.tk).toLocaleString(),"damage taken, avg opponent damage in FFA"):lk("Punching bag","Most damage taken. Not tracked in Free groups.");
-  const P0=T.pony,opC=PREM()?slot("One Trick Pony",P0?`<div class="nm" style="margin-top:8px">${esc(P0.name)}</div><div class="elo">${esc(P0.ch)}</div><div class="sub">${P0.pct}% of ${P0.n} games · ${P0.v} character${P0.v==1?"":"s"} played</div>`:none("Needs 11+ games with a character"),P0&&P0.name):lk("One Trick Pony","Least variety in fighters, over 10 matches. Not tracked in Free groups.");
-  const supC=`<h3 style="font:10px/1.6 var(--pf);margin:22px 0 10px">SUPERLATIVES</h3><div class="pair">${myC}${inC}</div><div class="pair">${nhC}${pbC}</div>${opC}`;
+  const P0=T.pony,opC=PREM()?slot("One Trick Pony",P0?`<div class="nm" style="margin-top:8px">${esc(P0.name)}</div><div class="elo">${esc(P0.ch)}</div><div class="sub">${P0.pct}% of ${P0.n} ${gms(P0.n)} · ${P0.v} character${P0.v==1?"":"s"} played</div>`:none("Needs 11+ games with a character"),P0&&P0.name):lk("One Trick Pony","Least variety in fighters, over 10 matches. Not tracked in Free groups.");
+  const nm=(r,big,sub,n)=>r?`<div class="nm" style="margin-top:8px">${esc(r.name)}</div><div class="elo">${big}</div><div class="sub">${sub}</div>`:none(n);
+  const Nl=T.nol,Sb=T.sb,Gs=T.slayer,Br=T.bride,Cu=T.cursed,Rc=T.coaster,By=T.bully,Jk=T.jk,Gc=T.gc;
+  const nlC=slot("No-lifers",nm(Nl,Nl&&Nl.n,"game"+(Nl&&Nl.n==1?"":"s")+" between 9am and 5pm","No games between 9am and 5pm"),Nl&&Nl.name);
+  const sbC=slot("Social Butterfly",nm(Sb,Sb&&Sb.n,"different opponents faced","Needs 2+ opponents"),Sb&&Sb.name);
+  const gsC2=slot("Giant Slayer",nm(Gs,Gs&&Gs.n,"upset win"+(Gs&&Gs.n==1?"":"s")+" over higher-rated players","No upsets yet"),Gs&&Gs.name);
+  const byC=slot("Bully",By?`<div class="nm" style="margin-top:8px">${esc(By.name)}</div><div class="elo">${By.n}</div><div class="sub">wins over ${esc(By.opp)} in ${By.of} meetings</div>`:none("Needs 3+ wins over one opponent"),By&&By.name);
+  const brC=slot("Bridesmaid",nm(Br,Br&&Br.n,"second-place finish"+(Br&&Br.n==1?"":"es")+" in FFA","No FFA runner-ups yet"),Br&&Br.name);
+  const cuC=slot("Cursed",nm(Cu,Cu&&Cu.n,"losses in a row","Needs a 3+ loss streak"),Cu&&Cu.name);
+  const rcC=slot("Rollercoaster",nm(Rc,Rc&&R0(Rc.v),"avg rating swing per game · "+(Rc&&Rc.n)+" games","Needs 3+ games"),Rc&&Rc.name);
+  const gcC=PREM()?slot("Glass Cannon",nm(Gc,Gc&&Gc.v.toFixed(1),"KOs + deaths per game · "+(Gc&&Gc.k)+" KOs, "+(Gc&&Gc.d)+" deaths","Needs 3+ games with stats"),Gc&&Gc.name):lk("Glass Cannon","Most KOs and deaths together. Not tracked in Free groups.");
+  const jkC=PREM()?slot("Jack of All Trades",nm(Jk,Jk&&Jk.v,"different characters played","Needs 3+ characters"),Jk&&Jk.name):lk("Jack of All Trades","Most different characters played. Not tracked in Free groups.");
+  const supC=`<h3 style="font:10px/1.6 var(--pf);margin:22px 0 10px">SUPERLATIVES</h3><div class="pair">${myC}${inC}</div><div class="pair">${nlC}${sbC}</div><div class="pair">${gsC2}${byC}</div><div class="pair">${brC}${cuC}</div><div class="pair">${rcC}${gcC}</div><div class="pair">${nhC}${pbC}</div><div class="pair">${jkC}${opC}</div>`;
   const lr=t=>{const L=T.lead[t];if(!L.cur)return`<div class="row" style="margin:8px 0"><span class="sub" style="flex:0 0 52px">${LB[t]}</span><span class="sub">No games yet</span></div>`;
     const note=!L.prev?"new board":L.prev==L.cur.name?"held the lead":`took the lead from ${esc(L.prev)}`;
     return`<div class="row" data-n="${esc(L.cur.name)}" style="margin:8px 0;cursor:pointer"><span class="sub" style="flex:0 0 52px">${LB[t]}</span><span class="rk">${medal(0,18)}</span><span class="nm">${esc(L.cur.name)}<div class="sub">${note}</div></span><span class="elo">${R0(L.cur.r[t])}</span></div>`};
   const leadCard=`<div class="card"><b>Rating leaders</b>${lr("one")}${lr("ffa")}</div>`;
   const C=T.cmb,cr=(label,key,c,val,sub)=>c?`<div class="row" data-stat="${key}" data-sr="${tper}" style="margin:8px 0"><span class="sub" style="flex:0 0 104px">${label}</span><span class="nm">${esc(c.name)}${sub?`<div class="sub">${sub}</div>`:""}</span><span class="elo">${val}</span><span class="sub">›</span></div>`:`<div class="row" style="margin:8px 0"><span class="sub" style="flex:0 0 96px">${label}</span><span class="sub">—</span></div>`;
-  const cmbCard=C.any?`<div class="card"><b>Combat leaders</b><div class="msg">Only matches with stats recorded count. Best K/D needs 3+. Tap a stat to see everyone ranked.</div>${cr("Best K/D","kd",C.kd,C.kd&&(C.kd.kd===Infinity?"∞":C.kd.kd.toFixed(2)),C.kd&&`${C.kd.k} KOs · ${C.kd.d} deaths · ${C.kd.n} games`)}${cr("Most KOs","kos",C.kos,C.kos&&C.kos.k)}${cr("Most damage","dmg",C.dmg,C.dmg&&Math.round(C.dmg.dmg).toLocaleString())}</div>`:`<div class="card"><b>Combat leaders</b><div class="msg">No stats recorded ${days?"in the last "+days+" days":"yet"}. Scan the second results screen, or type KOs, deaths, SDs, and damage when you add a match.</div></div>`;
+  const cmbCard=C.any?`<div class="card"><b>Combat leaders</b><div class="msg">Only matches with stats recorded count. Best K/D needs 3+. Tap a stat to see everyone ranked.</div>${cr("Best K/D","kd",C.kd,C.kd&&(C.kd.kd===Infinity?"∞":C.kd.kd.toFixed(2)),C.kd&&`${C.kd.k} KOs · ${C.kd.d} deaths · ${C.kd.n} ${gms(C.kd.n)}`)}${cr("Most KOs","kos",C.kos,C.kos&&C.kos.k)}${cr("Most damage","dmg",C.dmg,C.dmg&&Math.round(C.dmg.dmg).toLocaleString())}</div>`:`<div class="card"><b>Combat leaders</b><div class="msg">No stats recorded ${days?"in the last "+days+" days":"yet"}. Scan the second results screen, or type KOs, deaths, SDs, and damage when you add a match.</div></div>`;
   return seg+raceCard(T,days)+`<div class="pair">${cf("Top climber",T.climber,true)}${cf("Biggest drop",T.faller,false)}</div><div class="pair">${rivC}${udC}</div>${supC}<div class="card"><b>Who's moving</b><div class="msg">Rating change over ${pt}. Tap a player for their page.</div>${mv}</div><div class="card"><b>Most active</b>${act}</div><div class="card"><b>Hot streaks</b><div style="margin-top:6px">${st}</div></div>${leadCard}${PREM()?cmbCard:""}${PREM()?"":lockedStats("Combat leaders",["Best K/D","Most KOs","Most damage"])}`;
 }
 
@@ -574,11 +602,11 @@ function statRows(key,range,mode,sv){
   const A=Object.values(S),L=n=>n.toLocaleString(),out=[];
   const add=(c,val,disp,sub)=>out.push({name:c.name,val,disp,sub,k:c.k,g:c.g});
   for(const c of A){
-    if(key=="kd"&&c.n>=3)add(c,c.d?c.k/c.d:c.k?Infinity:0,c.d?(c.k/c.d).toFixed(2):c.k?"∞":"0.00",`${c.k} KOs · ${c.d} deaths · ${c.n} games`);
-    if(key=="kos"&&c.k>0)add(c,c.k,String(c.k),`${c.n} games with stats`);
-    if(key=="dmg"&&c.dmg>0)add(c,c.dmg,L(Math.round(c.dmg)),`${c.g} games`);
-    if(key=="sds"&&c.sd>0)add(c,c.sd,String(c.sd),`${c.g} games`);
-    if(key=="taken"&&c.tk>0)add(c,c.tk,L(Math.round(c.tk)),`${c.tn} games with stats`);
+    if(key=="kd"&&c.n>=3)add(c,c.d?c.k/c.d:c.k?Infinity:0,c.d?(c.k/c.d).toFixed(2):c.k?"∞":"0.00",`${c.k} KOs · ${c.d} deaths · ${c.n} ${gms(c.n)}`);
+    if(key=="kos"&&c.k>0)add(c,c.k,String(c.k),`${c.n} ${gms(c.n)} with stats`);
+    if(key=="dmg"&&c.dmg>0)add(c,c.dmg,L(Math.round(c.dmg)),`${c.g} ${gms(c.g)}`);
+    if(key=="sds"&&c.sd>0)add(c,c.sd,String(c.sd),`${c.g} ${gms(c.g)}`);
+    if(key=="taken"&&c.tk>0)add(c,c.tk,L(Math.round(c.tk)),`${c.tn} ${gms(c.tn)} with stats`);
     if(key=="wr"&&c.g>=5)add(c,c.w/c.g,Math.round(100*c.w/c.g)+"%",`${c.w}W ${c.g-c.w}L · avg opp ${Math.round(c.os/c.g)}`);
     if(key=="streak"){const v=sv=="cur"?c.run:c.best;if(v>=2)add(c,v,String(v),sv=="cur"?`longest ${c.best} · avg opp ${Math.round(c.rs/c.rn)}`:`${c.w}W of ${c.g} · now ${c.run} · avg opp ${Math.round(c.bs/c.bn)}`)}
   }
@@ -604,10 +632,10 @@ function joinCard(){return`<div class="card"><b>Join your group</b><div class="m
 async function joinGroup(){
   jmsg="Checking…";render();
   try{const j=await api("groups",{method:"POST",body:JSON.stringify({action:"join",name:jn,passkey:jk})});
-    tryStage="";tryOpen=false;gid=j.id;gname=j.name;gtier=j.tier||"premier";ls("gtier",gtier);gAdm=false;gk="";pass=jk;ls("gid",gid);ls("gname",gname);ls("pass",pass);gaResume();jk="";jmsg="";ms=[];sel="";tab="lb";await load();render()}
+    resetDraft();tryStage="";tryOpen=false;gid=j.id;gname=j.name;gtier=j.tier||"premier";ls("gtier",gtier);gAdm=false;gk="";pass=jk;ls("gid",gid);ls("gname",gname);ls("pass",pass);gaResume();jk="";jmsg="";ms=[];sel="";tab="lb";await load();render()}
   catch(e){jmsg=e.message;render()}
 }
-function leaveGroup(msg){if(peep)return peepExit();gAdm=false;gk="";demo=false;tryStage="";tryOpen=false;tab="lb";gid="";gname="";pass="";ls("gid","");ls("gname","");ls("pass","");ms=[];sel="";stat="";jmsg=typeof msg=="string"?msg:"";render()}
+function leaveGroup(msg){if(peep)return peepExit();resetDraft();gAdm=false;gk="";demo=false;tryStage="";tryOpen=false;tab="lb";gid="";gname="";pass="";ls("gid","");ls("gname","");ls("pass","");ms=[];sel="";stat="";jmsg=typeof msg=="string"?msg:"";render()}
 let grp={list:null,orph:0,msg:"",nn:"",nk:"",adopt:true,busy:false};
 const groupsApi=o=>api("groups",{method:"POST",body:JSON.stringify({admin,...o})});
 async function gmLoad(quiet){
@@ -701,12 +729,12 @@ const sig=d=>JSON.stringify(d.map(x=>[String(x.name||"").trim(),x.place,String(x
 const trackAcc=kind=>{if(demo||!gid)return;api("scans",{method:"POST",body:JSON.stringify({action:"acc",kind})}).catch(()=>{})};
 async function peekGroup(id){
   const g=(grp.list||[]).find(x=>x.id==id);if(!g||peep)return;
-  peep={gid,gname,pass,gtier,gAdm,gk};
+  resetDraft();peep={gid,gname,pass,gtier,gAdm,gk};
   gid=g.id;gname=g.name;pass=g.passkey;gtier=g.tier=="free"?"free":"premier";gAdm=false;gk="";ms=[];sel="";stat="";tab="lb";tryOpen=false;tryStage="";
   render();scrollTo(0,0);await load();render();
 }
 function peepExit(){
-  if(!peep)return;const o=peep;peep=null;
+  if(!peep)return;const o=peep;peep=null;resetDraft();
   gid=o.gid;gname=o.gname;pass=o.pass;gtier=o.gtier;ls("gtier",gtier);gAdm=o.gAdm;gk=o.gk;ms=[];sel="";stat="";tab="set";
   if(gid)load();render();scrollTo(0,0);
 }
@@ -776,7 +804,7 @@ function cgPage(){
   <form onsubmit="event.preventDefault();cgSubmit();return false" autocomplete="off">
   ${prem?`<div class="row"><input class="n" placeholder="Premier group key (XXXX-XXXX)" maxlength="12" autocapitalize="characters" value="${esc(cg.key)}" oninput="cg.key=this.value"></div>`:""}
   <div class="row"><input class="n" placeholder="Group name (must be unique)" maxlength="24" autocapitalize="off" value="${esc(cg.name)}" oninput="cg.name=this.value"></div>
-  <div class="row"><input class="n" placeholder="Group password (shared with players)" maxlength="40" autocapitalize="off" value="${esc(cg.pw)}" oninput="cg.pw=this.value"></div>
+  <div class="row"><input class="n" placeholder="Group password (for players)" maxlength="40" autocapitalize="off" value="${esc(cg.pw)}" oninput="cg.pw=this.value"></div>
   <div class="row"><input class="n" type="password" placeholder="Admin password (keep private)" maxlength="40" value="${esc(cg.ak)}" oninput="cg.ak=this.value"></div>
   <div class="row"><input class="n" type="password" placeholder="Repeat admin password" maxlength="40" value="${esc(cg.ak2)}" oninput="cg.ak2=this.value"></div>
   <div class="msg">Players join with the group password. The admin password manages matches.</div>
@@ -802,7 +830,7 @@ function cgMsg(m){cg.msg=m;render()}
 async function cgOpen(){
   const d=cg.done;cg={open:false,pick:"",name:"",pw:"",ak:"",ak2:"",key:"",msg:"",busy:false,done:null};
   gid=d.id;gname=d.name;gtier=d.tier;pass=d.pw;ls("gid",gid);ls("gname",gname);ls("gtier",gtier);ls("pass",pass);
-  gAdm=false;gk="";ms=[];sel="";tab="lb";await load();render();
+  resetDraft();gAdm=false;gk="";ms=[];sel="";tab="lb";await load();render();
   try{await api("groups",{method:"POST",body:JSON.stringify({action:"gadmin",gkey:d.ak})});gk=d.ak;gAdm=true;ls("gk_"+gid,gk);render()}catch(e){}
   scrollTo(0,0);
 }
@@ -850,9 +878,9 @@ function showHow(ctx){howCtx=ctx;howto=0;drawHow()}
 function drawHow(){
   const o=document.getElementById("ov");if(!o)return;
   if(howto<0){o.style.display="none";o.innerHTML="";return}
-  const s=HOW[howto],last=howto==HOW.length-1,body=s[1]??(howCtx=="try"?"Make sure the names and placements match your picture, then tap Accept scan to see the finished results.":"Make sure every name, placement and stat matches the screen. Fix anything that's off, then tap Is all data correct? and Save match.");
+  const s=HOW[howto],last=howto==HOW.length-1,body=s[1]??(howCtx=="try"?"Make sure the names and placements match your picture, then tap Accept scan to see the finished results.":"Make sure every name, placement and stat matches the screen. Fix anything that's off. A popup asks if all data is correct: tap Yes, save to log the match, or No, edit to keep fixing it first.");
   o.style.display="flex";
-  o.innerHTML=`<div class="box" role="dialog" aria-label="How to scan"><div class="dots">${HOW.map((_,i)=>`<i class="${i==howto?"on":""}"></i>`).join("")}</div><div class="big">${howto+1}. ${esc(s[0])}</div><div class="msg" style="margin:0 0 14px">${body}</div><div class="row">${howto>0?`<button class="g" onclick="howto--;drawHow()">Back</button>`:`<button class="g" onclick="howto=-1;drawHow()">Close</button>`}<button style="flex:1" onclick="${last?"howto=-1":"howto++"};drawHow()">${last?"Got it":"Next"}</button></div></div>`;
+  o.innerHTML=`<div class="box" role="dialog" aria-label="How to scan"><button class="cl" aria-label="Close" title="Close" onclick="howto=-1;drawHow()">✕</button><div class="dots">${HOW.map((_,i)=>`<i class="${i==howto?"on":""}"></i>`).join("")}</div><div class="big">${howto+1}. ${esc(s[0])}</div><div class="msg" style="margin:0 0 14px">${body}</div><div class="row">${howto>0?`<button class="g" onclick="howto--;drawHow()">Back</button>`:`<button class="g" onclick="howto=-1;drawHow()">Close</button>`}<button style="flex:1" onclick="${last?"howto=-1":"howto++"};drawHow()">${last?"Got it":"Next"}</button></div></div>`;
 }
 document.getElementById("ov").onclick=e=>{if(e.target.id=="ov"){howto=-1;drawHow()}};
 // ---------- Demo group ----------
