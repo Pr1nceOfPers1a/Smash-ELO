@@ -573,7 +573,9 @@ function trendsPage(){
   const rcC=slot("Rollercoaster",nm(Rc,Rc&&R0(Rc.v),"avg rating swing per game · "+(Rc&&Rc.n)+" games","Needs 3+ games"),Rc&&Rc.name);
   const gcC=PREM()?slot("Glass Cannon",nm(Gc,Gc&&Gc.v.toFixed(1),"KOs + deaths per game · "+(Gc&&Gc.k)+" KOs, "+(Gc&&Gc.d)+" deaths","Needs 3+ games with stats"),Gc&&Gc.name):lk("Glass Cannon","Most KOs and deaths together. Not tracked in Free groups.");
   const jkC=PREM()?slot("Jack of All Trades",nm(Jk,Jk&&Jk.v,"different characters played","Needs 3+ characters"),Jk&&Jk.name):lk("Jack of All Trades","Most different characters played. Not tracked in Free groups.");
-  const supC=`<h3 style="font:10px/1.6 var(--pf);margin:22px 0 10px">SUPERLATIVES</h3><div class="pair">${myC}${inC}</div><div class="pair">${nlC}${sbC}</div><div class="pair">${gsC2}${byC}</div><div class="pair">${brC}${cuC}</div><div class="pair">${rcC}${gcC}</div><div class="pair">${nhC}${pbC}</div><div class="pair">${jkC}${opC}</div>`;
+  const sc=[[M,myC],[I,inC],[Nl,nlC],[Sb,sbC],[Gs,gsC2],[By,byC],[Br,brC],[Cu,cuC],[Rc,rcC],[Gc,gcC,1],[C0.sds,nhC,1],[C0.taken,pbC,1],[Jk,jkC,1],[P0,opC,1]].filter(([d,h,pr])=>d||(pr&&!PREM())).map(x=>x[1]);
+  let sg="";for(let i=0;i<sc.length;i+=2)sg+=i+1<sc.length?`<div class="pair">${sc[i]}${sc[i+1]}</div>`:sc[i];
+  const supC=sc.length?`<h3 style="font:10px/1.6 var(--pf);margin:22px 0 10px">SUPERLATIVES</h3>${sg}`:"";
   const lr=t=>{const L=T.lead[t];if(!L.cur)return`<div class="row" style="margin:8px 0"><span class="sub" style="flex:0 0 52px">${LB[t]}</span><span class="sub">No games yet</span></div>`;
     const note=!L.prev?"new board":L.prev==L.cur.name?"held the lead":`took the lead from ${esc(L.prev)}`;
     return`<div class="row" data-n="${esc(L.cur.name)}" style="margin:8px 0;cursor:pointer"><span class="sub" style="flex:0 0 52px">${LB[t]}</span><span class="rk">${medal(0,18)}</span><span class="nm">${esc(L.cur.name)}<div class="sub">${note}</div></span><span class="elo">${R0(L.cur.r[t])}</span></div>`};
