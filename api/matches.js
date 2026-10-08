@@ -8,6 +8,7 @@ function valid(rs) {
     if (!nameOk(x.name)) return false;
     if (!Number.isInteger(x.place) || x.place < 1 || x.place > 8) return false;
     if (x.char !== undefined && (typeof x.char !== 'string' || x.char.length > 30)) return false;
+    if (x.rnd !== undefined && typeof x.rnd !== 'boolean') return false;
     for (const k of ['kills', 'deaths', 'sds', 'dmg']) {
       if (x[k] !== undefined && !(Number.isFinite(x[k]) && x[k] >= 0 && x[k] <= (k === 'dmg' ? 100000 : 999))) return false;
     }
@@ -63,7 +64,11 @@ module.exports = async (req, res) => {
       if (b.action === 'merge') return await merge(b, res, g);
       if (!valid(b.results)) return res.status(400).json({ error: 'Invalid match' });
       const free = g.tier === 'free'; // free groups: names and placements only, characters and combat stats are Premier
-      const results = b.results.map((x) => ({ name: x.name.trim(), place: x.place, ...(!free && x.char && x.char.trim() ? { char: x.char.trim() } : {}), ...Object.fromEntries((free ? [] : ['kills', 'deaths', 'sds', 'dmg']).filter((k) => x[k] !== undefined).map((k) => [k, x[k]])) }));
+      const results = b.results.map((x) => {
+        const rn = x.rnd === true || (typeof x.char === 'string' && /^random$/i.test(x.char.trim())); // "went random" is kept on every tier
+        const ch = rn ? 'Random' : (x.char && x.char.trim()) || '';
+        return { name: x.name.trim(), place: x.place, ...(rn ? { rnd: true } : {}), ...(!free && ch ? { char: ch } : {}), ...Object.fromEntries((free ? [] : ['kills', 'deaths', 'sds', 'dmg']).filter((k) => x[k] !== undefined).map((k) => [k, x[k]])) };
+      });
       const r = await sb('matches', { method: 'POST', body: JSON.stringify({ results, group_id: g.id }) });
       if (!r.ok) return res.status(500).json({ error: 'Database error' });
       return res.status(200).json({ ok: true });
