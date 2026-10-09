@@ -49,6 +49,7 @@ input.sm{flex:1;width:0;min-width:0;text-align:center;padding:8px 4px}
 .slot .pn{font-size:12px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .slot .pr{font:12px var(--pf);margin:6px 0 2px}.slot .pd{font-size:12px;font-weight:700;margin-bottom:6px}
 .blk{border:3px solid var(--ink);box-shadow:3px 3px 0 var(--ink)}
+#pod .b0{height:96px}#pod .b1{height:68px}#pod .b2{height:46px}#pod{min-height:240px}#pod.list{min-height:0}#pod.list .sb{margin:10px 0}#pod.list .sb .nm{font-size:15px}#pod.list .sb .pr{font-size:13px}
 .b0{height:46px;background:#ffd23f}.b1{height:32px;background:#c9ced8}.b2{height:22px;background:#d9894a}
 .pod.list{display:block;min-height:0}.sb{display:flex;align-items:center;gap:6px;margin:5px 0}.sb .rk{width:22px}.sb .nm{font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.sb .pr{font:11px var(--pf)}.sb .pd{font-size:12px;font-weight:700;min-width:56px;text-align:right}
 .warn{color:var(--bad)!important;font-weight:700}
@@ -99,6 +100,12 @@ input.sm{flex:1;width:0;min-width:0;text-align:center;padding:8px 4px}
 .bub::before{content:"";position:absolute;left:10px;bottom:-9px;border:6px solid transparent;border-top-color:var(--ink);border-bottom:0}
 .bub::after{content:"";position:absolute;left:12px;bottom:-5px;border:4px solid transparent;border-top-color:#fff;border-bottom:0}
 .bub.e{border-style:dashed;color:var(--mu)}
+.kv{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:9px 0;border-top:2px solid var(--ln);font:12px/1.4 ui-monospace,Menlo,Consolas,monospace}.kv:first-of-type{border-top:0}.kv .l{color:var(--mu)}.kv .v{font-weight:700;text-align:right}
+.big3{font:20px var(--pf);text-align:center;margin:10px 0 4px}
+.duo{display:flex;align-items:center;gap:8px}.duo .dn{flex:1;min-width:0;text-align:center}.duo .dn .nm{font-size:14px;overflow:hidden;text-overflow:ellipsis}.duo .dn .elo{font-size:14px;margin-top:4px}.duo .ds{flex:0 0 auto;text-align:center}
+.fm{display:inline-block;min-width:24px;margin-left:3px;padding:4px 0;text-align:center;font:8px var(--pf);color:#fff;border:2px solid var(--ink);background:#9c9a90}.fm.W{background:#13813a}.fm.L{background:#e5322d}
+.mo{display:inline-block;font:7px/1 var(--pf);background:#fff;color:var(--ink);padding:3px 4px;margin-right:6px;font-style:normal}
+details.ffa{margin:0 0 14px}details.ffa summary{cursor:pointer;list-style:none;font:9px var(--pf);padding:12px;background:#fff;border:3px solid var(--ink);box-shadow:3px 3px 0 var(--ink);text-align:center}details.ffa summary::-webkit-details-marker{display:none}details.ffa[open] summary{margin-bottom:12px}
 .mmb{width:100%;margin:0 0 14px;padding:11px 6px;font-size:9px}
 .mmc{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}.mmc button{background:#fff;color:var(--ink);padding:10px 12px;font-size:10px}.mmc button.on{background:var(--blue);color:#fff}
 .q{flex:0 0 auto;align-self:stretch;width:39px;padding:0;font-weight:700}
@@ -564,14 +571,15 @@ function raceCard(T,days){
   let tops=all?T.top5:T.top3;
   if(!tops.length)return"";
   RACE.s=tops.map((p,i)=>({name:p.name,col:i<3?RCOL[i]:RPAL[(i-3)%RPAL.length],pts:stepPts(p,T.t0,T.t1)}));
-  const vs=RACE.s.flatMap(s=>s.pts.map(q=>q[1])),lo=Math.min(...vs),hi=Math.max(...vs),sp=Math.max(hi-lo,10),pad=sp*.1;
-  const X=t=>26+(t-T.t0)/(T.t1-T.t0)*264,Y=v=>118-(v-(lo-pad))/(sp+2*pad)*108;
+  const vs=RACE.s.flatMap(s=>s.pts.map(q=>q[1])),dlo=Math.min(...vs),dhi=Math.max(...vs);
+  let lo=Math.floor((dlo-4)/50)*50,hi=Math.ceil((dhi+4)/50)*50;if(((hi-lo)/50)%2)hi+=50;if(hi-lo<100)hi=lo+100; // reference lines land on multiples of 50, middle one too
+  const X=t=>26+(t-T.t0)/(T.t1-T.t0)*264,Y=v=>218-(v-lo)/(hi-lo)*206;
   RACE.g={t0:T.t0,t1:T.t1,X,Y,hs:all?5:6};
   const k=days==7?7:5,fmt=d=>d.toLocaleDateString(undefined,days==7?{weekday:"short"}:{month:"numeric",day:"numeric"});
-  const ticks=Array.from({length:k+1},(_,i)=>T.t0+i*(T.t1-T.t0)/k).map(t=>`<line x1="${X(t).toFixed(1)}" y1="118" x2="${X(t).toFixed(1)}" y2="122" stroke="var(--ink)"/><text x="${X(t).toFixed(1)}" y="134" text-anchor="middle" font-size="8" style="fill:var(--mu)">${fmt(new Date(t))}</text>`).join("");
+  const ticks=Array.from({length:k+1},(_,i)=>T.t0+i*(T.t1-T.t0)/k).map(t=>`<line x1="${X(t).toFixed(1)}" y1="218" x2="${X(t).toFixed(1)}" y2="222" stroke="var(--ink)"/><text x="${X(t).toFixed(1)}" y="234" text-anchor="middle" font-size="8" style="fill:var(--mu)">${fmt(new Date(t))}</text>`).join("");
   const yl=[hi,(hi+lo)/2,lo].map(v=>`<text x="2" y="${(Y(v)+3).toFixed(1)}" font-size="8" style="fill:var(--mu)">${Math.round(v)}</text><line x1="26" y1="${Y(v).toFixed(1)}" x2="290" y2="${Y(v).toFixed(1)}" stroke="var(--ln)" stroke-dasharray="2 3"/>`).join("");
   const lines=RACE.s.map((s,i)=>`<polyline id="rl${i}" fill="none" stroke="${s.col}" stroke-width="${all?2:3}" stroke-linejoin="miter" shape-rendering="crispEdges" points=""/>`).join(""),heads=RACE.s.map((s,i)=>`<rect id="rh${i}" width="${all?5:6}" height="${all?5:6}" fill="${s.col}" stroke="var(--ink)" stroke-width="1"/>`).join("");
-  return`<div class="card"><div class="row"><b class="ct" style="flex:1">Rating race</b><button class="g" onclick="replayRace()">▶ Replay</button></div>${pgrp("c4","Race view",`<div class="seg"><button class="${all?"":"on"}" onclick="rview='top3';render()">Podium race</button><button class="${all?"on":""}" onclick="rview='top5';render()">Top 5</button></div>`)}<div class="sub" id="rt">&nbsp;</div><div class="pod${all?" list":""}" id="pod"></div><svg viewBox="0 0 300 140" width="100%" role="img" aria-label="Rating of the top three players ${days?"over the last "+days+" days":"over all time"}"><line x1="26" y1="118" x2="290" y2="118" stroke="var(--ink)"/>${yl}${ticks}${lines}${heads}</svg></div>`;
+  return`<div class="card"><div class="row"><b class="ct" style="flex:1">Rating race</b><button class="g" onclick="replayRace()">▶ Replay</button></div>${pgrp("c4","Race view",`<div class="seg"><button class="${all?"":"on"}" onclick="rview='top3';render()">Podium race</button><button class="${all?"on":""}" onclick="rview='top5';render()">Top 5</button></div>`)}<div class="sub" id="rt">&nbsp;</div><div class="pod${all?" list":""}" id="pod"></div><svg viewBox="0 0 300 242" width="100%" role="img" aria-label="Rating of the top three players ${days?"over the last "+days+" days":"over all time"}"><line x1="26" y1="218" x2="290" y2="218" stroke="var(--ink)"/>${yl}${ticks}${lines}${heads}</svg></div>`;
 }
 function trendsPage(){
   const days=tper=="week"?7:tper=="month"?30:0,w=tper,pt=days?`the last ${days} days`:"all time",T=trendsData(days),R0=Math.round;
@@ -694,58 +702,82 @@ function supPage(){
   return`<button class="g" onclick="goBack()">← Back</button><div style="height:12px"></div><div class="card"><b>${d[0]}</b><div class="msg">${d[1]}</div></div>${seg}${rows||`<div class="card"><div class="msg">Nobody qualifies for this ${days?"time range":"yet"}.</div></div>`}`;
 }
 // ---------- Matchup data ----------
-function mmPair(a,b){
-  const o={a,b,n:0,w:{[a]:0,[b]:0},t:0,md:{one:{n:0,[a]:0,[b]:0,t:0},ffa:{n:0,[a]:0,[b]:0,t:0}},pl:{[a]:0,[b]:0},cb:{[a]:{k:0,d:0,sd:0,dmg:0,n:0},[b]:{k:0,d:0,sd:0,dmg:0,n:0}},cp:{},rec:[],run:0,runWho:""};
+function mmPair(a,b,only){
+  const o={a,b,n:0,w:{[a]:0,[b]:0},t:0,md:{one:{n:0,[a]:0,[b]:0,t:0},ffa:{n:0,[a]:0,[b]:0,t:0}},pl:{[a]:0,[b]:0},cp:{}};
   for(const m of D.matches){
+    if(only&&m.mode!=only)continue;
     const x=m.results.find(r=>r.name==a),y=m.results.find(r=>r.name==b);if(!x||!y)continue;
     o.n++;o.pl[a]+=x.place;o.pl[b]+=y.place;
     const w=x.place<y.place?a:x.place>y.place?b:"";
-    if(w){o.w[w]++;o.md[m.mode][w]++;if(o.runWho==w)o.run++;else{o.runWho=w;o.run=1}}else{o.t++;o.md[m.mode].t++;o.runWho="";o.run=0}
+    if(w){o.w[w]++;o.md[m.mode][w]++}else{o.t++;o.md[m.mode].t++}
     o.md[m.mode].n++;
-    for(const [r,who] of [[x,a],[y,b]]){const c=o.cb[who];if(Number.isFinite(r.kills)&&Number.isFinite(r.deaths)){c.k+=r.kills;c.d+=r.deaths;c.n++}if(Number.isFinite(r.sds))c.sd+=r.sds;if(Number.isFinite(r.dmg))c.dmg+=r.dmg}
     if(x.char&&y.char){const k=x.char+"\n"+y.char,e=(o.cp[k]??={ac:x.char,bc:y.char,n:0,aw:0,bw:0,t:0});e.n++;w==a?e.aw++:w==b?e.bw++:e.t++}
-    o.rec.push({ts:m.ts,w,mode:m.mode,ac:x.char||"",bc:y.char||""});
   }
   return o;
 }
+const rc3=(w1,w2,t)=>`${w1}–${w2}${t?"–"+t:""}`;
 function mmPage(){
   const P=D.players,names=Object.values(P).filter(p=>p.g.all).map(p=>p.name).sort((a,b)=>a.localeCompare(b)),S=mm.sel.filter(n=>P[n]);mm.sel=S;
-  const chips=`<div class="card"><b>Matchup data</b><div class="msg">Pick 2 or more players (up to 6). Tap a name to add or remove it. Overall is wins–losses in meetings; the number after the dot is how many.</div><div class="mmc">${names.map(n=>`<button class="${S.includes(n)?"on":""}" data-mmt="${esc(n)}">${esc(n)}</button>`).join("")}</div></div>`;
+  const chips=`<div class="card"><b>Matchup data</b><div class="msg">Pick 2 or more players (up to 6). The first one you pick is the one the stats are about.</div><div class="mmc">${names.map(n=>`<button class="${S.includes(n)?"on":""}" data-mmt="${esc(n)}">${S.includes(n)?`<i class="mo">${S.indexOf(n)+1}</i>`:""}${esc(n)}</button>`).join("")}</div></div>`;
   const back=`<button class="g" onclick="goBack()">← Back</button><div style="height:12px"></div>`;
-  if(S.length<2)return back+chips+`<div class="card"><div class="msg">${S.length?`Pick at least one more player to compare with <b>${esc(S[0])}</b>.`:"Pick two players to see how they match up."}</div></div>`;
+  if(S.length<2)return back+chips+`<div class="card"><div class="msg">${S.length?`Pick one more player to compare with <b>${esc(S[0])}</b>.`:"Pick two players to see how they match up."}</div></div>`;
+  if(S.length==2)return back+chips+mmDuel(S[0],S[1]);
   let h="";
-  if(S.length>2){
-    const all=D.matches.filter(m=>S.every(n=>m.results.some(r=>r.name==n)));
-    const st=S.map(n=>{let w=0,pl=0;for(const m of all){const r=m.results.find(x=>x.name==n);pl+=r.place;if(r.place===1)w++}return{n,w,av:all.length?pl/all.length:0}}).sort((a,b)=>b.w-a.w||a.av-b.av);
-    h+=`<div class="card"><b>All ${S.length} together</b>${all.length?`<div class="sub" style="margin:4px 0 6px">${all.length} ${all.length==1?"match":"matches"} with all of them in it</div>${st.map(r=>`<div class="row" style="margin:6px 0"><span class="nm">${esc(r.n)}</span><span class="elo">${r.w}W</span><span class="sub">avg place ${r.av.toFixed(1)}</span></div>`).join("")}`:`<div class="msg">They haven't all been in one match yet.</div>`}</div>`;
-  }
+  const all=D.matches.filter(m=>S.every(n=>m.results.some(r=>r.name==n)));
+  const st=S.map(n=>{let w=0,pl=0;for(const m of all){const r=m.results.find(x=>x.name==n);pl+=r.place;if(r.place===1)w++}return{n,w,av:all.length?pl/all.length:0}}).sort((a,b)=>b.w-a.w||a.av-b.av);
+  h+=`<div class="card"><b>All ${S.length} together</b>${all.length?`<div class="sub" style="margin:4px 0 8px">${all.length} ${all.length==1?"match":"matches"} with all of them in it</div>${st.map(r=>`<div class="kv"><span class="v">${esc(r.n)}</span><span class="l">${r.w} ${r.w==1?"win":"wins"} · avg place ${r.av.toFixed(1)}</span></div>`).join("")}`:`<div class="msg">They haven't all been in one match yet.</div>`}</div>`;
+  h+=`<h3 style="font:10px/1.6 var(--pf);margin:18px 0 10px">HEAD TO HEAD</h3>`;
   for(let i=0;i<S.length;i++)for(let j=i+1;j<S.length;j++)h+=mmCard(S[i],S[j]);
   return back+chips+h;
 }
 function mmCard(a,b){
-  const o=mmPair(a,b),P=D.players,e=esc;
-  if(!o.n)return`<div class="card"><b>${e(a)} vs ${e(b)}</b><div class="msg">They haven't been in a match together yet.</div></div>`;
-  const rc=(w1,w2,t)=>`${w1}–${w2}${t?"–"+t:""}`,md=k=>{const m=o.md[k];return`<div><div class="elo">${m.n?rc(m[a],m[b],m.t):"—"}</div><div class="sub">${k=="one"?"1v1":"FFA"}${m.n?` · ${m.n}`:""}</div></div>`};
-  const rate=o.w[a]+o.w[b]?Math.round(100*o.w[a]/(o.w[a]+o.w[b])):50;
-  let h=`<div class="card"><b>${e(a)} vs ${e(b)}</b><div class="tri"><div><div class="elo">${rc(o.w[a],o.w[b],o.t)}</div><div class="sub">Overall · ${o.n}</div></div>${md("one")}${md("ffa")}</div>
-    <div class="sub" style="margin-top:10px">${e(a)} wins ${rate}% of their decided meetings</div>
-    <div class="sub">Rating now: ${e(a)} ${Math.round(P[a].r.all)} · ${e(b)} ${Math.round(P[b].r.all)}</div>
-    <div class="sub">Average place when together: ${e(a)} ${(o.pl[a]/o.n).toFixed(1)} · ${e(b)} ${(o.pl[b]/o.n).toFixed(1)}</div>
-    ${o.run>=2?`<div class="sub">${e(o.runWho)} has won the last ${o.run} meetings</div>`:""}</div>`;
-  if(PREM()){
-    const cl=Object.values(o.cp).map(c=>({...c,r:(c.aw+0.5*c.t)/c.n})),by=(f)=>cl.slice().sort(f);
-    const best=by((x,y)=>y.r-x.r||y.n-x.n)[0],worst=by((x,y)=>x.r-y.r||y.n-x.n)[0];
-    const fmt=(c,flip)=>flip?`${e(c.bc)} vs ${e(c.ac)}: ${c.bw}W ${c.aw}L${c.t?` ${c.t}T`:""}`:`${e(c.ac)} vs ${e(c.bc)}: ${c.aw}W ${c.bw}L${c.t?` ${c.t}T`:""}`;
-    let ch=`<div class="card"><b>Character pairs</b>`;
-    if(!cl.length)ch+=`<div class="msg">No meetings with both characters recorded yet.</div>`;
-    else if(cl.length==1)ch+=`<div class="sub" style="margin-top:6px">Only pairing so far: ${fmt(best)}</div>`;
-    else ch+=`<div class="sub" style="margin-top:6px">Best for ${e(a)}</div><div class="nm">${fmt(best)}</div><div class="sub" style="margin-top:8px">Best for ${e(b)}</div><div class="nm">${fmt(worst,1)}</div><div class="sub" style="margin-top:8px">${cl.length} different pairings seen</div>`;
-    ch+=`</div>`;h+=ch;
-    const cb=o.cb,kd=c=>c.n?(c.d?(c.k/c.d).toFixed(2):c.k?"∞":"—"):"—",any=[a,b].some(n=>cb[n].n||cb[n].dmg||cb[n].sd);
-    h+=`<div class="card"><b>Combat when together</b>${any?`<div class="tri" style="margin-top:6px">${[a,b].map(n=>`<div><div class="nm">${e(n)}</div><div class="elo">${kd(cb[n])}</div><div class="sub">K/D</div><div class="sub">${cb[n].k} KOs · ${cb[n].d} deaths</div><div class="sub">${cb[n].sd} SDs</div><div class="sub">${Math.round(cb[n].dmg).toLocaleString()} dmg</div></div>`).join("")}</div>`:`<div class="msg">No stats recorded in their meetings yet.</div>`}</div>`;
-  }else h+=lockedStats("Character pairs & combat",["Best character pair","Worst character pair","K/D when together","Damage dealt"]);
-  const last=o.rec.slice(-5).reverse();
-  h+=`<div class="card"><b>Recent meetings</b>${last.map(r=>`<div class="row" style="margin:6px 0"><span class="sub" style="flex:0 0 74px">${new Date(r.ts).toLocaleDateString(undefined,{month:"short",day:"numeric"})}</span><span class="nm">${r.w?e(r.w)+" won":"Tie"}<div class="sub">${r.mode=="one"?"1v1":"FFA"}${PREM()&&r.ac&&r.bc?` · ${e(r.ac)} vs ${e(r.bc)}`:""}</div></span></div>`).join("")}</div>`;
+  const o=mmPair(a,b),e=esc;
+  if(!o.n)return`<div class="card"><b>${e(a)} vs ${e(b)}</b><div class="msg">Haven't been in a match together yet.</div></div>`;
+  const one=o.md.one,ffa=o.md.ffa;
+  let pair="";
+  if(PREM()){const cl=Object.values(o.cp).map(c=>({...c,r:(c.aw+0.5*c.t)/c.n})).sort((x,y)=>y.r-x.r||y.n-x.n);if(cl.length){const c=cl[0];pair=`<div class="kv"><span class="l">${e(a)}'s best pairing</span><span class="v">${e(c.ac)} vs ${e(c.bc)} · ${c.aw}–${c.bw}</span></div>`}}
+  return`<div class="card"><b>${e(a)} vs ${e(b)}</b><div class="big3">${rc3(o.w[a],o.w[b],o.t)}</div><div class="sub" style="text-align:center">${o.n} ${o.n==1?"meeting":"meetings"}</div><div class="kv"><span class="l">1v1</span><span class="v">${one.n?rc3(one[a],one[b],one.t):"none yet"}</span></div><div class="kv"><span class="l">FFA</span><span class="v">${ffa.n?rc3(ffa[a],ffa[b],ffa.t):"none yet"}</span></div>${pair}</div>`;
+}
+// Focused 1v1 page: everything is from the point of view of the first player picked.
+function mmDuel(a,b){
+  const P=D.players,e=esc,o={n:0,aw:0,bw:0,t:0,seq:[],ac:{},bc:{},cp:{},ak:{k:0,d:0,sd:0,dmg:0,n:0},bk:{k:0,d:0,sd:0,dmg:0,n:0},rec:[]};
+  const add=(m,c,ch,won,lost)=>{if(!ch)return;const r=(m[ch]??={ch,n:0,w:0,l:0});r.n++;if(won)r.w++;if(lost)r.l++};
+  for(const m of D.matches){
+    if(m.mode!="one")continue;
+    const x=m.results.find(r=>r.name==a),y=m.results.find(r=>r.name==b);if(!x||!y)continue;
+    o.n++;const aw=x.place<y.place,bw=x.place>y.place;
+    aw?o.aw++:bw?o.bw++:o.t++;o.seq.push(aw?"W":bw?"L":"T");
+    add(o.ac,0,x.char,aw,bw);add(o.bc,0,y.char,bw,aw);
+    if(x.char&&y.char){const k=x.char+"\n"+y.char,c=(o.cp[k]??={ac:x.char,bc:y.char,n:0,aw:0,bw:0,t:0});c.n++;aw?c.aw++:bw?c.bw++:c.t++}
+    for(const [r,c] of [[x,o.ak],[y,o.bk]]){if(Number.isFinite(r.kills)&&Number.isFinite(r.deaths)){c.k+=r.kills;c.d+=r.deaths;c.n++}if(Number.isFinite(r.sds))c.sd+=r.sds;if(Number.isFinite(r.dmg))c.dmg+=r.dmg}
+    o.rec.push({ts:m.ts,res:aw?"W":bw?"L":"T",ac:x.char||"",bc:y.char||""});
+  }
+  const ra=P[a].r.one,rb=P[b].r.one,exp=Math.round(100/(1+Math.pow(10,(rb-ra)/400)));
+  const dec=o.aw+o.bw,act=dec?Math.round(100*o.aw/dec):null;
+  let run=0,rw="";for(let i=o.seq.length-1;i>=0;i--){const v=o.seq[i];if(v=="T")break;if(!rw)rw=v;if(v==rw)run++;else break}
+  const lead=o.aw>o.bw?`${e(a)} leads`:o.aw<o.bw?`${e(b)} leads`:"All square";
+  let h="";
+  if(!o.n)h+=`<div class="card"><b>${e(a)} vs ${e(b)}</b><div class="msg">They haven't played a 1v1 against each other yet. ${e(a)} is rated ${Math.round(ra)} and ${e(b)} ${Math.round(rb)} in 1v1, which gives ${e(a)} a ${exp}% chance.</div></div>`;
+  else{
+    h+=`<div class="card"><div class="duo"><div class="dn"><div class="nm">${e(a)}</div><div class="sub">1v1 rating</div><div class="elo">${Math.round(ra)}</div></div><div class="ds"><div class="big3">${o.aw}–${o.bw}</div>${o.t?`<div class="sub">${o.t} ${o.t==1?"tie":"ties"}</div>`:""}</div><div class="dn"><div class="nm">${e(b)}</div><div class="sub">1v1 rating</div><div class="elo">${Math.round(rb)}</div></div></div><div class="sub" style="text-align:center;margin-top:8px"><b>${lead}</b> · ${o.n} ${o.n==1?"match":"matches"}</div></div>`;
+    const form=o.seq.slice(-5).map(v=>`<span class="fm ${v}">${v}</span>`).join("");
+    h+=`<div class="card"><b>Outlook for ${e(a)}</b><div class="kv"><span class="l">Chance to win, by rating</span><span class="v">${exp}%</span></div><div class="kv"><span class="l">Actual win rate</span><span class="v">${act==null?"—":act+"%"}</span></div>${run>=2?`<div class="kv"><span class="l">Current run</span><span class="v">${rw=="W"?e(a):e(b)} won the last ${run}</span></div>`:""}<div class="kv"><span class="l">Last ${Math.min(5,o.n)} (oldest first)</span><span class="v">${form}</span></div></div>`;
+    if(PREM()){
+      const rate=c=>(c.w+0)/(c.w+c.l||1),list=m=>Object.values(m).sort((x,y)=>rate(y)-rate(x)||y.n-x.n);
+      const fmt=c=>`${e(c.ch)} · ${c.w}–${c.l}`,A=list(o.ac),Bc=list(o.bc),cl=Object.values(o.cp).map(c=>({...c,r:(c.aw+0.5*c.t)/c.n})).sort((x,y)=>y.r-x.r||y.n-x.n);
+      const row=(l,v)=>`<div class="kv"><span class="l">${l}</span><span class="v">${v}</span></div>`;
+      let ch="";
+      if(cl.length){ch+=row("Best pairing",`${e(cl[0].ac)} vs ${e(cl[0].bc)} · ${cl[0].aw}–${cl[0].bw}`);if(cl.length>1)ch+=row("Worst pairing",`${e(cl[cl.length-1].ac)} vs ${e(cl[cl.length-1].bc)} · ${cl[cl.length-1].aw}–${cl[cl.length-1].bw}`)}
+      if(A.length){ch+=row(`${e(a)}'s best character`,fmt(A[0]));if(A.length>1)ch+=row(`${e(a)}'s worst character`,fmt(A[A.length-1]))}
+      if(Bc.length)ch+=row(`${e(b)}'s best character`,fmt(Bc[0]));
+      h+=`<div class="card"><b>Characters</b>${ch||`<div class="msg">No characters recorded in these matches yet.</div>`}</div>`;
+      const A1=o.ak,B1=o.bk,kd=c=>c.n?(c.d?(c.k/c.d).toFixed(2):c.k?"∞":"—"):"—";
+      if(A1.n||B1.n||A1.dmg||B1.dmg||A1.sd||B1.sd)h+=`<div class="card"><b>Combat in these matches</b><table class="ft" style="margin-top:6px"><tr><th></th><th>${e(a)}</th><th>${e(b)}</th></tr>${[["K/D",kd(A1),kd(B1)],["KOs",A1.k,B1.k],["Deaths",A1.d,B1.d],["SDs",A1.sd,B1.sd],["Damage",Math.round(A1.dmg).toLocaleString(),Math.round(B1.dmg).toLocaleString()]].map(r=>`<tr><td>${r[0]}</td><td>${r[1]}</td><td>${r[2]}</td></tr>`).join("")}</table></div>`;
+    }else h+=lockedStats("Characters & combat",["Best pairing","Worst pairing","Best character","K/D in these matches"]);
+    h+=`<div class="card"><b>Recent 1v1s</b>${o.rec.slice(-5).reverse().map(r=>`<div class="kv"><span class="l">${new Date(r.ts).toLocaleDateString(undefined,{month:"short",day:"numeric"})}${PREM()&&r.ac&&r.bc?` · ${e(r.ac)} vs ${e(r.bc)}`:""}</span><span class="v"><span class="fm ${r.res}">${r.res}</span></span></div>`).join("")}</div>`;
+  }
+  const f=mmPair(a,b,"ffa");
+  h+=`<details class="ffa"><summary>Show FFA stats</summary><div class="card">${f.n?`<div class="kv"><span class="l">Free-for-alls together</span><span class="v">${f.n}</span></div><div class="kv"><span class="l">Record against each other</span><span class="v">${rc3(f.w[a],f.w[b],f.t)}</span></div><div class="kv"><span class="l">Average place</span><span class="v">${e(a)} ${(f.pl[a]/f.n).toFixed(1)} · ${e(b)} ${(f.pl[b]/f.n).toFixed(1)}</span></div><div class="kv"><span class="l">FFA rating</span><span class="v">${P[a].g.ffa?Math.round(P[a].r.ffa):"—"} · ${P[b].g.ffa?Math.round(P[b].r.ffa):"—"}</span></div>`:`<div class="msg">They haven't been in a free-for-all together yet.</div>`}</div></details>`;
   return h;
 }
 // ---------- Groups ----------
