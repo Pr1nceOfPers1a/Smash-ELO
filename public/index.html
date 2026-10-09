@@ -92,6 +92,12 @@ input.sm{flex:1;width:0;min-width:0;text-align:center;padding:8px 4px}
 #po,#cf{position:fixed;inset:0;background:rgba(26,22,48,.55);display:flex;align-items:center;justify-content:center;z-index:99;padding:20px}
 #po .card{max-width:320px;text-align:center;margin:0}
 #cf .card{max-width:340px;width:100%;margin:0;max-height:90vh;overflow:auto}
+.pbox{border:3px solid var(--ink);padding:8px;margin:8px 0;background:#fff}
+.sg{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}.sg label{display:block;font:10px/1.2 ui-monospace,Menlo,Consolas,monospace;color:var(--mu)}.sg input.sm{width:100%;flex:none;margin-top:3px}
+.bub{position:relative;display:block;width:fit-content;max-width:100%;font:11px/1.3 ui-monospace,Menlo,Consolas,monospace;font-weight:400;background:#fff;color:var(--ink);border:2px solid var(--ink);padding:3px 8px;margin:0 0 9px;cursor:pointer;word-break:break-word}
+.bub::before{content:"";position:absolute;left:10px;bottom:-9px;border:6px solid transparent;border-top-color:var(--ink);border-bottom:0}
+.bub::after{content:"";position:absolute;left:12px;bottom:-5px;border:4px solid transparent;border-top-color:#fff;border-bottom:0}
+.bub.e{border-style:dashed;color:var(--mu)}
 .q{flex:0 0 auto;align-self:stretch;width:39px;padding:0;font-weight:700}
 .rl{display:flex;align-items:center;gap:6px;font:11px/1.3 ui-monospace,Menlo,Consolas,monospace;color:var(--ink);white-space:nowrap;cursor:pointer}
 .rl input{width:18px;height:18px;accent-color:#e5322d;margin:0;flex:none}
@@ -114,8 +120,8 @@ const LB={all:"Overall",one:"1v1",ffa:"FFA"};
 const FIGHTERS="Mario,Donkey Kong,Link,Samus,Dark Samus,Yoshi,Kirby,Fox,Pikachu,Luigi,Ness,Captain Falcon,Jigglypuff,Peach,Daisy,Bowser,Ice Climbers,Sheik,Zelda,Dr. Mario,Pichu,Falco,Marth,Lucina,Young Link,Ganondorf,Mewtwo,Roy,Chrom,Mr. Game & Watch,Meta Knight,Pit,Dark Pit,Zero Suit Samus,Wario,Snake,Ike,Pokémon Trainer,Diddy Kong,Lucas,Sonic,King Dedede,Olimar,Lucario,R.O.B.,Toon Link,Wolf,Villager,Mega Man,Wii Fit Trainer,Rosalina & Luma,Little Mac,Greninja,Mii Brawler,Mii Swordfighter,Mii Gunner,Palutena,Pac-Man,Robin,Shulk,Bowser Jr.,Duck Hunt,Ryu,Ken,Cloud,Corrin,Bayonetta,Inkling,Ridley,Simon,Richter,King K. Rool,Isabelle,Incineroar,Piranha Plant,Joker,Hero,Banjo & Kazooie,Terry,Byleth,Min Min,Steve,Sephiroth,Pyra/Mythra,Kazuya,Sora".split(",");
 const ls=(k,v)=>{try{return v===undefined?localStorage.getItem(k)||"":localStorage.setItem(k,v)}catch(e){return""}};
 const gms=n=>n==1?"game":"games";
-function resetDraft(){draft=[{name:"",place:1},{name:"",place:2}];note="";scanImg="";scanRaw=null;conf=false;confSnap="";cfOpen=false}
-let ms=[],tab="lb",board="all",sel="",draft=[{name:"",place:1},{name:"",place:2}],note="",D=null;
+function resetDraft(){draft=[{name:"",place:1},{name:"",place:2}];note="";scanImg="";scanRaw=null;conf=false;confSnap=""}
+let stt={},ms=[],tab="lb",board="all",sel="",draft=[{name:"",place:1},{name:"",place:2}],note="",D=null;
 let me=ls("me"),pass=ls("pass"),admin=ls("admin"),gid=ls("gid"),gname=ls("gname"),jn=(typeof location!="undefined"&&new URLSearchParams(location.search).get("g")||"").slice(0,24),jk="",jmsg="",admOk=false,gtier=(typeof localStorage!="undefined"&&localStorage.getItem("gtier"))||"premier",gk="",gAdm=false,ml={open:false,step:"",key:"",code:"",chal:"",email:"",msg:"",busy:false},pkList=[],pkDays=30,pkMsg="",cg={open:false,pick:"",name:"",pw:"",ak:"",ak2:"",key:"",msg:"",busy:false,done:null},tdTot=null,tdStart=0,tdAcc=null,demo=false,tryOpen=false,tryKey="",tryMsg="",tryStage="",tryRes=null,tryBusy=false,tryLeft=0,pubN=null,pubAcc=null,howto=-1,howCtx="add",scanBase="",tkList=[],tkUses=1,tkHrs=24,tkMsg="",mgG="",mgMs=null,mgD=null;
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 let peep=null;
@@ -154,11 +160,18 @@ function updateNow(){
   el.style.display="flex";
   el.innerHTML=`<span class="live"><i class="dot blink"></i>PLAYING NOW</span><span class="who">${shown.map(esc).join(", ")}${more>0?` +${more} more`:""}</span><span class="ago">${mins<1?"just now":mins+" min ago"}</span>`;
 }
-async function load(){if(!gid||demo)return;try{ms=await api("matches");ms.sort((a,b)=>new Date(a.ts)-new Date(b.ts));updateNow();const ae=document.activeElement?.tagName;if(tab!="add"&&ae!="SELECT"&&ae!="INPUT")render();else D=calc(ms)}catch(e){}}
+async function load(){if(!gid||demo)return;try{ms=await api("matches");try{stt=(await api("matches",{method:"POST",body:JSON.stringify({action:"statuses"})})).statuses||{}}catch(e){}ms.sort((a,b)=>new Date(a.ts)-new Date(b.ts));updateNow();const ae=document.activeElement?.tagName;if(tab!="add"&&ae!="SELECT"&&ae!="INPUT")render();else D=calc(ms)}catch(e){}}
 function spark(h){
   if(h.length<2)return"";const v=h.map(x=>x.r),lo=Math.min(...v),hi=Math.max(...v),sp=Math.max(hi-lo,1);
   const pts=v.map((y,i)=>`${(i/(v.length-1)*296+2).toFixed(1)},${(56-(y-lo)/sp*52).toFixed(1)}`).join(" ");
   return`<svg viewBox="0 0 300 60" width="100%" height="60"><polyline fill="none" stroke="var(--ac)" stroke-width="2" points="${pts}"/></svg><div class="sub">Overall rating over time: ${Math.round(lo)} to ${Math.round(hi)}</div>`;
+}
+const bub=n=>{const t=stt[String(n).toLowerCase()]||"";return`<div class="bub${t?"":" e"}" data-st="${esc(n)}" role="button" aria-label="Edit status for ${esc(n)}">${t?esc(t):"Add status"}</div>`};
+async function editStatus(n){
+  if(peep)return alert("Peek mode is view only.");
+  const cur=stt[n.toLowerCase()]||"",v=prompt(`Status for ${n} (40 characters max, empty clears it):`,cur);
+  if(v==null)return;
+  try{const j=await api("matches",{method:"POST",body:JSON.stringify({action:"status",name:n,text:v})});stt=j.statuses||{};render()}catch(e){alert(e.message)}
 }
 const tri=p=>`<div class="tri">${["all","one","ffa"].map(t=>`<div><div class="elo">${p.g[t]?Math.round(p.r[t]):"—"}</div><div class="sub">${LB[t]}</div></div>`).join("")}</div>`;
 function render(){
@@ -166,7 +179,7 @@ function render(){
   {const nv=document.querySelector("nav");if(nv)nv.style.display=gid?"":"none"}
   if(demo){const v=document.getElementById("v");v.insertAdjacentHTML("afterbegin",`<div class="card" style="background:var(--yel)"><b class="ct">DEMO</b><div class="msg" style="margin:4px 0 8px">Sample players and matches. None of this is real data.</div><button onclick="exitDemo()">Exit demo</button></div>`)}
   if(peep){const v=document.getElementById("v");v.insertAdjacentHTML("afterbegin",`<div class="card" style="background:var(--yel)"><b class="ct">PEEKING</b><div class="msg" style="margin:4px 0 8px">You are viewing <b>${esc(gname)}</b> as a player. View only: nothing can be added or changed.</div><button onclick="peepExit()">Exit peek</button></div>`)}
-  drawHow();drawConfirm();
+  drawHow();
 }
 function renderCore(){
   raceStop();D=calc(ms);const P=D.players,v=document.getElementById("v");CH=[...new Set([...FIGHTERS,"Random",...ms.flatMap(m=>m.results.map(x=>x.char).filter(Boolean))])].sort();
@@ -185,7 +198,7 @@ function renderCore(){
     h+=`<div class="seg">${Object.keys(LB).map(t=>`<button class="${board==t?"on":""}" onclick="board='${t}';render()">${LB[t]}</button>`).join("")}<button class="srch${sopen?" on":""}" aria-label="Search players" onclick="${sopen?"sopen=false;fq='';render()":"sopen=true;render();document.getElementById('fq').focus()"}">${sopen?"✕":"🔍"}</button></div>`;
     if(sopen)h+=`<div class="row"><input class="n" id="fq" placeholder="Search player" value="${esc(fq)}" oninput="fq=this.value;render();const e=document.getElementById('fq');e.focus();e.setSelectionRange(fq.length,fq.length)"></div>`;
     const full=boardList(board),L=full.filter(p=>!q||p.name.toLowerCase().includes(q));
-    h+=L.length?L.map(p=>{const i=full.indexOf(p);return`<div class="card lb" data-n="${esc(p.name)}"><div class="rk">${i<3?medal(i):i+1}</div><div class="nm">${esc(p.name)} ${p.streak>=2?"🔥"+p.streak:""}<div class="sub">${p.g[board]} ${gms(p.g[board])}${prov(p.g[board])}</div></div><div class="elo">${Math.round(p.r[board])}</div></div>`}).join(""):`<p class="msg">No ${LB[board]} matches${q?" for that search":" yet"}.</p>`;
+    h+=L.length?L.map(p=>{const i=full.indexOf(p);return`<div class="card lb" data-n="${esc(p.name)}"><div class="rk">${i<3?medal(i):i+1}</div><div class="nm">${bub(p.name)}${esc(p.name)} ${p.streak>=2?"🔥"+p.streak:""}<div class="sub">${p.g[board]} ${gms(p.g[board])}${prov(p.g[board])}</div></div><div class="elo">${Math.round(p.r[board])}</div></div>`}).join(""):`<p class="msg">No ${LB[board]} matches${q?" for that search":" yet"}.</p>`;
     if(ms.length&&!q)h+=podiums();
     v.innerHTML=h;
   }
@@ -195,7 +208,7 @@ function renderCore(){
   if(tab=="add"){
     if(!pass){v.innerHTML=`<div class="card"><b>Group passcode</b><div class="msg">Ask the group admin for the passcode to add matches.</div><div class="row"><input class="n" type="password" id="pc" placeholder="Passcode"><button onclick="pass=document.getElementById('pc').value.trim();ls('pass',pass);render()">Save</button></div></div>`;return}
     v.innerHTML=`<datalist id="dl">${Object.keys(P).map(n=>`<option value="${esc(n)}">`).join("")}</datalist><datalist id="dlc">${CH.map(c=>`<option value="${esc(c)}">`).join("")}</datalist>
-    ${PREM()?`<div class="card"><div class="row" style="margin:0"><button class="g" style="flex:1" onclick="document.getElementById('f').click()">📷 Scan result screen</button><button class="g q" aria-label="How to scan" title="How to scan" onclick="showHow('add')">?</button></div><div class="msg${wc(note)}" id="st">${esc(note)}</div>${scanImg?`<button style="width:100%;margin-top:6px" onclick="cfOpen=true;render()">Is all data correct?</button><div class="msg">Check the scan against your screenshot. Yes saves the match, and confirmed scans help train a better scanner.</div>`:""}</div>`:`<div class="card"><div class="row" style="margin:0"><button class="g gbtn" style="flex:1" onclick="premOnly()">📷 Scan result screen</button></div></div>`}
+    ${PREM()?`<div class="card"><div class="row" style="margin:0"><button class="g" style="flex:1" onclick="document.getElementById('f').click()">📷 Scan result screen</button><button class="g q" aria-label="How to scan" title="How to scan" onclick="showHow('add')">?</button></div><div class="msg${wc(note)}" id="st">${esc(note)}</div></div>`:`<div class="card"><div class="row" style="margin:0"><button class="g gbtn" style="flex:1" onclick="premOnly()">📷 Scan result screen</button></div></div>`}
     <div class="card">${draft.map((r,i)=>`<div class="row"><input class="p" type="text" inputmode="numeric" maxlength="4" value="${ord(r.place)}" onfocus="this.select()" onchange="setPlace(${i},this)" aria-label="Place"><input class="n" list="dl" placeholder="Username" value="${esc(r.name)}" onchange="nameSet(${i},this.value)"><button class="x" onclick="draft.splice(${i},1);render()">✕</button></div>${flag(r.name,i)}${PREM()?`<div class="row" style="margin:-2px 0 6px 72px"><label class="rl"><input type="checkbox" id="rc${i}" ${r.rnd?"checked":""} onchange="setRnd(${i},this.checked)">Went random?</label><input class="n" id="ch${i}" list="dlc" placeholder="Character" ${r.rnd?"disabled":""} value="${esc(r.rnd?"Random":r.char||"")}" onchange="setChar(${i},this.value)"></div><div class="row" style="margin:0 0 10px 72px;gap:6px">${[["kills","KOs"],["deaths","Deaths"],["sds","SDs"],["dmg","Dmg"]].map(([k,t])=>`<input class="sm" type="number" inputmode="decimal" min="0" placeholder="${t}" value="${r[k]??""}" onchange="draft[${i}].${k}=nv(this.value)" aria-label="${t}">`).join("")}</div>`:`<div class="row" style="margin:-2px 0 10px 72px"><label class="rl"><input type="checkbox" id="rc${i}" ${r.rnd?"checked":""} onchange="setRnd(${i},this.checked)">Went random?</label><input class="n gr" readonly placeholder="Character 🔒" onclick="premOnly()"></div>`}`).join("")}
     <div class="row"><button class="g" onclick="if(draft.length<8){draft.push({name:'',place:draft.length+1});render()}">+ Player</button><button id="sv" style="flex:1" onclick="saveMatch()">Save match</button></div>
     <div class="msg">Type 1 to 8 for placement (1st = winner). Tied players share a place. 2 players = 1v1, 3 or more = FFA.</div></div>`;
@@ -213,7 +226,7 @@ function renderCore(){
   }
 }
 document.querySelector("nav").onclick=e=>{if(e.target.dataset.t){tab=e.target.dataset.t;sel="";stat="";if(tab=="tr")RACE.key="";if(tab!="lb"){sopen=false;fq=""}render()}};
-document.getElementById("v").onclick=e=>{const sc=e.target.closest("[data-stat]");if(sc){goStat(sc.dataset.stat,sc.dataset.sr,sc.dataset.sm,sc.dataset.sv);return}const k=e.target.closest("[data-ch]");if(k){pchar=pchar==k.dataset.ch?"":k.dataset.ch;render();return}const f=e.target.closest("[data-fix]");if(f){draft[+f.dataset.fix].name=f.dataset.to;render();return}const c=e.target.closest("[data-n]");if(c&&(tab=="lb"||tab=="tr")){tab="lb";sel=c.dataset.n;pchar="";render();scrollTo(0,0)}};
+document.getElementById("v").onclick=e=>{const sbb=e.target.closest("[data-st]");if(sbb){editStatus(sbb.dataset.st);return}const sc=e.target.closest("[data-stat]");if(sc){goStat(sc.dataset.stat,sc.dataset.sr,sc.dataset.sm,sc.dataset.sv);return}const k=e.target.closest("[data-ch]");if(k){pchar=pchar==k.dataset.ch?"":k.dataset.ch;render();return}const f=e.target.closest("[data-fix]");if(f){draft[+f.dataset.fix].name=f.dataset.to;render();return}const c=e.target.closest("[data-n]");if(c&&(tab=="lb"||tab=="tr")){tab="lb";sel=c.dataset.n;pchar="";render();scrollTo(0,0)}};
 let admMsg="";
 function accLine(){
   if(!tdAcc)return"";const a=tdAcc.accepted,m=tdAcc.missed,n=a+m;
@@ -404,7 +417,7 @@ function oppOf(name){
 function playerPage(p){
   const wm=p.wm,op=oppOf(p.name);
   return`<button class="g" onclick="sel='';render()">← Back</button>
-  <div class="card" style="margin-top:10px"><div class="row" style="gap:12px;margin:0 0 6px"><div style="flex:1;min-width:0"><div class="nm" style="font-size:20px">${esc(p.name)} ${p.streak>=2?`<span data-stat="streak" data-sv="cur">🔥 ${p.streak}</span>`:""}</div><div class="sub">${p.w}W · ${p.l}L · ${p.g.all} ${gms(p.g.all)}</div></div></div>${medalLine(p)}${triP(p)}</div>
+  <div class="card" style="margin-top:10px"><div class="row" style="gap:12px;margin:0 0 6px"><div style="flex:1;min-width:0"><div class="nm" style="font-size:20px">${bub(p.name)}${esc(p.name)} ${p.streak>=2?`<span data-stat="streak" data-sv="cur">🔥 ${p.streak}</span>`:""}</div><div class="sub">${p.w}W · ${p.l}L · ${p.g.all} ${gms(p.g.all)}</div></div></div>${medalLine(p)}${triP(p)}</div>
   <div class="card"><div class="hd"><b class="ct">Win rate</b>${lbLink("wr")}</div><div class="tri">${[["Overall","all",p.w,p.l],["1v1","one",wm.one.w,wm.one.l],["FFA","ffa",wm.ffa.w,wm.ffa.l]].map(([t,k,w,l])=>`<div data-stat="wr" data-sm="${k}"><div class="elo">${pct(w,l)}</div><div class="sub">${t} · ${w}W ${l}L</div><div class="sub">${op.avg(k)==null?"":"avg opp "+op.avg(k)}</div></div>`).join("")}</div></div>
   ${op.best>=2?`<div class="card"><div class="hd"><b class="ct">Win streak</b>${lbLink("streak","","best")}</div><div style="margin-top:6px">Longest: <b>${op.best}</b> wins in a row · avg opp ${op.bavg}</div>${p.streak>=2?`<div class="sub">Current: ${p.streak} in a row</div>`:""}</div>`:""}
   ${PREM()?combat(p):""}<div class="card"><b>Rating history</b>${trend(p)}</div>
@@ -479,6 +492,8 @@ function trendsData(days){
   const pony=top(Object.values(cc).filter(e=>e.n>10).map(e=>{const L=Object.entries(e.by).sort((a,b)=>b[1]-a[1]);return{name:e.name,n:e.n,v:L.length,ch:L[0][0],pct:Math.round(100*L[0][1]/e.n)}}),(a,b)=>a.v-b.v||b.pct-a.pct||b.n-a.n);
   const nt={};for(const m of inP)if(new Date(tms(m)).getHours()<4)for(const x of m.results)nt[x.name]=(nt[x.name]||0)+1;
   const ins=top(Object.entries(nt).map(([name,n])=>({name,n})),(a,b)=>b.n-a.n);
+  const duo={};for(const m of inP)if(m.results.length==2){const [a,b]=m.results.map(x=>x.name).sort(),k=a+"\n"+b;(duo[k]??={a,b,n:0}).n++}
+  const couple=top(Object.values(duo).filter(e=>e.n>=2),(x,y)=>y.n-x.n);
   const hrs={};for(const m of inP){const h=new Date(tms(m)).getHours();if(h>=9&&h<17)for(const x of m.results)hrs[x.name]=(hrs[x.name]||0)+1}
   const nol=top(Object.entries(hrs).map(([name,n])=>({name,n})),(a,b)=>b.n-a.n);
   const sb=top(rows.filter(r=>r.opp>=2).map(r=>({name:r.name,n:r.opp})),(a,b)=>b.n-a.n);
@@ -498,7 +513,7 @@ function trendsData(days){
     const st=Object.values(P).map(p=>({name:p.name,r:rAt(p,t0,t)})).filter(x=>x.r!=null).sort((a,b)=>b.r-a.r);
     lead[t]={cur:cur[0]||null,prev:st[0]?st[0].name:null};
   }
-  return{t0,t1,inP,rows,climber,faller,active,cur,longest,upset,rival,cmb,mys,ins,pony,nol,sb,slayer,bride,cursed,coaster,bully,jk,gc,lead,top3:nowL.slice(0,3),top5:nowL.slice(0,5)};
+  return{t0,t1,inP,rows,climber,faller,active,cur,longest,upset,rival,cmb,mys,ins,pony,couple,nol,sb,slayer,bride,cursed,coaster,bully,jk,gc,lead,top3:nowL.slice(0,3),top5:nowL.slice(0,5)};
 }
 const RACE={key:"",f:0,raf:0,done:false,start:0,s:[],g:null};
 const RDUR=6000,RCOL=["#e0a400","#7d8596","#b8672a"],RPAL=["#e5322d","#2f6bff","#13813a","#8a3ffc","#00a3a3","#d6336c","#ff7a00","#5c6b00","#1b1730"];
@@ -564,6 +579,7 @@ function trendsPage(){
   const P0=T.pony,opC=PREM()?slot("One Trick Pony",P0?`<div class="nm" style="margin-top:8px">${esc(P0.name)}</div><div class="elo">${esc(P0.ch)}</div><div class="sub">${P0.pct}% of ${P0.n} ${gms(P0.n)} · ${P0.v} character${P0.v==1?"":"s"} played</div>`:none("Needs 11+ games with a character"),P0&&P0.name):lk("One Trick Pony","Least variety in fighters, over 10 matches. Not tracked in Free groups.");
   const nm=(r,big,sub,n)=>r?`<div class="nm" style="margin-top:8px">${esc(r.name)}</div><div class="elo">${big}</div><div class="sub">${sub}</div>`:none(n);
   const Nl=T.nol,Sb=T.sb,Gs=T.slayer,Br=T.bride,Cu=T.cursed,Rc=T.coaster,By=T.bully,Jk=T.jk,Gc=T.gc;
+  const Cc=T.couple,ccC=slot("Cutest Couple",Cc?`<div class="nm" style="margin-top:8px">${esc(Cc.a)} &amp; ${esc(Cc.b)}</div><div class="elo">${Cc.n}</div><div class="sub">1v1 matches together</div>`:none("Needs 2+ 1v1s between the same two"));
   const nlC=slot("No-lifers",nm(Nl,Nl&&Nl.n,"game"+(Nl&&Nl.n==1?"":"s")+" between 9am and 5pm","No games between 9am and 5pm"),Nl&&Nl.name);
   const sbC=slot("Social Butterfly",nm(Sb,Sb&&Sb.n,"different opponents faced","Needs 2+ opponents"),Sb&&Sb.name);
   const gsC2=slot("Giant Slayer",nm(Gs,Gs&&Gs.n,"upset win"+(Gs&&Gs.n==1?"":"s")+" over higher-rated players","No upsets yet"),Gs&&Gs.name);
@@ -573,7 +589,7 @@ function trendsPage(){
   const rcC=slot("Rollercoaster",nm(Rc,Rc&&R0(Rc.v),"avg rating swing per game · "+(Rc&&Rc.n)+" games","Needs 3+ games"),Rc&&Rc.name);
   const gcC=PREM()?slot("Glass Cannon",nm(Gc,Gc&&Gc.v.toFixed(1),"KOs + deaths per game · "+(Gc&&Gc.k)+" KOs, "+(Gc&&Gc.d)+" deaths","Needs 3+ games with stats"),Gc&&Gc.name):lk("Glass Cannon","Most KOs and deaths together. Not tracked in Free groups.");
   const jkC=PREM()?slot("Jack of All Trades",nm(Jk,Jk&&Jk.v,"different characters played","Needs 3+ characters"),Jk&&Jk.name):lk("Jack of All Trades","Most different characters played. Not tracked in Free groups.");
-  const sc=[[M,myC],[I,inC],[Nl,nlC],[Sb,sbC],[Gs,gsC2],[By,byC],[Br,brC],[Cu,cuC],[Rc,rcC],[Gc,gcC,1],[C0.sds,nhC,1],[C0.taken,pbC,1],[Jk,jkC,1],[P0,opC,1]].filter(([d,h,pr])=>d||(pr&&!PREM())).map(x=>x[1]);
+  const sc=[[M,myC],[I,inC],[Nl,nlC],[Sb,sbC],[Gs,gsC2],[By,byC],[Cc,ccC],[Br,brC],[Cu,cuC],[Rc,rcC],[Gc,gcC,1],[C0.sds,nhC,1],[C0.taken,pbC,1],[Jk,jkC,1],[P0,opC,1]].filter(([d,h,pr])=>d||(pr&&!PREM())).map(x=>x[1]);
   let sg="";for(let i=0;i<sc.length;i+=2)sg+=i+1<sc.length?`<div class="pair">${sc[i]}${sc[i+1]}</div>`:sc[i];
   const supC=sc.length?`<h3 style="font:10px/1.6 var(--pf);margin:22px 0 10px">SUPERLATIVES</h3>${sg}`:"";
   const lr=t=>{const L=T.lead[t];if(!L.cur)return`<div class="row" style="margin:8px 0"><span class="sub" style="flex:0 0 52px">${LB[t]}</span><span class="sub">No games yet</span></div>`;
@@ -675,19 +691,7 @@ function groupsCard(){
   <div class="row"><button ${grp.busy?"disabled":""} style="flex:1" onclick="gmCreate()">Create group</button></div><div class="msg${wc(grp.msg)}">${esc(grp.msg)}</div></div>`;
 }
 // ---------- Training data (confirmed scans) ----------
-let cfOpen=false,scanImg="",scanRaw=null,conf=false,confSnap="",tdMsg="",tdBusy=false;
-function cfNo(){cfOpen=false;render()}
-function cfYes(){conf=true;confSnap=JSON.stringify(draft);cfOpen=false;render();saveMatch()}
-function drawConfirm(){
-  const o=document.getElementById("cf");if(o&&o.remove)o.remove();
-  if(cfOpen&&(!scanImg||tab!="add"||peep||demo))cfOpen=false;
-  if(!cfOpen||!document.createElement||!document.body)return;
-  const st=r=>PREM()?[["kills","KOs"],["deaths","deaths"],["sds","SDs"],["dmg","dmg"]].filter(([k])=>Number.isFinite(r[k])).map(([k,t])=>` · ${r[k]} ${t}`).join(""):"";
-  const rows=draft.map(r=>`<div class="sub" style="margin:4px 0"><b>${ord(r.place)}</b> ${esc(r.name||"?")}${r.char?" · "+esc(r.char):""}${st(r)}</div>`).join("");
-  const d=document.createElement("div");d.id="cf";d.onclick=e=>{if(e.target==d)cfNo()};
-  d.innerHTML=`<div class="card"><b>Is all data correct?</b><img alt="Your screenshot" src="data:image/jpeg;base64,${scanImg}" style="width:100%;max-height:170px;object-fit:contain;border:3px solid var(--ink);margin:8px 0;background:#000">${rows}<div class="msg" style="margin-top:8px">Yes saves this match now.</div><div class="row"><button class="g" style="flex:1" onclick="cfNo()">No, edit</button><button style="flex:1" onclick="cfYes()">Yes, save</button></div></div>`;
-  document.body.appendChild(d);
-}
+let scanImg="",scanRaw=null,conf=false,confSnap="",tdMsg="",tdBusy=false;
 const confOk=()=>!!scanImg&&conf&&JSON.stringify(draft)===confSnap;
 const crcT=(()=>{const t=new Uint32Array(256);for(let n=0;n<256;n++){let c=n;for(let k=0;k<8;k++)c=c&1?0xEDB88320^(c>>>1):c>>>1;t[n]=c>>>0}return t})();
 const crc32=u=>{let c=-1;for(let i=0;i<u.length;i++)c=crcT[(c^u[i])&255]^(c>>>8);return(c^-1)>>>0};
@@ -742,16 +746,18 @@ function peepExit(){
 }
 async function saveMatch(){
   if(peep)return alert("Peek mode is view only.");
+  if(scanImg){conf=true;confSnap=JSON.stringify(draft)} // pressing Save is the confirmation for a scan
   const known=Object.keys(D.players);
   const r=draft.map(x=>{const n=x.name.trim(),c0=(x.char||"").trim(),rn=!!x.rnd||c0.toLowerCase()=="random",c=rn?"Random":CH.find(k=>k.toLowerCase()==c0.toLowerCase())||c0;return{name:known.find(k=>k.toLowerCase()==n.toLowerCase())||n,place:x.place,...(rn?{rnd:true}:{}),...(PREM()&&c?{char:c.slice(0,30)}:{}),...(PREM()?statsOf(x):{})}}).filter(x=>x.name);
-  if(r.length<2)return alert("Need at least two players.");
-  if(new Set(r.map(x=>x.name.toLowerCase())).size<r.length)return alert("Each username must be unique.");
-  const b=document.getElementById("sv");b.disabled=true;
+  const bad=m=>alert(m);
+  if(r.length<2||r.some(x=>!x.name))return bad(r.length<2?"Need at least two players.":"Every player needs a username.");
+  if(new Set(r.map(x=>x.name.toLowerCase())).size<r.length)return bad("Each username must be unique.");
+  const b=document.getElementById("sv");if(b)b.disabled=true;
   const accKind=scanImg&&sig(draft)===scanBase?"accepted":"missed"; // scanned and untouched = accepted; typed, edited or re-scanned = missed
   const keep=confOk()?{image:scanImg,labels:r.map(x=>({name:x.name,place:x.place,character:x.char||"",kills:x.kills??null,deaths:x.deaths??null,sds:x.sds??null,damage:x.dmg??null})),scanned:scanRaw}:null;
   try{await api("matches",{method:"POST",body:JSON.stringify({passcode:pass,results:r})});trackAcc(accKind);draft=[{name:"",place:1},{name:"",place:2}];note="";scanImg="";scanRaw=null;conf=false;confSnap="";tab="lb";await load();render()
     if(keep)api("scans",{method:"POST",body:JSON.stringify({passcode:pass,...keep})}).catch(e=>alert("Match saved, but the scan couldn't be saved: "+e.message))}
-  catch(e){alert(e.message);b.disabled=false}
+  catch(e){if(b)b.disabled=false;bad(e.message)}
 }
 async function del(id){if(!confirm("Delete this match? Ratings will be recalculated."))return;try{await api("matches",{method:"DELETE",body:JSON.stringify({admin,gkey:gk,id})});await load()}catch(e){alert(e.message)}}
 function csv(list){
@@ -770,7 +776,7 @@ document.getElementById("f").onchange=async e=>{if(peep){e.target.value="";retur
   try{
     const img=await shrink(file),j=await api("scan",{method:"POST",body:JSON.stringify({passcode:pass,roster:Object.keys(D.players),chars:CH,image:img})});
     if(j.players.length<2){note=j.problem?"Couldn't read it: "+j.problem:"Couldn't read that screen. Enter results by hand."}
-    else{if(scanImg)trackAcc("missed");({draft,note}=fromScan(j.players));draft.forEach(autoRnd);scanImg=img;scanRaw=j.players;conf=false;confSnap="";scanBase=sig(draft);cfOpen=true}
+    else{if(scanImg)trackAcc("missed");({draft,note}=fromScan(j.players));draft.forEach(autoRnd);scanImg=img;scanRaw=j.players;conf=false;confSnap="";scanBase=sig(draft)}
   }catch(err){note=err.message}
   render();
 };
