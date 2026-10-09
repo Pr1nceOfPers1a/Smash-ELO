@@ -28,7 +28,7 @@ button.lnk{background:none;border:0;box-shadow:none;color:var(--ac);padding:0;te
 .seg{display:flex;gap:6px;margin:0 4px 14px 0}.seg button{flex:1;background:#fff;color:var(--ink);padding:10px 2px;font-size:8px;white-space:nowrap}.seg button.on{background:var(--blue);color:#fff}.seg button.srch{flex:0 0 46px;padding:8px 0;font-size:14px}.seg button.srch.on{background:var(--ac)}
 .lb{display:flex;align-items:center;gap:10px;cursor:pointer}.rk{width:28px;display:inline-flex;justify-content:center;align-items:center;color:var(--mu);font:10px var(--pf)}
 .nm{flex:1;font-weight:700;min-width:0}.sub{color:var(--mu);font-size:13px}.elo{font:15px/1.3 var(--pf)}
-.tri{display:flex;justify-content:space-around;gap:6px;text-align:center;margin-top:8px}.tri>div{flex:1 1 0;min-width:0}.tri .elo{font-size:14px}
+.tri{display:flex;justify-content:space-around;gap:6px;text-align:center;margin-top:8px}.tri>div{flex:1 1 0;min-width:0}.tri .elo{font-size:14px}.tri .sub{overflow-wrap:anywhere}
 .up{color:var(--ok)}.dn{color:var(--bad)}.msg{color:var(--mu);font-size:14px;margin:6px 0}
 nav{position:fixed;bottom:0;left:0;right:0;display:flex;background:var(--card);border-top:3px solid var(--ink);padding-bottom:env(safe-area-inset-bottom)}
 nav button{flex:1;background:none;border:0;box-shadow:none;color:var(--mu);padding:16px 0 14px;font-size:8px}
@@ -36,7 +36,7 @@ nav button.on{color:var(--ac);box-shadow:inset 0 -4px 0 var(--ac)}nav button:act
 .flag{font-size:13px;color:var(--ac);margin:-4px 0 8px 72px;font-weight:700}
 .tag{display:inline-block;font:8px/1.4 var(--pf);color:var(--ink);background:var(--yel);border:2px solid var(--ink);padding:2px 5px;margin-left:6px;vertical-align:middle}
 .cols{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:8px}
-.pair{display:grid;grid-template-columns:1fr 1fr;gap:0 12px}.pair .elo{margin:6px 0 4px}
+.pair{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:0 12px}.pair>.card{min-width:0}.pair .elo{margin:6px 0 4px;overflow-wrap:anywhere}.pair .sub,.pair .nm{overflow-wrap:anywhere}
 .mn{font-size:14px;font-weight:700;word-break:break-word}
 details summary{cursor:pointer}
 input.sm{flex:1;width:0;min-width:0;text-align:center;padding:8px 4px}
@@ -377,7 +377,7 @@ const prov=g=>g&&g<10?`<span class="tag">provisional</span>`:"";
 const triP=p=>`<div class="tri">${["all","one","ffa"].map(t=>`<div><div class="elo">${p.g[t]?Math.round(p.r[t]):"—"}</div><div class="sub">${LB[t]}</div>${prov(p.g[t])}</div>`).join("")}</div>`;
 function avgCard(P){
   const ps=Object.values(P);if(!ps.length)return"";
-  return`<div class="card"><div class="sub">Average rating</div><div class="tri">${["all","one","ffa"].map(t=>{const L=ps.filter(p=>p.g[t]);const a=L.length?L.reduce((s,p)=>s+p.r[t],0)/L.length:null;return`<div><div class="elo">${a==null?"—":Math.round(a)}</div><div class="sub">${LB[t]} · ${L.length} ranked</div></div>`}).join("")}</div></div>`;
+  return`<div class="card"><div class="sub">Average rating</div><div class="tri">${["all","one","ffa"].map(t=>{const L=ps.filter(p=>p.g[t]);const a=L.length?L.reduce((s,p)=>s+p.r[t],0)/L.length:null;return`<div><div class="elo">${a==null?"—":Math.round(a)}</div><div class="sub">${LB[t]}</div><div class="sub">${L.length} ranked</div></div>`}).join("")}</div></div>`;
 }
 function trend(p){
   const h=p.h[pmode],now=Date.now(),DAY=864e5,all=prange=="all";
@@ -443,7 +443,7 @@ function playerPage(p){
   return`<button class="g" onclick="goBack()">← Back</button>
   <div class="card" style="margin-top:10px"><div class="row" style="gap:12px;margin:0 0 6px"><div style="flex:1;min-width:0"><div class="nm" style="font-size:20px">${bub(p.name)}${esc(p.name)} ${p.streak>=2?`<span data-stat="streak" data-sv="cur">🔥 ${p.streak}</span>`:""}</div><div class="sub">${p.w}W · ${p.l}L · ${p.g.all} ${gms(p.g.all)}</div></div></div>${medalLine(p)}${triP(p)}</div>
   <button class="g mmb" data-mm="${esc(p.name)}">See matchup data ›</button>
-  <div class="card"><div class="hd"><b class="ct">Win rate</b>${lbLink("wr")}</div><div class="tri">${[["Overall","all",p.w,p.l],["1v1","one",wm.one.w,wm.one.l],["FFA","ffa",wm.ffa.w,wm.ffa.l]].map(([t,k,w,l])=>`<div data-stat="wr" data-sm="${k}"><div class="elo">${pct(w,l)}</div><div class="sub">${t} · ${w}W ${l}L</div></div>`).join("")}</div></div>
+  <div class="card"><div class="hd"><b class="ct">Win rate</b>${lbLink("wr")}</div><div class="tri">${[["Overall","all",p.w,p.l],["1v1","one",wm.one.w,wm.one.l],["FFA","ffa",wm.ffa.w,wm.ffa.l]].map(([t,k,w,l])=>`<div data-stat="wr" data-sm="${k}"><div class="elo">${pct(w,l)}</div><div class="sub">${t}</div><div class="sub">${w}W ${l}L</div></div>`).join("")}</div></div>
   ${op.best>=2?`<div class="card"><div class="hd"><b class="ct">Win streak</b>${lbLink("streak","","best")}</div><div style="margin-top:6px">Longest: <b>${op.best}</b> wins in a row</div>${p.streak>=2?`<div class="sub">Current: ${p.streak} in a row</div>`:""}</div>`:""}
   ${PREM()?combat(p):""}<div class="card"><b>Rating history</b>${trend(p)}</div>
   ${PREM()?charCard(p):""}${rivals(p)}${upsets(p)}${PREM()?"":lockedStats("Combat stats",COMBAT_ITEMS)+lockedStats("Fighter stats",FIGHTER_ITEMS)}`;
@@ -459,7 +459,7 @@ function combat(p){
   if(!N&&!SD&&!DM)return`<div class="card"><b>Combat stats</b><div class="sub">No stats yet. Scan the second results screen, or type KOs, deaths, SDs, and damage when you add a match.</div></div>`;
   const kd=c=>c.n?(c.d?(c.k/c.d).toFixed(2):c.k?"∞":"—"):"—";
   const big=(t,k,v)=>`<div class="card mini1"><div class="hd" style="margin:0"><b class="ct">${t}</b>${lbLink(k)}</div><div class="elo">${v}</div></div>`;
-  return`<div class="card"><div class="hd"><b class="ct">K/D</b>${lbLink("kd")}</div><div class="tri" style="margin-top:4px"><div data-stat="kd" data-sm="one"><div class="elo">${kd(a)}</div><div class="sub">1v1 K/D · ${a.n} ${gms(a.n)}</div></div><div data-stat="kd" data-sm="ffa"><div class="elo">${kd(b)}</div><div class="sub">FFA K/D · ${b.n} ${gms(b.n)}</div></div></div><div class="sub" style="margin-top:8px">Total deaths: ${Dd}</div></div>
+  return`<div class="card"><div class="hd"><b class="ct">K/D</b>${lbLink("kd")}</div><div class="tri" style="margin-top:4px"><div data-stat="kd" data-sm="one"><div class="elo">${kd(a)}</div><div class="sub">1v1 K/D</div><div class="sub">${a.n} ${gms(a.n)}</div></div><div data-stat="kd" data-sm="ffa"><div class="elo">${kd(b)}</div><div class="sub">FFA K/D</div><div class="sub">${b.n} ${gms(b.n)}</div></div></div><div class="sub" style="margin-top:8px">Total deaths: ${Dd}</div></div>
   ${big("Total KOs","kos",K)}${big("Total SDs","sds",SD)}${big("Total damage","dmg",Math.round(DM).toLocaleString())}<div class="msg" style="margin:-6px 0 14px">Totals only include matches with stats recorded.</div>`;
 }
 // ---------- 8-bit medals ----------
