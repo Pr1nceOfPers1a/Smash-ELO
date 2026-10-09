@@ -11,10 +11,10 @@ async function sendCode(code) {
     method: 'POST',
     headers: { Authorization: `Bearer ${process.env.RESEND_API_KEY}`, 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      from: process.env.MAIL_FROM || 'Smash ELO <onboarding@resend.dev>',
+      from: process.env.MAIL_FROM || 'BroElo <onboarding@resend.dev>',
       to: [process.env.MASTER_EMAIL],
-      subject: `Smash ELO Master code: ${code}`,
-      text: `Your Smash ELO Master sign-in code is ${code}. It expires in 10 minutes. If this wasn't you, change the Master Passkey.`,
+      subject: `BroElo Master code: ${code}`,
+      text: `Your BroElo Master sign-in code is ${code}. It expires in 10 minutes. If this wasn't you, change the Master Passkey.`,
     }),
   });
   return r.ok;

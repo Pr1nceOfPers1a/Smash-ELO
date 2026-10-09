@@ -89,8 +89,9 @@ input.sm{flex:1;width:0;min-width:0;text-align:center;padding:8px 4px}
 .nodata{font:11px/1.5 ui-monospace,Menlo,Consolas,monospace;color:var(--mu);margin-top:8px}
 .gr{background:#e4e1d2!important;color:#8a8878!important;border-style:dashed!important;cursor:pointer}
 .gbtn{opacity:.55;filter:grayscale(1);cursor:pointer}
-#po,#cf{position:fixed;inset:0;background:rgba(26,22,48,.55);display:flex;align-items:center;justify-content:center;z-index:99;padding:20px}
+#po,#cf,#se{position:fixed;inset:0;background:rgba(26,22,48,.55);display:flex;align-items:center;justify-content:center;z-index:99;padding:20px}
 #po .card{max-width:320px;text-align:center;margin:0}
+#se .card{max-width:340px;width:100%;margin:0}
 #cf .card{max-width:340px;width:100%;margin:0;max-height:90vh;overflow:auto}
 .pbox{border:3px solid var(--ink);padding:8px;margin:8px 0;background:#fff}
 .sg{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}.sg label{display:block;font:10px/1.2 ui-monospace,Menlo,Consolas,monospace;color:var(--mu)}.sg input.sm{width:100%;flex:none;margin-top:3px}
@@ -167,11 +168,19 @@ function spark(h){
   return`<svg viewBox="0 0 300 60" width="100%" height="60"><polyline fill="none" stroke="var(--ac)" stroke-width="2" points="${pts}"/></svg><div class="sub">Overall rating over time: ${Math.round(lo)} to ${Math.round(hi)}</div>`;
 }
 const bub=n=>{const t=stt[String(n).toLowerCase()]||"";return`<div class="bub${t?"":" e"}" data-st="${esc(n)}" role="button" aria-label="Edit status for ${esc(n)}">${t?esc(t):"Add status"}</div>`};
-async function editStatus(n){
+function editStatus(n){
   if(peep)return alert("Peek mode is view only.");
-  const cur=stt[n.toLowerCase()]||"",v=prompt(`Status for ${n} (40 characters max, empty clears it):`,cur);
-  if(v==null)return;
-  try{const j=await api("matches",{method:"POST",body:JSON.stringify({action:"status",name:n,text:v})});stt=j.statuses||{};render()}catch(e){alert(e.message)}
+  const o=document.getElementById("se");if(o)o.remove();
+  const cur=stt[n.toLowerCase()]||"",d=document.createElement("div");d.id="se";
+  d.innerHTML=`<div class="card"><b>Status for ${esc(n)}</b><div class="row"><input class="n" id="sei" maxlength="40" placeholder="Say something (40 characters)" value="${esc(cur)}" autocomplete="off"></div><div class="msg" id="sem"></div><div class="row"><button class="g" style="flex:1" id="sex">Cancel</button><button style="flex:1" id="sev">Save</button></div></div>`;
+  document.body.appendChild(d);
+  const inp=document.getElementById("sei"),msg=document.getElementById("sem"),close=()=>d.remove();
+  const save=async()=>{const b=document.getElementById("sev");b.disabled=true;
+    try{const j=await api("matches",{method:"POST",body:JSON.stringify({action:"status",name:n,text:inp.value})});stt=j.statuses||{};close();render()}
+    catch(e){b.disabled=false;msg.className="msg warn";msg.textContent=e.message}};
+  document.getElementById("sev").onclick=save;document.getElementById("sex").onclick=close;
+  d.onclick=e=>{if(e.target===d)close()};inp.onkeydown=e=>{if(e.key=="Enter")save();if(e.key=="Escape")close()};
+  inp.focus();inp.select();
 }
 const tri=p=>`<div class="tri">${["all","one","ffa"].map(t=>`<div><div class="elo">${p.g[t]?Math.round(p.r[t]):"—"}</div><div class="sub">${LB[t]}</div></div>`).join("")}</div>`;
 function render(){
