@@ -14,7 +14,7 @@ h1{font:20px/1.3 var(--pf);margin:6px 0 4px;color:var(--ink);text-shadow:3px 3px
 .tl{font:8px/1.6 var(--pf);color:var(--mu);margin:0 0 16px}
 .blink{animation:bl 1s steps(2,start) infinite}@keyframes bl{to{visibility:hidden}}
 .card{background:var(--card);border:3px solid var(--ink);border-radius:0;box-shadow:4px 4px 0 var(--ink);padding:12px;margin:0 4px 16px 0}
-.card>b,.ct,summary>b{font:10px/1.6 var(--pf);text-transform:uppercase;color:var(--ink)}
+.card>b,.ct,summary>b{font:10px/1.6 var(--pf);text-transform:uppercase;color:var(--mu)}
 .row{display:flex;gap:8px;align-items:center;margin-bottom:8px}
 input,select{background:var(--in);color:var(--tx);border:3px solid var(--ink);border-radius:0;padding:9px;font:inherit;min-width:0;max-width:100%}
 input:focus,select:focus{outline:3px solid var(--blue);outline-offset:0}
@@ -27,9 +27,9 @@ button.x{background:none;border:0;box-shadow:none;color:var(--mu);padding:6px 10
 button.lnk{background:none;border:0;box-shadow:none;color:var(--ac);padding:0;text-decoration:underline;font:inherit;font-weight:700}
 .seg{display:flex;gap:6px;margin:0 4px 14px 0}.seg button{flex:1;background:#fff;color:var(--ink);padding:10px 2px;font-size:8px;white-space:nowrap}.seg button.on{background:var(--blue);color:#fff}.seg button.srch{flex:0 0 46px;padding:8px 0;font-size:14px}.seg button.srch.on{background:var(--ac)}
 .lb{display:flex;align-items:center;gap:10px;cursor:pointer}.rk{width:28px;display:inline-flex;justify-content:center;align-items:center;color:var(--mu);font:10px var(--pf)}
-.nm{flex:1;font-weight:700;min-width:0}.sub{color:var(--mu);font-size:13px}.elo{font:15px/1.3 var(--pf)}
-.tri{display:flex;justify-content:space-around;gap:6px;text-align:center;margin-top:8px}.tri>div{flex:1 1 0;min-width:0}.tri .elo{font-size:14px}.tri .sub{overflow-wrap:anywhere}
-.up{color:var(--ok)}.dn{color:var(--bad)}.msg{color:var(--mu);font-size:14px;margin:6px 0}
+.nm{flex:1;font-weight:700;min-width:0}.sub{color:var(--mu);font-size:13px}.nm .sub{font-weight:400}.sub b{color:var(--ink)}.card .ct+.nm{margin-top:8px}.elo{font:15px/1.3 var(--pf)}
+.tri{display:flex;justify-content:space-around;gap:6px;text-align:center;margin-top:8px}.tri>div{flex:1 1 0;min-width:0}.tri .elo{font-size:16px;margin-bottom:2px}.tri .sub{overflow-wrap:anywhere;font-size:12px}
+.up{color:var(--ok)}.dn{color:var(--bad)}.msg{color:var(--mu);font-size:13px;margin:6px 0}
 nav{position:fixed;bottom:0;left:0;right:0;display:flex;background:var(--card);border-top:3px solid var(--ink);padding-bottom:env(safe-area-inset-bottom)}
 nav button{flex:1;background:none;border:0;box-shadow:none;color:var(--mu);padding:16px 0 14px;font-size:8px}
 nav button.on{color:var(--ac);box-shadow:inset 0 -4px 0 var(--ac)}nav button:active{transform:none}
@@ -59,7 +59,7 @@ input.sm{flex:1;width:0;min-width:0;text-align:center;padding:8px 4px}
 .pk.c1{--gc:#2f6bff}.pk.c2{--gc:#13813a}.pk.c3{--gc:#8a3ffc}.pk.c4{--gc:#d9480f}
 .card .pk{margin:6px 0 10px;box-shadow:none}
 .hd{display:flex;flex-wrap:wrap;gap:2px 10px;align-items:baseline;margin-bottom:4px}.hd .ct{flex:1}
-.lbl{font:700 11px/1.4 ui-monospace,Menlo,Consolas,monospace;color:#777;text-align:right;margin-left:auto}
+.lbl{font:400 11px/1.4 ui-monospace,Menlo,Consolas,monospace;color:var(--mu);text-align:right;margin-left:auto}
 .mini1{padding:10px 12px}.mini1 .elo{margin-top:2px}
 #now{display:none;align-items:center;gap:6px 10px;flex-wrap:wrap;margin:0 4px 16px 0;background:var(--yel);border:3px solid var(--ink);box-shadow:4px 4px 0 var(--ink);padding:9px 11px}
 #now .live{font:8px/1.5 var(--pf);color:var(--ink);white-space:nowrap}#now .who{font-weight:700;flex:1;min-width:0;overflow-wrap:anywhere}#now .ago{font-size:12px;color:var(--ink)}
@@ -99,13 +99,15 @@ input.sm{flex:1;width:0;min-width:0;text-align:center;padding:8px 4px}
 .bub{position:relative;display:block;width:fit-content;max-width:100%;font:11px/1.3 ui-monospace,Menlo,Consolas,monospace;font-weight:400;background:#fff;color:var(--ink);border:2px solid var(--ink);padding:3px 8px;margin:0 0 9px;cursor:pointer;word-break:break-word}
 .bub::before{content:"";position:absolute;left:10px;bottom:-9px;border:6px solid transparent;border-top-color:var(--ink);border-bottom:0}
 .bub::after{content:"";position:absolute;left:12px;bottom:-5px;border:4px solid transparent;border-top-color:#fff;border-bottom:0}
-.bub.e{border-style:dashed;color:var(--mu)}
+.bub.e{border:0;background:none;padding:0 0 2px;margin:0 0 4px;color:var(--mu);font-size:11px;opacity:.7}.bub.e::before,.bub.e::after{display:none}
 .kv{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:9px 0;border-top:2px solid var(--ln);font:12px/1.4 ui-monospace,Menlo,Consolas,monospace}.kv:first-of-type{border-top:0}.kv .l{color:var(--mu)}.kv .v{font-weight:700;text-align:right}
 .big3{font:20px var(--pf);text-align:center;margin:10px 0 4px}
 .duo{display:flex;align-items:center;gap:8px}.duo .dn{flex:1;min-width:0;text-align:center}.duo .dn .nm{font-size:14px;overflow:hidden;text-overflow:ellipsis}.duo .dn .elo{font-size:14px;margin-top:4px}.duo .ds{flex:0 0 auto;text-align:center}
 .fm{display:inline-block;min-width:24px;margin-left:3px;padding:4px 0;text-align:center;font:8px var(--pf);color:#fff;border:2px solid var(--ink);background:#9c9a90}.fm.W{background:#13813a}.fm.L{background:#e5322d}
 .mo{display:inline-block;font:7px/1 var(--pf);background:#fff;color:var(--ink);padding:3px 4px;margin-right:6px;font-style:normal}
 details.ffa{margin:0 0 14px}details.ffa summary{cursor:pointer;list-style:none;font:9px var(--pf);padding:12px;background:#fff;border:3px solid var(--ink);box-shadow:3px 3px 0 var(--ink);text-align:center}details.ffa summary::-webkit-details-marker{display:none}details.ffa[open] summary{margin-bottom:12px}
+.pv{display:inline-block;font:400 11px/1.3 ui-monospace,Menlo,Consolas,monospace;color:var(--mu);font-style:italic;margin-left:6px}
+.sh{font:10px/1.6 var(--pf);margin:24px 0 12px;padding-bottom:6px;border-bottom:3px solid var(--ink);text-transform:uppercase}
 .mmb{width:100%;margin:0 0 14px;padding:11px 6px;font-size:9px}
 .mmc{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}.mmc button{background:#fff;color:var(--ink);padding:10px 12px;font-size:10px}.mmc button.on{background:var(--blue);color:#fff}
 .q{flex:0 0 auto;align-self:stretch;width:39px;padding:0;font-weight:700}
@@ -373,7 +375,7 @@ async function doMerge(){
 let psort="best";
 const pct=(w,l)=>w+l?Math.round(100*w/(w+l))+"%":"—";
 const gm=r=>r.w+r.l+r.t,wr=r=>(r.w+.5*r.t)/gm(r),rec=r=>`${r.w}–${r.l}${r.t?"–"+r.t:""}`;
-const prov=g=>g&&g<10?`<span class="tag">provisional</span>`:"";
+const prov=g=>g&&g<10?`<span class="pv">provisional</span>`:"";
 const triP=p=>`<div class="tri">${["all","one","ffa"].map(t=>`<div><div class="elo">${p.g[t]?Math.round(p.r[t]):"—"}</div><div class="sub">${LB[t]}</div>${prov(p.g[t])}</div>`).join("")}</div>`;
 function avgCard(P){
   const ps=Object.values(P);if(!ps.length)return"";
@@ -595,21 +597,21 @@ function trendsPage(){
   const slot=(t,body,n,sk)=>`<div class="card"${n?` data-n="${esc(n)}" style="cursor:pointer"`:sk?` data-sup="${sk}" style="cursor:pointer"`:""}><div class="ct">${t}${sk?`<span style="float:right;color:var(--mu)">›</span>`:""}</div>${body}</div>`,none=m=>`<div class="sub" style="margin-top:8px">${m}</div>`;
   const rivC=slot("Biggest rivals",rv?`<div class="nm" style="margin-top:8px">${esc(rv.a)} vs ${esc(rv.b)}</div><div class="sub">${rv.n} meeting${rv.n==1?"":"s"} · ${rv.aw}–${rv.bw}${rv.t?"–"+rv.t:""}</div>`:none("No rivalries yet"));
   const udC=slot("Underdog",u?`<div class="nm" style="margin-top:8px">${esc(u.name)}</div><div class="sub">beat ${esc(u.opp)} · rated ${R0(u.gap)} lower · ${R0(u.pr*100)}% chance</div>`:none("None yet. Needs a 50+ rating gap"),u&&u.name);
-  const myC=slot("Man of Mystery",M?`<div class="nm" style="margin-top:8px">${esc(M.name)}</div><div class="elo up">${R0(100*M.w/M.n)}%</div><div class="sub">${M.w}W ${M.n-M.w}L going random</div>`:none("Needs 3+ games going random"),0,"mys");
-  const inC=slot("Insomniac",I?`<div class="nm" style="margin-top:8px">${esc(I.name)}</div><div class="elo">${I.n}</div><div class="sub">game${I.n==1?"":"s"} between midnight and 4am</div>`:none("No games between midnight and 4am"),0,"ins");
+  const myC=slot("Man of Mystery",M?`<div class="nm">${esc(M.name)}</div><div class="sub"><b>${R0(100*M.w/M.n)}%</b> ${M.w}W ${M.n-M.w}L going random</div>`:none("Needs 3+ games going random"),0,"mys");
+  const inC=slot("Insomniac",I?`<div class="nm">${esc(I.name)}</div><div class="sub"><b>${I.n}</b> game${I.n==1?"":"s"} between midnight and 4am</div>`:none("No games between midnight and 4am"),0,"ins");
   const C0=T.cmb;
   const lk=(t,d)=>`<div class="card locked"><span class="tag">Premier Group Feature</span><div><b>${t}</b></div><div class="pixbox" style="height:30px"><i style="height:100%"></i></div><div class="nodata">${d}</div></div>`;
-  const stC=(t,key,c,val,sub)=>`<div class="card"${c?` data-stat="${key}" data-sr="${tper}" style="cursor:pointer"`:""}><div class="ct">${t}</div>${c?`<div class="nm" style="margin-top:8px">${esc(c.name)}</div><div class="elo">${val}</div><div class="sub">${sub}</div>`:none("Nobody yet")}</div>`;
+  const stC=(t,key,c,val,sub)=>`<div class="card"${c?` data-stat="${key}" data-sr="${tper}" style="cursor:pointer"`:""}><div class="ct">${t}</div>${c?`<div class="nm">${esc(c.name)}</div><div class="sub"><b>${val}</b> ${sub}</div>`:none("Nobody yet")}</div>`;
   const nhC=PREM()?stC("Needs Help","sds",C0.sds,C0.sds&&C0.sds.sd,"self-destructs"):lk("Needs Help","Most self-destructs. Not tracked in Free groups.");
   const pbC=PREM()?stC("Punching bag","taken",C0.taken,C0.taken&&R0(C0.taken.tk).toLocaleString(),"damage taken, avg opponent damage in FFA"):lk("Punching bag","Most damage taken. Not tracked in Free groups.");
-  const P0=T.pony,opC=PREM()?slot("One Trick Pony",P0?`<div class="nm" style="margin-top:8px">${esc(P0.name)}</div><div class="elo">${esc(P0.ch)}</div><div class="sub">${P0.pct}% of ${P0.n} ${gms(P0.n)} · ${P0.v} character${P0.v==1?"":"s"} played</div>`:none("Needs 11+ games with a character"),0,"pony"):lk("One Trick Pony","Least variety in fighters, over 10 matches. Not tracked in Free groups.");
-  const nm=(r,big,sub,n)=>r?`<div class="nm" style="margin-top:8px">${esc(r.name)}</div><div class="elo">${big}</div><div class="sub">${sub}</div>`:none(n);
+  const P0=T.pony,opC=PREM()?slot("One Trick Pony",P0?`<div class="nm">${esc(P0.name)}</div><div class="sub"><b>${esc(P0.ch)}</b> ${P0.pct}% of ${P0.n} ${gms(P0.n)} · ${P0.v} character${P0.v==1?"":"s"} played</div>`:none("Needs 11+ games with a character"),0,"pony"):lk("One Trick Pony","Least variety in fighters, over 10 matches. Not tracked in Free groups.");
+  const nm=(r,big,sub,n)=>r?`<div class="nm">${esc(r.name)}</div><div class="sub"><b>${big}</b> ${sub}</div>`:none(n);
   const Nl=T.nol,Sb=T.sb,Gs=T.slayer,Br=T.bride,Cu=T.cursed,Rc=T.coaster,By=T.bully,Jk=T.jk,Gc=T.gc;
-  const Cc=T.couple,ccC=slot("Cutest Couple",Cc?`<div class="nm" style="margin-top:8px">${esc(Cc.a)} &amp; ${esc(Cc.b)}</div><div class="elo">${Cc.n}</div><div class="sub">1v1 matches together</div>`:none("Needs 2+ 1v1s between the same two"),0,"couple");
+  const Cc=T.couple,ccC=slot("Cutest Couple",Cc?`<div class="nm">${esc(Cc.a)} &amp; ${esc(Cc.b)}</div><div class="sub"><b>${Cc.n}</b> 1v1 matches together</div>`:none("Needs 2+ 1v1s between the same two"),0,"couple");
   const nlC=slot("No-lifers",nm(Nl,Nl&&Nl.n,"game"+(Nl&&Nl.n==1?"":"s")+" between 9am and 5pm","No games between 9am and 5pm"),0,"nol");
   const sbC=slot("Social Butterfly",nm(Sb,Sb&&Sb.n,"different opponents faced","Needs 2+ opponents"),0,"sb");
   const gsC2=slot("Giant Slayer",nm(Gs,Gs&&Gs.n,"upset win"+(Gs&&Gs.n==1?"":"s")+" over higher-rated players","No upsets yet"),0,"slayer");
-  const byC=slot("Bully",By?`<div class="nm" style="margin-top:8px">${esc(By.name)}</div><div class="elo">${By.n}</div><div class="sub">wins over ${esc(By.opp)} in ${By.of} meetings</div>`:none("Needs 3+ wins over one opponent"),0,"bully");
+  const byC=slot("Bully",By?`<div class="nm">${esc(By.name)}</div><div class="sub"><b>${By.n}</b> wins over ${esc(By.opp)} in ${By.of} meetings</div>`:none("Needs 3+ wins over one opponent"),0,"bully");
   const brC=slot("Bridesmaid",nm(Br,Br&&Br.n,"second-place finish"+(Br&&Br.n==1?"":"es")+" in FFA","No FFA runner-ups yet"),0,"bride");
   const cuC=slot("Cursed",nm(Cu,Cu&&Cu.n,"losses in a row","Needs a 3+ loss streak"),0,"cursed");
   const rcC=slot("Rollercoaster",nm(Rc,Rc&&R0(Rc.v),"avg rating swing per game · "+(Rc&&Rc.n)+" games","Needs 3+ games"),0,"coaster");
@@ -617,7 +619,7 @@ function trendsPage(){
   const jkC=PREM()?slot("Jack of All Trades",nm(Jk,Jk&&Jk.v,"different characters played","Needs 3+ characters"),0,"jk"):lk("Jack of All Trades","Most different characters played. Not tracked in Free groups.");
   const sc=[[M,myC],[I,inC],[Nl,nlC],[Sb,sbC],[Gs,gsC2],[By,byC],[Cc,ccC],[Br,brC],[Cu,cuC],[Rc,rcC],[Gc,gcC,1],[C0.sds,nhC,1],[C0.taken,pbC,1],[Jk,jkC,1],[P0,opC,1]].filter(([d,h,pr])=>d||(pr&&!PREM())).map(x=>x[1]);
   let sg="";for(let i=0;i<sc.length;i+=2)sg+=i+1<sc.length?`<div class="pair">${sc[i]}${sc[i+1]}</div>`:sc[i];
-  const supC=sc.length?`<h3 style="font:10px/1.6 var(--pf);margin:22px 0 10px">SUPERLATIVES</h3>${sg}`:"";
+  const supC=sc.length?`<h3 class="sh">SUPERLATIVES</h3>${sg}`:"";
   const lr=t=>{const L=T.lead[t];if(!L.cur)return`<div class="row" style="margin:8px 0"><span class="sub" style="flex:0 0 52px">${LB[t]}</span><span class="sub">No games yet</span></div>`;
     const note=!L.prev?"new board":L.prev==L.cur.name?"held the lead":`took the lead from ${esc(L.prev)}`;
     return`<div class="row" data-n="${esc(L.cur.name)}" style="margin:8px 0;cursor:pointer"><span class="sub" style="flex:0 0 52px">${LB[t]}</span><span class="rk">${medal(0,18)}</span><span class="nm">${esc(L.cur.name)}<div class="sub">${note}</div></span><span class="elo">${R0(L.cur.r[t])}</span></div>`};
@@ -664,7 +666,7 @@ function statRows(key,range,mode,sv){
   return out.sort((a,b)=>b.val===a.val?(b.k-a.k||b.g-a.g):b.val>a.val?1:-1);
 }
 const FREEST=["streak","wr"];
-function podiums(){return`<h3 style="font:10px/1.6 var(--pf);margin:22px 0 10px">ALL-TIME PODIUMS</h3>${Object.keys(STATS).filter(k=>PREM()||FREEST.includes(k)).map(podiumCard).join("")}${PREM()?"":Object.keys(STATS).filter(k=>!FREEST.includes(k)).map(lockedPod).join("")}`}
+function podiums(){return`<h3 class="sh">ALL-TIME PODIUMS</h3>${Object.keys(STATS).filter(k=>PREM()||FREEST.includes(k)).map(podiumCard).join("")}${PREM()?"":Object.keys(STATS).filter(k=>!FREEST.includes(k)).map(lockedPod).join("")}`}
 function podiumCard(k){
   const rows=statRows(k,"all","all","best").slice(0,3),S=STATS[k];
   const slot=i=>{const r=rows[i];return r?`<div class="slot">${medal(i,22)}<div class="pn">${esc(r.name)}</div><div class="pr">${r.disp}</div><div class="blk b${i}"></div></div>`:`<div class="slot" style="visibility:hidden"><div class="pr">&nbsp;</div><div class="blk b${i}"></div></div>`};
@@ -726,7 +728,7 @@ function mmPage(){
   const all=D.matches.filter(m=>S.every(n=>m.results.some(r=>r.name==n)));
   const st=S.map(n=>{let w=0,pl=0;for(const m of all){const r=m.results.find(x=>x.name==n);pl+=r.place;if(r.place===1)w++}return{n,w,av:all.length?pl/all.length:0}}).sort((a,b)=>b.w-a.w||a.av-b.av);
   h+=`<div class="card"><b>All ${S.length} together</b>${all.length?`<div class="sub" style="margin:4px 0 8px">${all.length} ${all.length==1?"match":"matches"} with all of them in it</div>${st.map(r=>`<div class="kv"><span class="v">${esc(r.n)}</span><span class="l">${r.w} ${r.w==1?"win":"wins"} · avg place ${r.av.toFixed(1)}</span></div>`).join("")}`:`<div class="msg">They haven't all been in one match yet.</div>`}</div>`;
-  h+=`<h3 style="font:10px/1.6 var(--pf);margin:18px 0 10px">HEAD TO HEAD</h3>`;
+  h+=`<h3 class="sh">HEAD TO HEAD</h3>`;
   for(let i=0;i<S.length;i++)for(let j=i+1;j<S.length;j++)h+=mmCard(S[i],S[j]);
   return back+chips+h;
 }
