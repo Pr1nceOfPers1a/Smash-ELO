@@ -39,7 +39,7 @@ nav button.on{color:var(--ac);box-shadow:inset 0 -4px 0 var(--ac)}nav button:act
 .pair{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:0 12px}.pair>.card{min-width:0}.pair .elo{margin:6px 0 4px;overflow-wrap:anywhere}.pair .sub,.pair .nm{overflow-wrap:anywhere}
 .mn{font-size:14px;font-weight:700;word-break:break-word}
 details summary{cursor:pointer}
-input.sm{flex:1;width:0;min-width:0;text-align:center;padding:8px 4px}
+input.sm{flex:1;width:0;min-width:0;text-align:center;padding:8px 4px;font-size:13px}
 .med{vertical-align:middle;image-rendering:pixelated}
 .medals{display:flex;flex-wrap:wrap;gap:6px 12px;margin-top:8px;font:8px var(--pf)}.mb{display:inline-flex;align-items:center;gap:4px}
 .mv{display:flex;align-items:center;gap:8px;margin:8px 0;cursor:pointer}.mv .dl{font:11px var(--pf);white-space:nowrap}.mv .rc{font-size:12px;color:var(--mu);min-width:62px;text-align:right}
@@ -111,8 +111,14 @@ details.ffa{margin:0 0 14px}details.ffa summary{cursor:pointer;list-style:none;f
 .mmb{width:100%;margin:0 0 14px;padding:11px 6px;font-size:9px}
 .mmc{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}.mmc button{background:#fff;color:var(--ink);padding:10px 12px;font-size:10px}.mmc button.on{background:var(--blue);color:#fff}
 .q{flex:0 0 auto;align-self:stretch;width:39px;padding:0;font-weight:700}
-.rl{display:flex;align-items:center;gap:6px;font:11px/1.3 ui-monospace,Menlo,Consolas,monospace;color:var(--ink);white-space:nowrap;cursor:pointer}
-.rl input{width:18px;height:18px;accent-color:#e5322d;margin:0;flex:none}
+.rl{position:relative;display:inline-flex;align-items:center;gap:8px;flex:none;font:8px/1.4 var(--pf);color:var(--ink);background:#fff;border:3px solid var(--ink);box-shadow:3px 3px 0 var(--ink);padding:9px 10px;cursor:pointer;white-space:nowrap;user-select:none}
+.rl::before{content:"";flex:none;width:12px;height:12px;border:3px solid var(--ink);background:#fff}
+.rl input{position:absolute;inset:0;width:100%;height:100%;margin:0;opacity:0;cursor:pointer}
+.rl:has(input:checked){background:var(--yel)}.rl:has(input:checked)::before{background:var(--ac)}
+.rl:has(input:focus-visible){outline:3px solid var(--blue)}
+#st{margin-top:10px}
+.rl:active{transform:translate(3px,3px);box-shadow:none}
+.row:has(>.rl){flex-wrap:wrap}.row:has(>.rl) input.n{min-width:110px}
 .locked{position:relative;opacity:.55;filter:grayscale(1);background:#e4e1d2;box-shadow:none;pointer-events:none}
 .tag{display:inline-block;font:7px/1 var(--pf);background:var(--ink);color:#fff;padding:5px 6px;margin-bottom:8px}
 .ft{width:100%;border-collapse:collapse;font:12px/1.35 ui-monospace,Menlo,Consolas,monospace}
@@ -234,9 +240,9 @@ function renderCore(){
   if(tab=="add"){
     if(!pass){v.innerHTML=`<div class="card"><b>Group passcode</b><div class="msg">Ask the group admin for the passcode to add matches.</div><div class="row"><input class="n" type="password" id="pc" placeholder="Passcode"><button onclick="pass=document.getElementById('pc').value.trim();ls('pass',pass);render()">Save</button></div></div>`;return}
     v.innerHTML=`<datalist id="dl">${Object.keys(P).map(n=>`<option value="${esc(n)}">`).join("")}</datalist><datalist id="dlc">${CH.map(c=>`<option value="${esc(c)}">`).join("")}</datalist>
-    ${PREM()?`<div class="card"><div class="row" style="margin:0"><button class="g" style="flex:1" onclick="document.getElementById('f').click()">📷 Scan result screen</button><button class="g q" aria-label="How to scan" title="How to scan" onclick="showHow('add')">?</button></div><div class="msg${wc(note)}" id="st">${esc(note)}</div></div>`:`<div class="card"><div class="row" style="margin:0"><button class="g gbtn" style="flex:1" onclick="premOnly()">📷 Scan result screen</button></div></div>`}
+    ${PREM()?`<div class="card"><div class="row" style="margin:0"><button class="g" style="flex:1" ${scanBusy?"disabled":""} onclick="document.getElementById('f').click()">📷 ${scanBusy||scanImg?"Rescan":"Scan"}</button><button id="sv" style="flex:1" onclick="saveMatch()">Save match</button><button class="g q" aria-label="How to scan" title="How to scan" onclick="showHow('add')">?</button></div><div class="msg${wc(note)}" id="st">${esc(note)}</div></div>`:`<div class="card"><div class="row" style="margin:0"><button class="g gbtn" style="flex:1" onclick="premOnly()">📷 Scan</button><button id="sv" style="flex:1" onclick="saveMatch()">Save match</button></div></div>`}
     <div class="card">${draft.map((r,i)=>`<div class="row"><input class="p" type="text" inputmode="numeric" maxlength="4" value="${ord(r.place)}" onfocus="this.select()" onchange="setPlace(${i},this)" aria-label="Place"><input class="n" list="dl" placeholder="Username" value="${esc(r.name)}" onchange="nameSet(${i},this.value)"><button class="x" onclick="draft.splice(${i},1);render()">✕</button></div>${flag(r.name,i)}${PREM()?`<div class="row" style="margin:-2px 0 6px 72px"><label class="rl"><input type="checkbox" id="rc${i}" ${r.rnd?"checked":""} onchange="setRnd(${i},this.checked)">Went random?</label><input class="n" id="ch${i}" list="dlc" placeholder="Character" ${r.rnd?"disabled":""} value="${esc(r.rnd?"Random":r.char||"")}" onchange="setChar(${i},this.value)"></div><div class="row" style="margin:0 0 10px 72px;gap:6px">${[["kills","KOs"],["deaths","Deaths"],["sds","SDs"],["dmg","Dmg"]].map(([k,t])=>`<input class="sm" type="number" inputmode="decimal" min="0" placeholder="${t}" value="${r[k]??""}" onchange="draft[${i}].${k}=nv(this.value)" aria-label="${t}">`).join("")}</div>`:`<div class="row" style="margin:-2px 0 10px 72px"><label class="rl"><input type="checkbox" id="rc${i}" ${r.rnd?"checked":""} onchange="setRnd(${i},this.checked)">Went random?</label><input class="n gr" readonly placeholder="Character 🔒" onclick="premOnly()"></div>`}`).join("")}
-    <div class="row"><button class="g" onclick="if(draft.length<8){draft.push({name:'',place:draft.length+1});render()}">+ Player</button><button id="sv" style="flex:1" onclick="saveMatch()">Save match</button></div>
+    <div class="row"><button class="g" onclick="if(draft.length<8){draft.push({name:'',place:draft.length+1});render()}">+ Player</button></div>
     <div class="msg">Type 1 to 8 for placement (1st = winner). Tied players share a place. 2 players = 1v1, 3 or more = FFA.</div></div>`;
   }
   if(tab=="hist"){
@@ -828,7 +834,7 @@ function groupsCard(){
   <div class="row"><button ${grp.busy?"disabled":""} style="flex:1" onclick="gmCreate()">Create group</button></div><div class="msg${wc(grp.msg)}">${esc(grp.msg)}</div></div>`;
 }
 // ---------- Training data (confirmed scans) ----------
-let scanImg="",scanRaw=null,conf=false,confSnap="",tdMsg="",tdBusy=false;
+let scanBusy=false,scanImg="",scanRaw=null,conf=false,confSnap="",tdMsg="",tdBusy=false;
 const confOk=()=>!!scanImg&&conf&&JSON.stringify(draft)===confSnap;
 const crcT=(()=>{const t=new Uint32Array(256);for(let n=0;n<256;n++){let c=n;for(let k=0;k<8;k++)c=c&1?0xEDB88320^(c>>>1):c>>>1;t[n]=c>>>0}return t})();
 const crc32=u=>{let c=-1;for(let i=0;i<u.length;i++)c=crcT[(c^u[i])&255]^(c>>>8);return(c^-1)>>>0};
@@ -883,6 +889,7 @@ function peepExit(){
 }
 async function saveMatch(){
   if(peep)return alert("Peek mode is view only.");
+  if(scanBusy)return alert("Still reading the screenshot. Try again in a moment.");
   if(scanImg){conf=true;confSnap=JSON.stringify(draft)} // pressing Save is the confirmation for a scan
   const known=Object.keys(D.players);
   const r=draft.map(x=>{const n=x.name.trim(),c0=(x.char||"").trim(),rn=!!x.rnd||c0.toLowerCase()=="random",c=rn?"Random":CH.find(k=>k.toLowerCase()==c0.toLowerCase())||c0;return{name:known.find(k=>k.toLowerCase()==n.toLowerCase())||n,place:x.place,...(rn?{rnd:true}:{}),...(PREM()&&c?{char:c.slice(0,30)}:{}),...(PREM()?statsOf(x):{})}}).filter(x=>x.name);
@@ -909,13 +916,13 @@ async function shrink(file){
 }
 document.getElementById("f").onchange=async e=>{if(peep){e.target.value="";return alert("Peek mode is view only.")}
   const file=e.target.files[0];e.target.value="";if(!file)return;
-  document.getElementById("st").textContent="Reading screenshot…";
+  scanBusy=true;render();{const st=document.getElementById("st");if(st)st.textContent="Reading screenshot…"}
   try{
     const img=await shrink(file),j=await api("scan",{method:"POST",body:JSON.stringify({passcode:pass,roster:Object.keys(D.players),chars:CH,image:img})});
     if(j.players.length<2){note=j.problem?"Couldn't read it: "+j.problem:"Couldn't read that screen. Enter results by hand."}
     else{if(scanImg)trackAcc("missed");({draft,note}=fromScan(j.players));draft.forEach(autoRnd);scanImg=img;scanRaw=j.players;conf=false;confSnap="";scanBase=sig(draft)}
   }catch(err){note=err.message}
-  render();
+  scanBusy=false;render();
 };
 
 // ---------- Login page: demo + try scan ----------
