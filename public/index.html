@@ -99,6 +99,8 @@ input.sm{flex:1;width:0;min-width:0;text-align:center;padding:8px 4px}
 .bub::before{content:"";position:absolute;left:10px;bottom:-9px;border:6px solid transparent;border-top-color:var(--ink);border-bottom:0}
 .bub::after{content:"";position:absolute;left:12px;bottom:-5px;border:4px solid transparent;border-top-color:#fff;border-bottom:0}
 .bub.e{border-style:dashed;color:var(--mu)}
+.mmb{width:100%;margin:0 0 14px;padding:11px 6px;font-size:9px}
+.mmc{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}.mmc button{background:#fff;color:var(--ink);padding:10px 12px;font-size:10px}.mmc button.on{background:var(--blue);color:#fff}
 .q{flex:0 0 auto;align-self:stretch;width:39px;padding:0;font-weight:700}
 .rl{display:flex;align-items:center;gap:6px;font:11px/1.3 ui-monospace,Menlo,Consolas,monospace;color:var(--ink);white-space:nowrap;cursor:pointer}
 .rl input{width:18px;height:18px;accent-color:#e5322d;margin:0;flex:none}
@@ -121,7 +123,7 @@ const LB={all:"Overall",one:"1v1",ffa:"FFA"};
 const FIGHTERS="Mario,Donkey Kong,Link,Samus,Dark Samus,Yoshi,Kirby,Fox,Pikachu,Luigi,Ness,Captain Falcon,Jigglypuff,Peach,Daisy,Bowser,Ice Climbers,Sheik,Zelda,Dr. Mario,Pichu,Falco,Marth,Lucina,Young Link,Ganondorf,Mewtwo,Roy,Chrom,Mr. Game & Watch,Meta Knight,Pit,Dark Pit,Zero Suit Samus,Wario,Snake,Ike,Pokémon Trainer,Diddy Kong,Lucas,Sonic,King Dedede,Olimar,Lucario,R.O.B.,Toon Link,Wolf,Villager,Mega Man,Wii Fit Trainer,Rosalina & Luma,Little Mac,Greninja,Mii Brawler,Mii Swordfighter,Mii Gunner,Palutena,Pac-Man,Robin,Shulk,Bowser Jr.,Duck Hunt,Ryu,Ken,Cloud,Corrin,Bayonetta,Inkling,Ridley,Simon,Richter,King K. Rool,Isabelle,Incineroar,Piranha Plant,Joker,Hero,Banjo & Kazooie,Terry,Byleth,Min Min,Steve,Sephiroth,Pyra/Mythra,Kazuya,Sora".split(",");
 const ls=(k,v)=>{try{return v===undefined?localStorage.getItem(k)||"":localStorage.setItem(k,v)}catch(e){return""}};
 const gms=n=>n==1?"game":"games";
-function resetDraft(){draft=[{name:"",place:1},{name:"",place:2}];note="";scanImg="";scanRaw=null;conf=false;confSnap=""}
+function resetDraft(){NAVS=[];sup="";mm=null;draft=[{name:"",place:1},{name:"",place:2}];note="";scanImg="";scanRaw=null;conf=false;confSnap=""}
 let stt={},ms=[],tab="lb",board="all",sel="",draft=[{name:"",place:1},{name:"",place:2}],note="",D=null;
 let me=ls("me"),pass=ls("pass"),admin=ls("admin"),gid=ls("gid"),gname=ls("gname"),jn=(typeof location!="undefined"&&new URLSearchParams(location.search).get("g")||"").slice(0,24),jk="",jmsg="",admOk=false,gtier=(typeof localStorage!="undefined"&&localStorage.getItem("gtier"))||"premier",gk="",gAdm=false,ml={open:false,step:"",key:"",code:"",chal:"",email:"",msg:"",busy:false},pkList=[],pkDays=30,pkMsg="",cg={open:false,pick:"",name:"",pw:"",ak:"",ak2:"",key:"",msg:"",busy:false,done:null},tdTot=null,tdStart=0,tdAcc=null,demo=false,tryOpen=false,tryKey="",tryMsg="",tryStage="",tryRes=null,tryBusy=false,tryLeft=0,pubN=null,pubAcc=null,howto=-1,howCtx="add",scanBase="",tkList=[],tkUses=1,tkHrs=24,tkMsg="",mgG="",mgMs=null,mgD=null;
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
@@ -195,7 +197,13 @@ function renderCore(){
   document.querySelectorAll("nav button").forEach(b=>b.classList.toggle("on",b.dataset.t==tab));
   {const tl=document.querySelector(".tl");if(tl)tl.innerHTML=`▶ ${esc(gid&&gname?gname:"1UP LEADERBOARD")} <span class="blink">█</span>`}
   if(!gid&&tab!="set"){v.innerHTML=cg.open?cgPage():tryStage?tryPage():loginPage();return}
-  if(stat&&!(sel&&P[sel])&&(tab=="lb"||tab=="tr")){v.innerHTML=statPage();return}
+  if(tab=="lb"||tab=="tr"){
+    if(sel&&!P[sel])sel="";
+    if(mm){v.innerHTML=mmPage();return}
+    if(sel){v.innerHTML=playerPage(P[sel]);return}
+    if(sup){v.innerHTML=supPage();return}
+    if(stat){v.innerHTML=statPage();return}
+  }
   if(tab=="lb"){
     if(sel&&P[sel]){v.innerHTML=playerPage(P[sel]);return}
     let h="";
@@ -208,7 +216,7 @@ function renderCore(){
     if(sopen)h+=`<div class="row"><input class="n" id="fq" placeholder="Search player" value="${esc(fq)}" oninput="fq=this.value;render();const e=document.getElementById('fq');e.focus();e.setSelectionRange(fq.length,fq.length)"></div>`;
     const full=boardList(board),L=full.filter(p=>!q||p.name.toLowerCase().includes(q));
     h+=L.length?L.map(p=>{const i=full.indexOf(p);return`<div class="card lb" data-n="${esc(p.name)}"><div class="rk">${i<3?medal(i):i+1}</div><div class="nm">${bub(p.name)}${esc(p.name)} ${p.streak>=2?"🔥"+p.streak:""}<div class="sub">${p.g[board]} ${gms(p.g[board])}${prov(p.g[board])}</div></div><div class="elo">${Math.round(p.r[board])}</div></div>`}).join(""):`<p class="msg">No ${LB[board]} matches${q?" for that search":" yet"}.</p>`;
-    if(ms.length&&!q)h+=podiums();
+    if(ms.length&&!q)h+=`<button class="g mmb" data-mm="">See matchup data ›</button>`+podiums();
     v.innerHTML=h;
   }
   if(tab=="tr"){v.innerHTML=trendsPage();raceStart()}
@@ -234,8 +242,8 @@ function renderCore(){
     ${isAdm()?`<div class="card"><b>Scans</b><div class="msg">Scans you confirm as correct are saved here.</div><div class="row"><button class="g" ${tdBusy?"disabled":""} onclick="tdCount()">Check count</button><button class="g" ${tdBusy?"disabled":""} onclick="tdDownload()">Download all (.zip)</button></div><div class="msg${wc(tdMsg)}">${esc(tdMsg)}</div>${tdTot!=null?`<div class="row" style="margin:8px 0 0"><b class="ct" style="flex:1">Total scans (site-wide)</b><span class="elo">${tdTot.toLocaleString()}</span></div><div class="sub">Every scan run, saved or not. Counting began at ${tdStart.toLocaleString()} (one per match logged before then).</div>${accLine()}`:""}</div>`:""}${premKeysCard()}${tryKeysCard()}${mergeCard(P)}${groupsCard()}`;
   }
 }
-document.querySelector("nav").onclick=e=>{if(e.target.dataset.t){tab=e.target.dataset.t;sel="";stat="";if(tab=="tr")RACE.key="";if(tab!="lb"){sopen=false;fq=""}render()}};
-document.getElementById("v").onclick=e=>{const sbb=e.target.closest("[data-st]");if(sbb){editStatus(sbb.dataset.st);return}const sc=e.target.closest("[data-stat]");if(sc){goStat(sc.dataset.stat,sc.dataset.sr,sc.dataset.sm,sc.dataset.sv);return}const k=e.target.closest("[data-ch]");if(k){pchar=pchar==k.dataset.ch?"":k.dataset.ch;render();return}const f=e.target.closest("[data-fix]");if(f){draft[+f.dataset.fix].name=f.dataset.to;render();return}const c=e.target.closest("[data-n]");if(c&&(tab=="lb"||tab=="tr")){tab="lb";sel=c.dataset.n;pchar="";render();scrollTo(0,0)}};
+document.querySelector("nav").onclick=e=>{if(e.target.dataset.t){navClear();tab=e.target.dataset.t;if(tab=="tr")RACE.key="";if(tab!="lb"){sopen=false;fq=""}render()}};
+document.getElementById("v").onclick=e=>{const sbb=e.target.closest("[data-st]");if(sbb){editStatus(sbb.dataset.st);return}const sc=e.target.closest("[data-stat]");if(sc){goStat(sc.dataset.stat,sc.dataset.sr,sc.dataset.sm,sc.dataset.sv);return}const k=e.target.closest("[data-ch]");if(k){pchar=pchar==k.dataset.ch?"":k.dataset.ch;render();return}const f=e.target.closest("[data-fix]");if(f){draft[+f.dataset.fix].name=f.dataset.to;render();return}const mt=e.target.closest("[data-mmt]");if(mt){mmTog(mt.dataset.mmt);return}const mb=e.target.closest("[data-mm]");if(mb){mmOpen(mb.dataset.mm);return}const su=e.target.closest("[data-sup]");if(su){supOpen(su.dataset.sup);return}const c=e.target.closest("[data-n]");if(c&&(tab=="lb"||tab=="tr")){navPush();sel=c.dataset.n;stat="";sup="";mm=null;pchar="";render();scrollTo(0,0)}};
 let admMsg="";
 function accLine(){
   if(!tdAcc)return"";const a=tdAcc.accepted,m=tdAcc.missed,n=a+m;
@@ -425,10 +433,11 @@ function oppOf(name){
 }
 function playerPage(p){
   const wm=p.wm,op=oppOf(p.name);
-  return`<button class="g" onclick="sel='';render()">← Back</button>
+  return`<button class="g" onclick="goBack()">← Back</button>
   <div class="card" style="margin-top:10px"><div class="row" style="gap:12px;margin:0 0 6px"><div style="flex:1;min-width:0"><div class="nm" style="font-size:20px">${bub(p.name)}${esc(p.name)} ${p.streak>=2?`<span data-stat="streak" data-sv="cur">🔥 ${p.streak}</span>`:""}</div><div class="sub">${p.w}W · ${p.l}L · ${p.g.all} ${gms(p.g.all)}</div></div></div>${medalLine(p)}${triP(p)}</div>
-  <div class="card"><div class="hd"><b class="ct">Win rate</b>${lbLink("wr")}</div><div class="tri">${[["Overall","all",p.w,p.l],["1v1","one",wm.one.w,wm.one.l],["FFA","ffa",wm.ffa.w,wm.ffa.l]].map(([t,k,w,l])=>`<div data-stat="wr" data-sm="${k}"><div class="elo">${pct(w,l)}</div><div class="sub">${t} · ${w}W ${l}L</div><div class="sub">${op.avg(k)==null?"":"avg opp "+op.avg(k)}</div></div>`).join("")}</div></div>
-  ${op.best>=2?`<div class="card"><div class="hd"><b class="ct">Win streak</b>${lbLink("streak","","best")}</div><div style="margin-top:6px">Longest: <b>${op.best}</b> wins in a row · avg opp ${op.bavg}</div>${p.streak>=2?`<div class="sub">Current: ${p.streak} in a row</div>`:""}</div>`:""}
+  <button class="g mmb" data-mm="${esc(p.name)}">See matchup data ›</button>
+  <div class="card"><div class="hd"><b class="ct">Win rate</b>${lbLink("wr")}</div><div class="tri">${[["Overall","all",p.w,p.l],["1v1","one",wm.one.w,wm.one.l],["FFA","ffa",wm.ffa.w,wm.ffa.l]].map(([t,k,w,l])=>`<div data-stat="wr" data-sm="${k}"><div class="elo">${pct(w,l)}</div><div class="sub">${t} · ${w}W ${l}L</div></div>`).join("")}</div></div>
+  ${op.best>=2?`<div class="card"><div class="hd"><b class="ct">Win streak</b>${lbLink("streak","","best")}</div><div style="margin-top:6px">Longest: <b>${op.best}</b> wins in a row</div>${p.streak>=2?`<div class="sub">Current: ${p.streak} in a row</div>`:""}</div>`:""}
   ${PREM()?combat(p):""}<div class="card"><b>Rating history</b>${trend(p)}</div>
   ${PREM()?charCard(p):""}${rivals(p)}${upsets(p)}${PREM()?"":lockedStats("Combat stats",COMBAT_ITEMS)+lockedStats("Fighter stats",FIGHTER_ITEMS)}`;
 }
@@ -491,38 +500,38 @@ function trendsData(days){
     if(Number.isFinite(x.kills)&&Number.isFinite(x.deaths)){c.k+=x.kills;c.d+=x.deaths;c.n++}
     if(Number.isFinite(x.sds))c.sd+=x.sds;if(Number.isFinite(x.dmg))c.dmg+=x.dmg;
     {const od=m.results.filter(y=>y!==x&&Number.isFinite(y.dmg)).map(y=>y.dmg);if(od.length)c.tk+=od.reduce((a,b)=>a+b,0)/od.length}}
-  const ca=Object.values(cs),kdOf=c=>c.d?c.k/c.d:c.k?Infinity:0,top=(L,f)=>L.sort(f)[0]||null;
+  const ca=Object.values(cs),kdOf=c=>c.d?c.k/c.d:c.k?Infinity:0,top=(L,f)=>L.sort(f)[0]||null,LS={},topK=(k,L,f)=>{L.sort(f);LS[k]=L;return L[0]||null};
   const cmb={any:ca.some(c=>c.n||c.sd||c.dmg||c.tk),taken:top(ca.filter(c=>c.tk>0).slice(),(a,b)=>b.tk-a.tk),
     kd:top(ca.filter(c=>c.n>=3).map(c=>({...c,kd:kdOf(c)})),(a,b)=>a.kd===b.kd?b.k-a.k:b.kd>a.kd?1:-1),
     kos:top(ca.filter(c=>c.k>0),(a,b)=>b.k-a.k||b.n-a.n),dmg:top(ca.filter(c=>c.dmg>0),(a,b)=>b.dmg-a.dmg),sds:top(ca.filter(c=>c.sd>0),(a,b)=>b.sd-a.sd||b.dmg-a.dmg)};
   const rm={};for(const m of inP)for(const x of m.results)if(x.rnd||x.char=="Random"){const e=(rm[x.name]??={name:x.name,n:0,w:0});e.n++;if(x.place===1)e.w++}
-  const mys=top(Object.values(rm).filter(e=>e.n>=3),(a,b)=>b.w/b.n-a.w/a.n||b.n-a.n);
+  const mys=topK("mys",Object.values(rm).filter(e=>e.n>=3),(a,b)=>b.w/b.n-a.w/a.n||b.n-a.n);
   const cc={};for(const m of inP)for(const x of m.results)if(x.char&&!x.rnd&&x.char!="Random"){const e=(cc[x.name]??={name:x.name,n:0,by:{}});e.n++;e.by[x.char]=(e.by[x.char]||0)+1}
-  const pony=top(Object.values(cc).filter(e=>e.n>10).map(e=>{const L=Object.entries(e.by).sort((a,b)=>b[1]-a[1]);return{name:e.name,n:e.n,v:L.length,ch:L[0][0],pct:Math.round(100*L[0][1]/e.n)}}),(a,b)=>a.v-b.v||b.pct-a.pct||b.n-a.n);
+  const pony=topK("pony",Object.values(cc).filter(e=>e.n>10).map(e=>{const L=Object.entries(e.by).sort((a,b)=>b[1]-a[1]);return{name:e.name,n:e.n,v:L.length,ch:L[0][0],pct:Math.round(100*L[0][1]/e.n)}}),(a,b)=>a.v-b.v||b.pct-a.pct||b.n-a.n);
   const nt={};for(const m of inP)if(new Date(tms(m)).getHours()<4)for(const x of m.results)nt[x.name]=(nt[x.name]||0)+1;
-  const ins=top(Object.entries(nt).map(([name,n])=>({name,n})),(a,b)=>b.n-a.n);
+  const ins=topK("ins",Object.entries(nt).map(([name,n])=>({name,n})),(a,b)=>b.n-a.n);
   const duo={};for(const m of inP)if(m.results.length==2){const [a,b]=m.results.map(x=>x.name).sort(),k=a+"\n"+b;(duo[k]??={a,b,n:0}).n++}
-  const couple=top(Object.values(duo).filter(e=>e.n>=2),(x,y)=>y.n-x.n);
+  const couple=topK("couple",Object.values(duo).filter(e=>e.n>=2),(x,y)=>y.n-x.n);
   const hrs={};for(const m of inP){const h=new Date(tms(m)).getHours();if(h>=9&&h<17)for(const x of m.results)hrs[x.name]=(hrs[x.name]||0)+1}
-  const nol=top(Object.entries(hrs).map(([name,n])=>({name,n})),(a,b)=>b.n-a.n);
-  const sb=top(rows.filter(r=>r.opp>=2).map(r=>({name:r.name,n:r.opp})),(a,b)=>b.n-a.n);
+  const nol=topK("nol",Object.entries(hrs).map(([name,n])=>({name,n})),(a,b)=>b.n-a.n);
+  const sb=topK("sb",rows.filter(r=>r.opp>=2).map(r=>({name:r.name,n:r.opp})),(a,b)=>b.n-a.n);
   const gsC={};for(const p of Object.values(P))for(const u of p.ups)if(u.won&&tms(u)>t0)gsC[p.name]=(gsC[p.name]||0)+1;
-  const slayer=top(Object.entries(gsC).map(([name,n])=>({name,n})).filter(e=>e.n>=1),(a,b)=>b.n-a.n);
+  const slayer=topK("slayer",Object.entries(gsC).map(([name,n])=>({name,n})).filter(e=>e.n>=1),(a,b)=>b.n-a.n);
   const sec={};for(const m of inP)if(m.results.length>=3)for(const x of m.results)if(x.place===2)sec[x.name]=(sec[x.name]||0)+1;
-  const bride=top(Object.entries(sec).map(([name,n])=>({name,n})),(a,b)=>b.n-a.n);
+  const bride=topK("bride",Object.entries(sec).map(([name,n])=>({name,n})),(a,b)=>b.n-a.n);
   const lr2={},lb={};for(const m of inP)for(const x of m.results){lr2[x.name]=x.place===1?0:(lr2[x.name]||0)+1;if(lr2[x.name]>(lb[x.name]||0))lb[x.name]=lr2[x.name]}
-  const cursed=top(Object.entries(lb).map(([name,n])=>({name,n})).filter(e=>e.n>=3),(a,b)=>b.n-a.n);
+  const cursed=topK("cursed",Object.entries(lb).map(([name,n])=>({name,n})).filter(e=>e.n>=3),(a,b)=>b.n-a.n);
   const sw={};for(const m of inP)for(const x of m.results){const e=(sw[x.name]??={name:x.name,n:0,t:0});e.n++;e.t+=Math.abs(m.d.all[x.name]||0)}
-  const coaster=top(Object.values(sw).filter(e=>e.n>=3).map(e=>({name:e.name,n:e.n,v:e.t/e.n})),(a,b)=>b.v-a.v);
-  let bully=null;for(const e of Object.values(pr))for(const [w,l,c] of [[e.a,e.b,e.aw],[e.b,e.a,e.bw]])if(c>=3&&(!bully||c>bully.n))bully={name:w,opp:l,n:c,of:e.n};
-  const jk=top(Object.values(cc).map(e=>({name:e.name,v:Object.keys(e.by).length,n:e.n})).filter(e=>e.v>=3),(a,b)=>b.v-a.v||b.n-a.n);
-  const gc=top(ca.filter(c=>c.n>=3).map(c=>({...c,v:(c.k+c.d)/c.n})),(a,b)=>b.v-a.v);
+  const coaster=topK("coaster",Object.values(sw).filter(e=>e.n>=3).map(e=>({name:e.name,n:e.n,v:e.t/e.n})),(a,b)=>b.v-a.v);
+  const bully=topK("bully",Object.values(pr).flatMap(e=>[[e.a,e.b,e.aw],[e.b,e.a,e.bw]].filter(x=>x[2]>=3).map(([w,l,c])=>({name:w,opp:l,n:c,of:e.n}))),(a,b)=>b.n-a.n||a.of-b.of);
+  const jk=topK("jk",Object.values(cc).map(e=>({name:e.name,v:Object.keys(e.by).length,n:e.n})).filter(e=>e.v>=3),(a,b)=>b.v-a.v||b.n-a.n);
+  const gc=topK("gc",ca.filter(c=>c.n>=3).map(c=>({...c,v:(c.k+c.d)/c.n})),(a,b)=>b.v-a.v);
   const lead={};for(const t of ["one","ffa"]){
     const cur=Object.values(P).filter(p=>p.g[t]).sort((a,b)=>b.r[t]-a.r[t]);
     const st=Object.values(P).map(p=>({name:p.name,r:rAt(p,t0,t)})).filter(x=>x.r!=null).sort((a,b)=>b.r-a.r);
     lead[t]={cur:cur[0]||null,prev:st[0]?st[0].name:null};
   }
-  return{t0,t1,inP,rows,climber,faller,active,cur,longest,upset,rival,cmb,mys,ins,pony,couple,nol,sb,slayer,bride,cursed,coaster,bully,jk,gc,lead,top3:nowL.slice(0,3),top5:nowL.slice(0,5)};
+  return{t0,t1,inP,rows,climber,faller,active,cur,longest,upset,rival,cmb,ls:LS,mys,ins,pony,couple,nol,sb,slayer,bride,cursed,coaster,bully,jk,gc,lead,top3:nowL.slice(0,3),top5:nowL.slice(0,5)};
 }
 const RACE={key:"",f:0,raf:0,done:false,start:0,s:[],g:null};
 const RDUR=6000,RCOL=["#e0a400","#7d8596","#b8672a"],RPAL=["#e5322d","#2f6bff","#13813a","#8a3ffc","#00a3a3","#d6336c","#ff7a00","#5c6b00","#1b1730"];
@@ -575,29 +584,29 @@ function trendsPage(){
   const act=T.active.map(r=>`<div style="margin:8px 0" data-n="${esc(r.name)}"><div class="row" style="margin:0"><span class="nm">${esc(r.name)}</span><span class="sub">${r.n} ${gms(r.n)} · ${r.opp} opponent${r.opp==1?"":"s"}</span></div><div class="bar" style="width:${Math.max(4,r.n/mx*100)}%"></div></div>`).join("");
   const st=(T.cur.length?T.cur.map(p=>`<div class="row" style="margin:6px 0" data-stat="streak" data-sv="cur" data-sr="all"><span class="nm">🔥 ${esc(p.name)}</span><span class="elo up">${p.streak}</span><span class="sub">in a row</span></div>`).join(""):`<div class="sub">No active streaks of 2 or more.</div>`)+(T.longest?`<div class="sub" style="margin-top:8px" data-stat="streak" data-sv="best" data-sr="${tper}">Longest ${tper=="all"?"ever":"this "+w}: <b>${esc(T.longest.name)}</b> · ${T.longest.n} wins in a row ›</div>`:"");
   const u=T.upset,rv=T.rival,M=T.mys,I=T.ins;
-  const slot=(t,body,n)=>`<div class="card"${n?` data-n="${esc(n)}" style="cursor:pointer"`:""}><div class="ct">${t}</div>${body}</div>`,none=m=>`<div class="sub" style="margin-top:8px">${m}</div>`;
+  const slot=(t,body,n,sk)=>`<div class="card"${n?` data-n="${esc(n)}" style="cursor:pointer"`:sk?` data-sup="${sk}" style="cursor:pointer"`:""}><div class="ct">${t}${sk?`<span style="float:right;color:var(--mu)">›</span>`:""}</div>${body}</div>`,none=m=>`<div class="sub" style="margin-top:8px">${m}</div>`;
   const rivC=slot("Biggest rivals",rv?`<div class="nm" style="margin-top:8px">${esc(rv.a)} vs ${esc(rv.b)}</div><div class="sub">${rv.n} meeting${rv.n==1?"":"s"} · ${rv.aw}–${rv.bw}${rv.t?"–"+rv.t:""}</div>`:none("No rivalries yet"));
   const udC=slot("Underdog",u?`<div class="nm" style="margin-top:8px">${esc(u.name)}</div><div class="sub">beat ${esc(u.opp)} · rated ${R0(u.gap)} lower · ${R0(u.pr*100)}% chance</div>`:none("None yet. Needs a 50+ rating gap"),u&&u.name);
-  const myC=slot("Man of Mystery",M?`<div class="nm" style="margin-top:8px">${esc(M.name)}</div><div class="elo up">${R0(100*M.w/M.n)}%</div><div class="sub">${M.w}W ${M.n-M.w}L going random</div>`:none("Needs 3+ games going random"),M&&M.name);
-  const inC=slot("Insomniac",I?`<div class="nm" style="margin-top:8px">${esc(I.name)}</div><div class="elo">${I.n}</div><div class="sub">game${I.n==1?"":"s"} between midnight and 4am</div>`:none("No games between midnight and 4am"),I&&I.name);
+  const myC=slot("Man of Mystery",M?`<div class="nm" style="margin-top:8px">${esc(M.name)}</div><div class="elo up">${R0(100*M.w/M.n)}%</div><div class="sub">${M.w}W ${M.n-M.w}L going random</div>`:none("Needs 3+ games going random"),0,"mys");
+  const inC=slot("Insomniac",I?`<div class="nm" style="margin-top:8px">${esc(I.name)}</div><div class="elo">${I.n}</div><div class="sub">game${I.n==1?"":"s"} between midnight and 4am</div>`:none("No games between midnight and 4am"),0,"ins");
   const C0=T.cmb;
   const lk=(t,d)=>`<div class="card locked"><span class="tag">Premier Group Feature</span><div><b>${t}</b></div><div class="pixbox" style="height:30px"><i style="height:100%"></i></div><div class="nodata">${d}</div></div>`;
   const stC=(t,key,c,val,sub)=>`<div class="card"${c?` data-stat="${key}" data-sr="${tper}" style="cursor:pointer"`:""}><div class="ct">${t}</div>${c?`<div class="nm" style="margin-top:8px">${esc(c.name)}</div><div class="elo">${val}</div><div class="sub">${sub}</div>`:none("Nobody yet")}</div>`;
   const nhC=PREM()?stC("Needs Help","sds",C0.sds,C0.sds&&C0.sds.sd,"self-destructs"):lk("Needs Help","Most self-destructs. Not tracked in Free groups.");
   const pbC=PREM()?stC("Punching bag","taken",C0.taken,C0.taken&&R0(C0.taken.tk).toLocaleString(),"damage taken, avg opponent damage in FFA"):lk("Punching bag","Most damage taken. Not tracked in Free groups.");
-  const P0=T.pony,opC=PREM()?slot("One Trick Pony",P0?`<div class="nm" style="margin-top:8px">${esc(P0.name)}</div><div class="elo">${esc(P0.ch)}</div><div class="sub">${P0.pct}% of ${P0.n} ${gms(P0.n)} · ${P0.v} character${P0.v==1?"":"s"} played</div>`:none("Needs 11+ games with a character"),P0&&P0.name):lk("One Trick Pony","Least variety in fighters, over 10 matches. Not tracked in Free groups.");
+  const P0=T.pony,opC=PREM()?slot("One Trick Pony",P0?`<div class="nm" style="margin-top:8px">${esc(P0.name)}</div><div class="elo">${esc(P0.ch)}</div><div class="sub">${P0.pct}% of ${P0.n} ${gms(P0.n)} · ${P0.v} character${P0.v==1?"":"s"} played</div>`:none("Needs 11+ games with a character"),0,"pony"):lk("One Trick Pony","Least variety in fighters, over 10 matches. Not tracked in Free groups.");
   const nm=(r,big,sub,n)=>r?`<div class="nm" style="margin-top:8px">${esc(r.name)}</div><div class="elo">${big}</div><div class="sub">${sub}</div>`:none(n);
   const Nl=T.nol,Sb=T.sb,Gs=T.slayer,Br=T.bride,Cu=T.cursed,Rc=T.coaster,By=T.bully,Jk=T.jk,Gc=T.gc;
-  const Cc=T.couple,ccC=slot("Cutest Couple",Cc?`<div class="nm" style="margin-top:8px">${esc(Cc.a)} &amp; ${esc(Cc.b)}</div><div class="elo">${Cc.n}</div><div class="sub">1v1 matches together</div>`:none("Needs 2+ 1v1s between the same two"));
-  const nlC=slot("No-lifers",nm(Nl,Nl&&Nl.n,"game"+(Nl&&Nl.n==1?"":"s")+" between 9am and 5pm","No games between 9am and 5pm"),Nl&&Nl.name);
-  const sbC=slot("Social Butterfly",nm(Sb,Sb&&Sb.n,"different opponents faced","Needs 2+ opponents"),Sb&&Sb.name);
-  const gsC2=slot("Giant Slayer",nm(Gs,Gs&&Gs.n,"upset win"+(Gs&&Gs.n==1?"":"s")+" over higher-rated players","No upsets yet"),Gs&&Gs.name);
-  const byC=slot("Bully",By?`<div class="nm" style="margin-top:8px">${esc(By.name)}</div><div class="elo">${By.n}</div><div class="sub">wins over ${esc(By.opp)} in ${By.of} meetings</div>`:none("Needs 3+ wins over one opponent"),By&&By.name);
-  const brC=slot("Bridesmaid",nm(Br,Br&&Br.n,"second-place finish"+(Br&&Br.n==1?"":"es")+" in FFA","No FFA runner-ups yet"),Br&&Br.name);
-  const cuC=slot("Cursed",nm(Cu,Cu&&Cu.n,"losses in a row","Needs a 3+ loss streak"),Cu&&Cu.name);
-  const rcC=slot("Rollercoaster",nm(Rc,Rc&&R0(Rc.v),"avg rating swing per game · "+(Rc&&Rc.n)+" games","Needs 3+ games"),Rc&&Rc.name);
-  const gcC=PREM()?slot("Glass Cannon",nm(Gc,Gc&&Gc.v.toFixed(1),"KOs + deaths per game · "+(Gc&&Gc.k)+" KOs, "+(Gc&&Gc.d)+" deaths","Needs 3+ games with stats"),Gc&&Gc.name):lk("Glass Cannon","Most KOs and deaths together. Not tracked in Free groups.");
-  const jkC=PREM()?slot("Jack of All Trades",nm(Jk,Jk&&Jk.v,"different characters played","Needs 3+ characters"),Jk&&Jk.name):lk("Jack of All Trades","Most different characters played. Not tracked in Free groups.");
+  const Cc=T.couple,ccC=slot("Cutest Couple",Cc?`<div class="nm" style="margin-top:8px">${esc(Cc.a)} &amp; ${esc(Cc.b)}</div><div class="elo">${Cc.n}</div><div class="sub">1v1 matches together</div>`:none("Needs 2+ 1v1s between the same two"),0,"couple");
+  const nlC=slot("No-lifers",nm(Nl,Nl&&Nl.n,"game"+(Nl&&Nl.n==1?"":"s")+" between 9am and 5pm","No games between 9am and 5pm"),0,"nol");
+  const sbC=slot("Social Butterfly",nm(Sb,Sb&&Sb.n,"different opponents faced","Needs 2+ opponents"),0,"sb");
+  const gsC2=slot("Giant Slayer",nm(Gs,Gs&&Gs.n,"upset win"+(Gs&&Gs.n==1?"":"s")+" over higher-rated players","No upsets yet"),0,"slayer");
+  const byC=slot("Bully",By?`<div class="nm" style="margin-top:8px">${esc(By.name)}</div><div class="elo">${By.n}</div><div class="sub">wins over ${esc(By.opp)} in ${By.of} meetings</div>`:none("Needs 3+ wins over one opponent"),0,"bully");
+  const brC=slot("Bridesmaid",nm(Br,Br&&Br.n,"second-place finish"+(Br&&Br.n==1?"":"es")+" in FFA","No FFA runner-ups yet"),0,"bride");
+  const cuC=slot("Cursed",nm(Cu,Cu&&Cu.n,"losses in a row","Needs a 3+ loss streak"),0,"cursed");
+  const rcC=slot("Rollercoaster",nm(Rc,Rc&&R0(Rc.v),"avg rating swing per game · "+(Rc&&Rc.n)+" games","Needs 3+ games"),0,"coaster");
+  const gcC=PREM()?slot("Glass Cannon",nm(Gc,Gc&&Gc.v.toFixed(1),"KOs + deaths per game · "+(Gc&&Gc.k)+" KOs, "+(Gc&&Gc.d)+" deaths","Needs 3+ games with stats"),0,"gc"):lk("Glass Cannon","Most KOs and deaths together. Not tracked in Free groups.");
+  const jkC=PREM()?slot("Jack of All Trades",nm(Jk,Jk&&Jk.v,"different characters played","Needs 3+ characters"),0,"jk"):lk("Jack of All Trades","Most different characters played. Not tracked in Free groups.");
   const sc=[[M,myC],[I,inC],[Nl,nlC],[Sb,sbC],[Gs,gsC2],[By,byC],[Cc,ccC],[Br,brC],[Cu,cuC],[Rc,rcC],[Gc,gcC,1],[C0.sds,nhC,1],[C0.taken,pbC,1],[Jk,jkC,1],[P0,opC,1]].filter(([d,h,pr])=>d||(pr&&!PREM())).map(x=>x[1]);
   let sg="";for(let i=0;i<sc.length;i+=2)sg+=i+1<sc.length?`<div class="pair">${sc[i]}${sc[i+1]}</div>`:sc[i];
   const supC=sc.length?`<h3 style="font:10px/1.6 var(--pf);margin:22px 0 10px">SUPERLATIVES</h3>${sg}`:"";
@@ -607,14 +616,21 @@ function trendsPage(){
   const leadCard=`<div class="card"><b>Rating leaders</b>${lr("one")}${lr("ffa")}</div>`;
   const C=T.cmb,cr=(label,key,c,val,sub)=>c?`<div class="row" data-stat="${key}" data-sr="${tper}" style="margin:8px 0"><span class="sub" style="flex:0 0 104px">${label}</span><span class="nm">${esc(c.name)}${sub?`<div class="sub">${sub}</div>`:""}</span><span class="elo">${val}</span><span class="sub">›</span></div>`:`<div class="row" style="margin:8px 0"><span class="sub" style="flex:0 0 96px">${label}</span><span class="sub">—</span></div>`;
   const cmbCard=C.any?`<div class="card"><b>Combat leaders</b><div class="msg">Only matches with stats recorded count. Best K/D needs 3+. Tap a stat to see everyone ranked.</div>${cr("Best K/D","kd",C.kd,C.kd&&(C.kd.kd===Infinity?"∞":C.kd.kd.toFixed(2)),C.kd&&`${C.kd.k} KOs · ${C.kd.d} deaths · ${C.kd.n} ${gms(C.kd.n)}`)}${cr("Most KOs","kos",C.kos,C.kos&&C.kos.k)}${cr("Most damage","dmg",C.dmg,C.dmg&&Math.round(C.dmg.dmg).toLocaleString())}</div>`:`<div class="card"><b>Combat leaders</b><div class="msg">No stats recorded ${days?"in the last "+days+" days":"yet"}. Scan the second results screen, or type KOs, deaths, SDs, and damage when you add a match.</div></div>`;
-  return seg+raceCard(T,days)+`<div class="pair">${cf("Top climber",T.climber,true)}${cf("Biggest drop",T.faller,false)}</div><div class="pair">${rivC}${udC}</div>${supC}<div class="card"><b>Who's moving</b><div class="msg">Rating change over ${pt}. Tap a player for their page.</div>${mv}</div><div class="card"><b>Most active</b>${act}</div><div class="card"><b>Hot streaks</b><div style="margin-top:6px">${st}</div></div>${leadCard}${PREM()?cmbCard:""}${PREM()?"":lockedStats("Combat leaders",["Best K/D","Most KOs","Most damage"])}`;
+  return seg+raceCard(T,days)+`<div class="pair">${cf("Top climber",T.climber,true)}${cf("Biggest drop",T.faller,false)}</div><div class="pair">${rivC}${udC}</div><button class="g mmb" data-mm="">See matchup data ›</button>${supC}<div class="card"><b>Who's moving</b><div class="msg">Rating change over ${pt}. Tap a player for their page.</div>${mv}</div><div class="card"><b>Most active</b>${act}</div><div class="card"><b>Hot streaks</b><div style="margin-top:6px">${st}</div></div>${leadCard}${PREM()?cmbCard:""}${PREM()?"":lockedStats("Combat leaders",["Best K/D","Most KOs","Most damage"])}`;
 }
 
 // ---------- Stat ranking pages ----------
-const STATS={kd:{c:"K/D",t:"K/D ratio",d:"Kills per death. Needs 3+ games with stats."},kos:{c:"KOs",t:"Most KOs",d:"Total kills."},dmg:{c:"Damage",t:"Most damage",d:"Total damage dealt."},sds:{c:"SDs",t:"Needs Help",d:"Most self-destructs."},taken:{c:"Taken",t:"Punching bag",d:"Most damage taken. In free-for-alls this uses the average damage of your opponents."},streak:{c:"Streak",t:"Win streaks",d:"Wins in a row. Avg opp = average rating of the opponents in that streak."},wr:{c:"Win %",t:"Win rate",d:"Needs 5+ games. Avg opp = average rating of opponents faced."}};
+const STATS={kd:{c:"K/D",t:"K/D ratio",d:"Kills per death. Needs 3+ games with stats."},kos:{c:"KOs",t:"Most KOs",d:"Total kills."},dmg:{c:"Damage",t:"Most damage",d:"Total damage dealt."},sds:{c:"SDs",t:"Needs Help",d:"Most self-destructs."},taken:{c:"Taken",t:"Punching bag",d:"Most damage taken. In free-for-alls this uses the average damage of your opponents."},streak:{c:"Streak",t:"Win streaks",d:"Wins in a row."},wr:{c:"Win %",t:"Win rate",d:"Needs 5+ games."}};
 const SR={week:"Week",month:"Month",all:"All time"},SM={all:"Overall",one:"1v1",ffa:"FFA"};
-let stat="",sfrom="lb",sfsel="",srange="all",smode="all",ssv="best";
-function goStat(k,r,m,v){if(!PREM()&&!FREEST.includes(k))return;if(!stat){sfrom=tab;sfsel=sel}stat=STATS[k]?k:"kd";srange=SR[r]?r:"all";smode=SM[m]?m:"all";ssv=v=="cur"?"cur":"best";sel="";render();scrollTo(0,0)}
+let NAVS=[],sup="",mm=null,stat="",sfrom="lb",sfsel="",srange="all",smode="all",ssv="best";
+const navSnap=()=>({tab,sel,stat,srange,smode,ssv,sup,mm:mm?JSON.stringify(mm):"",y:window.scrollY||0});
+function navPush(){NAVS.push(navSnap());if(NAVS.length>30)NAVS.shift()}
+function navClear(){NAVS=[];sel="";stat="";sup="";mm=null}
+function goBack(){const s=NAVS.pop();if(s){tab=s.tab;sel=s.sel;stat=s.stat;srange=s.srange;smode=s.smode;ssv=s.ssv;sup=s.sup;mm=s.mm?JSON.parse(s.mm):null}else{sel="";stat="";sup="";mm=null}render();scrollTo(0,s?s.y:0)}
+function goStat(k,r,m,v){if(!PREM()&&!FREEST.includes(k))return;if(!stat)navPush();stat=STATS[k]?k:"kd";srange=SR[r]?r:"all";smode=SM[m]?m:"all";ssv=v=="cur"?"cur":"best";sel="";sup="";mm=null;render();scrollTo(0,0)}
+function supOpen(k){navPush();sup=k;sel="";stat="";mm=null;render();scrollTo(0,0)}
+function mmOpen(n){navPush();mm={sel:n?[n]:[]};sel="";stat="";sup="";render();scrollTo(0,0)}
+function mmTog(n){const i=mm.sel.indexOf(n);if(i>=0)mm.sel.splice(i,1);else if(mm.sel.length<6)mm.sel.push(n);const y=scrollY;render();scrollTo(0,y)}
 function statRows(key,range,mode,sv){
   const lastT=D.matches.length?tms(D.matches[D.matches.length-1]):0,days=range=="week"?7:range=="month"?30:0,t0=days?Math.max(Date.now(),lastT)-days*DAY:-1;
   const S={},R={};
@@ -634,8 +650,8 @@ function statRows(key,range,mode,sv){
     if(key=="dmg"&&c.dmg>0)add(c,c.dmg,L(Math.round(c.dmg)),`${c.g} ${gms(c.g)}`);
     if(key=="sds"&&c.sd>0)add(c,c.sd,String(c.sd),`${c.g} ${gms(c.g)}`);
     if(key=="taken"&&c.tk>0)add(c,c.tk,L(Math.round(c.tk)),`${c.tn} ${gms(c.tn)} with stats`);
-    if(key=="wr"&&c.g>=5)add(c,c.w/c.g,Math.round(100*c.w/c.g)+"%",`${c.w}W ${c.g-c.w}L · avg opp ${Math.round(c.os/c.g)}`);
-    if(key=="streak"){const v=sv=="cur"?c.run:c.best;if(v>=2)add(c,v,String(v),sv=="cur"?`longest ${c.best} · avg opp ${Math.round(c.rs/c.rn)}`:`${c.w}W of ${c.g} · now ${c.run} · avg opp ${Math.round(c.bs/c.bn)}`)}
+    if(key=="wr"&&c.g>=5)add(c,c.w/c.g,Math.round(100*c.w/c.g)+"%",`${c.w}W ${c.g-c.w}L`);
+    if(key=="streak"){const v=sv=="cur"?c.run:c.best;if(v>=2)add(c,v,String(v),sv=="cur"?`longest ${c.best}`:`${c.w}W of ${c.g} · now ${c.run}`)}
   }
   return out.sort((a,b)=>b.val===a.val?(b.k-a.k||b.g-a.g):b.val>a.val?1:-1);
 }
@@ -652,7 +668,85 @@ function statPage(){
   const sv=stat=="streak"?pgrp("c4","Streak view",`<div class="seg"><button class="${ssv=="best"?"on":""}" onclick="ssv='best';render()">Longest run</button><button class="${ssv=="cur"?"on":""}" onclick="ssv='cur';render()">Active now</button></div>`):"";
   const needs=["kd","kos","dmg","sds","taken"].includes(stat);
   const list=rows.length?rows.map((r,i)=>`<div class="card lb" data-n="${esc(r.name)}"><div class="rk">${i<3?medal(i):i+1}</div><div class="nm">${esc(r.name)}<div class="sub">${r.sub}</div></div><div class="elo">${r.disp}</div></div>`).join(""):`<div class="card"><div class="msg">${needs?"No stats recorded for this filter. Scan the second results screen, or type KOs, deaths, SDs, and damage when you add a match.":stat=="streak"?(ssv=="cur"?"Nobody is on a streak of 2+ right now.":"No streaks of 2+ for this filter."):"Nobody has enough games for this filter yet."}</div></div>`;
-  return`<button class="g" onclick="stat='';tab=sfrom;sel=sfsel;render();scrollTo(0,0)">← Back</button><div style="height:12px"></div>${chips}<div class="card"><b>${S.t}</b><div class="msg">${S.d}${needs?" Only matches with stats recorded count.":""}</div></div>${pgrp("c2","Time range",seg(SR,srange,"srange"))}${pgrp("c3","Game mode",seg(SM,smode,"smode"))}${sv}${list}${podiums()}`;
+  return`<button class="g" onclick="goBack()">← Back</button><div style="height:12px"></div>${chips}<div class="card"><b>${S.t}</b><div class="msg">${S.d}${needs?" Only matches with stats recorded count.":""}</div></div>${pgrp("c2","Time range",seg(SR,srange,"srange"))}${pgrp("c3","Game mode",seg(SM,smode,"smode"))}${sv}${list}${podiums()}`;
+}
+// ---------- Superlative leaderboards ----------
+const SUPD={
+  mys:["Man of Mystery","Best win rate going random. Needs 3+ games going random.",e=>[Math.round(100*e.w/e.n)+"%",`${e.w}W ${e.n-e.w}L going random`]],
+  ins:["Insomniac","Most games between midnight and 4am.",e=>[e.n,e.n==1?"game":"games"]],
+  nol:["No-lifers","Most games between 9am and 5pm.",e=>[e.n,e.n==1?"game":"games"]],
+  sb:["Social Butterfly","Most different opponents faced. Needs 2+.",e=>[e.n,"different opponents"]],
+  slayer:["Giant Slayer","Most upset wins over players rated 50+ higher.",e=>[e.n,e.n==1?"upset win":"upset wins"]],
+  bully:["Bully","Most wins over one opponent. Needs 3+ wins.",e=>[e.n,`wins over ${e.opp} in ${e.of} meetings`]],
+  couple:["Cutest Couple","The duo with the most 1v1 matches against each other. Needs 2+.",e=>[e.n,"1v1 matches together"],1],
+  bride:["Bridesmaid","Most 2nd-place finishes in matches with 3+ players.",e=>[e.n,e.n==1?"second place":"second places"]],
+  cursed:["Cursed","Longest losing streak. Needs 3+ in a row.",e=>[e.n,"losses in a row"]],
+  coaster:["Rollercoaster","Biggest average rating swing per game. Needs 3+ games.",e=>[Math.round(e.v),`avg swing · ${e.n} games`]],
+  gc:["Glass Cannon","Most KOs plus deaths per game. Needs 3+ games with stats.",e=>[e.v.toFixed(1),`${e.k} KOs · ${e.d} deaths`]],
+  jk:["Jack of All Trades","Most different characters played. Needs 3+.",e=>[e.v,"different characters"]],
+  pony:["One Trick Pony","Least variety in fighters, over 10 matches.",e=>[e.ch,`${e.pct}% of ${e.n} games · ${e.v} character${e.v==1?"":"s"}`]]
+};
+function supPage(){
+  const d=SUPD[sup];if(!d){sup="";return""}
+  const days=tper=="week"?7:tper=="month"?30:0,T=trendsData(days),L=(T.ls[sup]||[]).slice(0,25);
+  const seg=pgrp("c2","Time range",`<div class="seg"><button class="${tper=="week"?"on":""}" onclick="tper='week';render()">Week</button><button class="${tper=="month"?"on":""}" onclick="tper='month';render()">Month</button><button class="${tper=="all"?"on":""}" onclick="tper='all';render()">All time</button></div>`);
+  const rows=L.map((e,i)=>{const[b,sub]=d[2](e),nm=d[3]?`${esc(e.a)} &amp; ${esc(e.b)}`:esc(e.name);return`<div class="card lb"${d[3]?"":` data-n="${esc(e.name)}"`}><div class="rk">${i<3?medal(i):i+1}</div><div class="nm">${nm}<div class="sub">${sub}</div></div><div class="elo">${b}</div></div>`}).join("");
+  return`<button class="g" onclick="goBack()">← Back</button><div style="height:12px"></div><div class="card"><b>${d[0]}</b><div class="msg">${d[1]}</div></div>${seg}${rows||`<div class="card"><div class="msg">Nobody qualifies for this ${days?"time range":"yet"}.</div></div>`}`;
+}
+// ---------- Matchup data ----------
+function mmPair(a,b){
+  const o={a,b,n:0,w:{[a]:0,[b]:0},t:0,md:{one:{n:0,[a]:0,[b]:0,t:0},ffa:{n:0,[a]:0,[b]:0,t:0}},pl:{[a]:0,[b]:0},cb:{[a]:{k:0,d:0,sd:0,dmg:0,n:0},[b]:{k:0,d:0,sd:0,dmg:0,n:0}},cp:{},rec:[],run:0,runWho:""};
+  for(const m of D.matches){
+    const x=m.results.find(r=>r.name==a),y=m.results.find(r=>r.name==b);if(!x||!y)continue;
+    o.n++;o.pl[a]+=x.place;o.pl[b]+=y.place;
+    const w=x.place<y.place?a:x.place>y.place?b:"";
+    if(w){o.w[w]++;o.md[m.mode][w]++;if(o.runWho==w)o.run++;else{o.runWho=w;o.run=1}}else{o.t++;o.md[m.mode].t++;o.runWho="";o.run=0}
+    o.md[m.mode].n++;
+    for(const [r,who] of [[x,a],[y,b]]){const c=o.cb[who];if(Number.isFinite(r.kills)&&Number.isFinite(r.deaths)){c.k+=r.kills;c.d+=r.deaths;c.n++}if(Number.isFinite(r.sds))c.sd+=r.sds;if(Number.isFinite(r.dmg))c.dmg+=r.dmg}
+    if(x.char&&y.char){const k=x.char+"\n"+y.char,e=(o.cp[k]??={ac:x.char,bc:y.char,n:0,aw:0,bw:0,t:0});e.n++;w==a?e.aw++:w==b?e.bw++:e.t++}
+    o.rec.push({ts:m.ts,w,mode:m.mode,ac:x.char||"",bc:y.char||""});
+  }
+  return o;
+}
+function mmPage(){
+  const P=D.players,names=Object.values(P).filter(p=>p.g.all).map(p=>p.name).sort((a,b)=>a.localeCompare(b)),S=mm.sel.filter(n=>P[n]);mm.sel=S;
+  const chips=`<div class="card"><b>Matchup data</b><div class="msg">Pick 2 or more players (up to 6). Tap a name to add or remove it. Overall is wins–losses in meetings; the number after the dot is how many.</div><div class="mmc">${names.map(n=>`<button class="${S.includes(n)?"on":""}" data-mmt="${esc(n)}">${esc(n)}</button>`).join("")}</div></div>`;
+  const back=`<button class="g" onclick="goBack()">← Back</button><div style="height:12px"></div>`;
+  if(S.length<2)return back+chips+`<div class="card"><div class="msg">${S.length?`Pick at least one more player to compare with <b>${esc(S[0])}</b>.`:"Pick two players to see how they match up."}</div></div>`;
+  let h="";
+  if(S.length>2){
+    const all=D.matches.filter(m=>S.every(n=>m.results.some(r=>r.name==n)));
+    const st=S.map(n=>{let w=0,pl=0;for(const m of all){const r=m.results.find(x=>x.name==n);pl+=r.place;if(r.place===1)w++}return{n,w,av:all.length?pl/all.length:0}}).sort((a,b)=>b.w-a.w||a.av-b.av);
+    h+=`<div class="card"><b>All ${S.length} together</b>${all.length?`<div class="sub" style="margin:4px 0 6px">${all.length} ${all.length==1?"match":"matches"} with all of them in it</div>${st.map(r=>`<div class="row" style="margin:6px 0"><span class="nm">${esc(r.n)}</span><span class="elo">${r.w}W</span><span class="sub">avg place ${r.av.toFixed(1)}</span></div>`).join("")}`:`<div class="msg">They haven't all been in one match yet.</div>`}</div>`;
+  }
+  for(let i=0;i<S.length;i++)for(let j=i+1;j<S.length;j++)h+=mmCard(S[i],S[j]);
+  return back+chips+h;
+}
+function mmCard(a,b){
+  const o=mmPair(a,b),P=D.players,e=esc;
+  if(!o.n)return`<div class="card"><b>${e(a)} vs ${e(b)}</b><div class="msg">They haven't been in a match together yet.</div></div>`;
+  const rc=(w1,w2,t)=>`${w1}–${w2}${t?"–"+t:""}`,md=k=>{const m=o.md[k];return`<div><div class="elo">${m.n?rc(m[a],m[b],m.t):"—"}</div><div class="sub">${k=="one"?"1v1":"FFA"}${m.n?` · ${m.n}`:""}</div></div>`};
+  const rate=o.w[a]+o.w[b]?Math.round(100*o.w[a]/(o.w[a]+o.w[b])):50;
+  let h=`<div class="card"><b>${e(a)} vs ${e(b)}</b><div class="tri"><div><div class="elo">${rc(o.w[a],o.w[b],o.t)}</div><div class="sub">Overall · ${o.n}</div></div>${md("one")}${md("ffa")}</div>
+    <div class="sub" style="margin-top:10px">${e(a)} wins ${rate}% of their decided meetings</div>
+    <div class="sub">Rating now: ${e(a)} ${Math.round(P[a].r.all)} · ${e(b)} ${Math.round(P[b].r.all)}</div>
+    <div class="sub">Average place when together: ${e(a)} ${(o.pl[a]/o.n).toFixed(1)} · ${e(b)} ${(o.pl[b]/o.n).toFixed(1)}</div>
+    ${o.run>=2?`<div class="sub">${e(o.runWho)} has won the last ${o.run} meetings</div>`:""}</div>`;
+  if(PREM()){
+    const cl=Object.values(o.cp).map(c=>({...c,r:(c.aw+0.5*c.t)/c.n})),by=(f)=>cl.slice().sort(f);
+    const best=by((x,y)=>y.r-x.r||y.n-x.n)[0],worst=by((x,y)=>x.r-y.r||y.n-x.n)[0];
+    const fmt=(c,flip)=>flip?`${e(c.bc)} vs ${e(c.ac)}: ${c.bw}W ${c.aw}L${c.t?` ${c.t}T`:""}`:`${e(c.ac)} vs ${e(c.bc)}: ${c.aw}W ${c.bw}L${c.t?` ${c.t}T`:""}`;
+    let ch=`<div class="card"><b>Character pairs</b>`;
+    if(!cl.length)ch+=`<div class="msg">No meetings with both characters recorded yet.</div>`;
+    else if(cl.length==1)ch+=`<div class="sub" style="margin-top:6px">Only pairing so far: ${fmt(best)}</div>`;
+    else ch+=`<div class="sub" style="margin-top:6px">Best for ${e(a)}</div><div class="nm">${fmt(best)}</div><div class="sub" style="margin-top:8px">Best for ${e(b)}</div><div class="nm">${fmt(worst,1)}</div><div class="sub" style="margin-top:8px">${cl.length} different pairings seen</div>`;
+    ch+=`</div>`;h+=ch;
+    const cb=o.cb,kd=c=>c.n?(c.d?(c.k/c.d).toFixed(2):c.k?"∞":"—"):"—",any=[a,b].some(n=>cb[n].n||cb[n].dmg||cb[n].sd);
+    h+=`<div class="card"><b>Combat when together</b>${any?`<div class="tri" style="margin-top:6px">${[a,b].map(n=>`<div><div class="nm">${e(n)}</div><div class="elo">${kd(cb[n])}</div><div class="sub">K/D</div><div class="sub">${cb[n].k} KOs · ${cb[n].d} deaths</div><div class="sub">${cb[n].sd} SDs</div><div class="sub">${Math.round(cb[n].dmg).toLocaleString()} dmg</div></div>`).join("")}</div>`:`<div class="msg">No stats recorded in their meetings yet.</div>`}</div>`;
+  }else h+=lockedStats("Character pairs & combat",["Best character pair","Worst character pair","K/D when together","Damage dealt"]);
+  const last=o.rec.slice(-5).reverse();
+  h+=`<div class="card"><b>Recent meetings</b>${last.map(r=>`<div class="row" style="margin:6px 0"><span class="sub" style="flex:0 0 74px">${new Date(r.ts).toLocaleDateString(undefined,{month:"short",day:"numeric"})}</span><span class="nm">${r.w?e(r.w)+" won":"Tie"}<div class="sub">${r.mode=="one"?"1v1":"FFA"}${PREM()&&r.ac&&r.bc?` · ${e(r.ac)} vs ${e(r.bc)}`:""}</div></span></div>`).join("")}</div>`;
+  return h;
 }
 // ---------- Groups ----------
 function joinCard(){return`<div class="card"><b>Join your group</b><div class="msg">Ask your group's admin for the group name and <button class="hid" onclick="mlOpen()">passkey</button>.</div><form onsubmit="event.preventDefault();joinGroup();return false" autocomplete="on"><div class="row"><input class="n" name="username" id="gname" placeholder="Group name" value="${esc(jn)}" oninput="jn=this.value" autocapitalize="off" autocomplete="username"></div><div class="row"><input class="n" type="password" name="password" id="gkey" placeholder="Passkey" value="${esc(jk)}" oninput="jk=this.value" autocomplete="current-password"></div><div class="row"><button type="submit" style="flex:1">Join</button></div></form><div class="msg${wc(jmsg)}">${esc(jmsg)}</div></div>`}
