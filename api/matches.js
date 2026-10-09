@@ -1,4 +1,6 @@
 const { sb, auth, adminOk, groupAdminOk } = require('./_lib');
+const { getJson, putJson } = require('./_store');
+const SKEY = (id) => `status/${id}.json`;
 const UUID = /^[0-9a-f-]{36}$/i;
 const nameOk = (s) => typeof s === 'string' && s.trim().length > 0 && s.length <= 24;
 function valid(rs) {
@@ -60,6 +62,17 @@ module.exports = async (req, res) => {
         if (!adminOk(b.admin)) return res.status(401).json({ error: 'Wrong Master Passkey' });
         const r = await sb(`matches?select=id,ts,results&group_id=eq.${g.id}&order=ts.asc&limit=5000`);
         return res.status(200).json(await r.json());
+      }
+      if (b.action === 'statuses') return res.status(200).json({ statuses: (await getJson(SKEY(g.id))) || {} });
+      if (b.action === 'status') {
+        // Anyone in the group can set anyone's status bubble (empty text clears it).
+        if (!nameOk(b.name)) return res.status(400).json({ error: 'Bad name' });
+        const text = String(b.text == null ? '' : b.text).replace(/[\u0000-\u001f\u007f]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 40);
+        const all = (await getJson(SKEY(g.id))) || {};
+        const key = b.name.trim().toLowerCase();
+        if (text) { if (!all[key] && Object.keys(all).length >= 400) return res.status(400).json({ error: 'Too many statuses' }); all[key] = text; } else delete all[key];
+        if (!(await putJson(SKEY(g.id), all))) return res.status(500).json({ error: 'Could not save status' });
+        return res.status(200).json({ ok: true, statuses: all });
       }
       if (b.action === 'merge') return await merge(b, res, g);
       if (!valid(b.results)) return res.status(400).json({ error: 'Invalid match' });
