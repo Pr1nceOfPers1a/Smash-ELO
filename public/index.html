@@ -609,7 +609,7 @@ function trendsPage(){
   const lk=(t,d)=>`<div class="card locked"><span class="tag">Premier Group Feature</span><div><b>${t}</b></div><div class="pixbox" style="height:30px"><i style="height:100%"></i></div><div class="nodata">${d}</div></div>`;
   const stC=(t,key,c,val,sub)=>`<div class="card"${c?` data-stat="${key}" data-sr="${tper}" style="cursor:pointer"`:""}><div class="ct">${t}</div>${c?`<div class="nm">${esc(c.name)}</div><div class="sub"><b>${val}</b> ${sub}</div>`:none("Nobody yet")}</div>`;
   const nhC=PREM()?stC("Needs Help","sds",C0.sds,C0.sds&&C0.sds.sd,"self-destructs"):lk("Needs Help","Most self-destructs. Not tracked in Free groups.");
-  const pbC=PREM()?stC("Punching bag","taken",C0.taken,C0.taken&&R0(C0.taken.tk).toLocaleString(),"damage taken, avg opponent damage in FFA"):lk("Punching bag","Most damage taken. Not tracked in Free groups.");
+  const pbC=PREM()?stC("Punching bag","taken",C0.taken,C0.taken&&R0(C0.taken.tk).toLocaleString(),"damage taken"):lk("Punching bag","Most damage taken. Not tracked in Free groups.");
   const P0=T.pony,opC=PREM()?slot("One Trick Pony",P0?`<div class="nm">${esc(P0.name)}</div><div class="sub"><b>${esc(P0.ch)}</b> ${P0.pct}% of ${P0.n} ${gms(P0.n)} · ${P0.v} character${P0.v==1?"":"s"} played</div>`:none("Needs 11+ games with a character"),0,"pony"):lk("One Trick Pony","Least variety in fighters, over 10 matches. Not tracked in Free groups.");
   const nm=(r,big,sub,n)=>r?`<div class="nm">${esc(r.name)}</div><div class="sub"><b>${big}</b> ${sub}</div>`:none(n);
   const Nl=T.nol,Sb=T.sb,Gs=T.slayer,Br=T.bride,Cu=T.cursed,Rc=T.coaster,By=T.bully,Jk=T.jk,Gc=T.gc;
