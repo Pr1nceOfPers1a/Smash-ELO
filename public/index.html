@@ -27,7 +27,7 @@ button.x{background:none;border:0;box-shadow:none;color:var(--mu);padding:6px 10
 button.lnk{background:none;border:0;box-shadow:none;color:var(--ac);padding:0;text-decoration:underline;font:inherit;font-weight:700}
 .seg{display:flex;gap:6px;margin:0 4px 14px 0}.seg button{flex:1;background:#fff;color:var(--ink);padding:10px 2px;font-size:8px;white-space:nowrap}.seg button.on{background:var(--blue);color:#fff}.seg button.srch{flex:0 0 46px;padding:8px 0;font-size:14px}.seg button.srch.on{background:var(--ac)}
 .lb{display:flex;align-items:center;gap:10px;cursor:pointer}.rk{width:28px;display:inline-flex;justify-content:center;align-items:center;color:var(--mu);font:10px var(--pf)}
-.nm{flex:1;font-weight:700;min-width:0}.sub{color:var(--mu);font-size:13px}.nm .sub{font-weight:400}.sub b{color:var(--ink)}.card .ct+.nm{margin-top:8px}.elo{font:15px/1.3 var(--pf)}
+.nm{flex:1;font-weight:700;min-width:0}.sub{color:var(--mu);font-size:13px}.nm .sub{font-weight:400}.sub b{color:var(--ink)}.card{position:relative}.chv{position:absolute;right:12px;top:12px;color:var(--mu);font:13px/1 ui-monospace,Menlo,Consolas,monospace}.card .ct:has(.chv){padding-right:16px}.sub.one{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.pair .sub.one{overflow-wrap:normal}.card .ct+.nm{margin-top:8px}.elo{font:15px/1.3 var(--pf)}
 .tri{display:flex;justify-content:space-around;gap:6px;text-align:center;margin-top:8px}.tri>div{flex:1 1 0;min-width:0}.tri .elo{font-size:16px;margin-bottom:2px}.tri .sub{overflow-wrap:anywhere;font-size:12px}
 .up{color:var(--ok)}.dn{color:var(--bad)}.msg{color:var(--mu);font-size:13px;margin:6px 0}
 nav{position:fixed;bottom:0;left:0;right:0;display:flex;background:var(--card);border-top:3px solid var(--ink);padding-bottom:env(safe-area-inset-bottom)}
@@ -536,8 +536,6 @@ function trendsData(days){
   const bride=topK("bride",Object.entries(sec).map(([name,n])=>({name,n})),(a,b)=>b.n-a.n);
   const lr2={},lb={};for(const m of inP)for(const x of m.results){lr2[x.name]=x.place===1?0:(lr2[x.name]||0)+1;if(lr2[x.name]>(lb[x.name]||0))lb[x.name]=lr2[x.name]}
   const cursed=topK("cursed",Object.entries(lb).map(([name,n])=>({name,n})).filter(e=>e.n>=3),(a,b)=>b.n-a.n);
-  const sw={};for(const m of inP)for(const x of m.results){const e=(sw[x.name]??={name:x.name,n:0,t:0});e.n++;e.t+=Math.abs(m.d.all[x.name]||0)}
-  const coaster=topK("coaster",Object.values(sw).filter(e=>e.n>=3).map(e=>({name:e.name,n:e.n,v:e.t/e.n})),(a,b)=>b.v-a.v);
   const bully=topK("bully",Object.values(pr).flatMap(e=>[[e.a,e.b,e.aw],[e.b,e.a,e.bw]].filter(x=>x[2]>=3).map(([w,l,c])=>({name:w,opp:l,n:c,of:e.n}))),(a,b)=>b.n-a.n||a.of-b.of);
   const jk=topK("jk",Object.values(cc).map(e=>({name:e.name,v:Object.keys(e.by).length,n:e.n})).filter(e=>e.v>=3),(a,b)=>b.v-a.v||b.n-a.n);
   const gc=topK("gc",ca.filter(c=>c.n>=3).map(c=>({...c,v:(c.k+c.d)/c.n})),(a,b)=>b.v-a.v);
@@ -546,7 +544,7 @@ function trendsData(days){
     const st=Object.values(P).map(p=>({name:p.name,r:rAt(p,t0,t)})).filter(x=>x.r!=null).sort((a,b)=>b.r-a.r);
     lead[t]={cur:cur[0]||null,prev:st[0]?st[0].name:null};
   }
-  return{t0,t1,inP,rows,climber,faller,active,cur,longest,upset,rival,cmb,ls:LS,mys,ins,pony,couple,nol,sb,slayer,bride,cursed,coaster,bully,jk,gc,lead,top3:nowL.slice(0,3),top5:nowL.slice(0,5)};
+  return{t0,t1,inP,rows,climber,faller,active,cur,longest,upset,rival,cmb,ls:LS,mys,ins,pony,couple,nol,sb,slayer,bride,cursed,bully,jk,gc,lead,top3:nowL.slice(0,3),top5:nowL.slice(0,5)};
 }
 const RACE={key:"",f:0,raf:0,done:false,start:0,s:[],g:null};
 const RDUR=6000,RCOL=["#e0a400","#7d8596","#b8672a"],RPAL=["#e5322d","#2f6bff","#13813a","#8a3ffc","#00a3a3","#d6336c","#ff7a00","#5c6b00","#1b1730"];
@@ -594,36 +592,35 @@ function trendsPage(){
   const seg=pgrp("c2","Time range",`<div class="seg"><button class="${tper=="week"?"on":""}" onclick="tper='week';render()">Week</button><button class="${tper=="month"?"on":""}" onclick="tper='month';render()">Month</button><button class="${tper=="all"?"on":""}" onclick="tper='all';render()">All time</button></div>`);
   RACE.g=null;RACE.s=[];
   if(!T.inP.length)return seg+`<div class="card"><b>Quiet here</b><div class="msg">${days?`No matches in the last ${days} days.`:"No matches yet."}</div></div>`;
-  const cf=(t,r,good)=>`<div class="card"${r?` data-n="${esc(r.name)}" style="cursor:pointer"`:""}><div class="ct">${t}</div>${r?`<div class="nm" style="margin-top:8px">${esc(r.name)}</div><div class="elo ${good?"up":"dn"}">${r.d>=0?"+":""}${R0(r.d)}</div><div class="sub">${R0(r.s)} → ${R0(r.e)} · ${r.n} ${gms(r.n)}</div>`:`<div class="sub" style="margin-top:8px">Nobody yet (needs 2+ games)</div>`}</div>`;
+  const cf=(t,r,good)=>`<div class="card"${r?` data-n="${esc(r.name)}" style="cursor:pointer"`:""}><div class="ct">${t}</div>${r?`<div class="nm" style="margin-top:8px">${esc(r.name)}</div><div class="elo ${good?"up":"dn"}">${r.d>=0?"+":""}${R0(r.d)}</div><div class="sub">${R0(r.s)} → ${R0(r.e)}</div>`:`<div class="sub" style="margin-top:8px">Nobody yet (needs 2+ games)</div>`}</div>`;
   const mv=T.rows.map(r=>{const d=R0(r.d),rc=r.rs==null?"NEW":r.rs-r.rn>0?"▲"+(r.rs-r.rn):r.rs-r.rn<0?"▼"+(r.rn-r.rs):"–";return`<div class="mv" data-n="${esc(r.name)}"><span class="rk">${r.rn<=3?medal(r.rn-1,20):r.rn}</span><span class="nm">${esc(r.name)}<div class="sub">${r.n} game${r.n>1?"s":""} · now ${R0(r.e)}</div></span><span class="dl ${d>0?"up":d<0?"dn":""}">${d>0?"▲":d<0?"▼":"–"} ${Math.abs(d)}</span><span class="rc">#${r.rn} ${rc}</span></div>`}).join("");
   const mx=Math.max(...T.active.map(r=>r.n));
   const act=T.active.map(r=>`<div style="margin:8px 0" data-n="${esc(r.name)}"><div class="row" style="margin:0"><span class="nm">${esc(r.name)}</span><span class="sub">${r.n} ${gms(r.n)} · ${r.opp} opponent${r.opp==1?"":"s"}</span></div><div class="bar" style="width:${Math.max(4,r.n/mx*100)}%"></div></div>`).join("");
   const st=(T.cur.length?T.cur.map(p=>`<div class="row" style="margin:6px 0" data-stat="streak" data-sv="cur" data-sr="all"><span class="nm">🔥 ${esc(p.name)}</span><span class="elo up">${p.streak}</span><span class="sub">in a row</span></div>`).join(""):`<div class="sub">No active streaks of 2 or more.</div>`)+(T.longest?`<div class="sub" style="margin-top:8px" data-stat="streak" data-sv="best" data-sr="${tper}">Longest ${tper=="all"?"ever":"this "+w}: <b>${esc(T.longest.name)}</b> · ${T.longest.n} wins in a row ›</div>`:"");
   const u=T.upset,rv=T.rival,M=T.mys,I=T.ins;
-  const slot=(t,body,n,sk)=>`<div class="card"${n?` data-n="${esc(n)}" style="cursor:pointer"`:sk?` data-sup="${sk}" style="cursor:pointer"`:""}><div class="ct">${t}${sk?`<span style="float:right;color:var(--mu)">›</span>`:""}</div>${body}</div>`,none=m=>`<div class="sub" style="margin-top:8px">${m}</div>`;
-  const rivC=slot("Biggest rivals",rv?`<div class="nm" style="margin-top:8px">${esc(rv.a)} vs ${esc(rv.b)}</div><div class="sub">${rv.n} meeting${rv.n==1?"":"s"} · ${rv.aw}–${rv.bw}${rv.t?"–"+rv.t:""}</div>`:none("No rivalries yet"));
-  const udC=slot("Underdog",u?`<div class="nm" style="margin-top:8px">${esc(u.name)}</div><div class="sub">beat ${esc(u.opp)} · rated ${R0(u.gap)} lower · ${R0(u.pr*100)}% chance</div>`:none("None yet. Needs a 50+ rating gap"),u&&u.name);
-  const myC=slot("Man of Mystery",M?`<div class="nm">${esc(M.name)}</div><div class="sub"><b>${R0(100*M.w/M.n)}%</b> ${M.w}W ${M.n-M.w}L going random</div>`:none("Needs 3+ games going random"),0,"mys");
-  const inC=slot("Insomniac",I?`<div class="nm">${esc(I.name)}</div><div class="sub"><b>${I.n}</b> game${I.n==1?"":"s"} between midnight and 4am</div>`:none("No games between midnight and 4am"),0,"ins");
+  const slot=(t,body,n,sk)=>`<div class="card"${n?` data-n="${esc(n)}" style="cursor:pointer"`:sk?` data-sup="${sk}" style="cursor:pointer"`:""}><div class="ct">${t}${sk?`<span class="chv">›</span>`:""}</div>${body}</div>`,none=m=>`<div class="sub" style="margin-top:8px">${m}</div>`;
+  const rivC=slot("Biggest rivals",rv?`<div class="nm" style="margin-top:8px">${esc(rv.a)} vs ${esc(rv.b)}</div><div class="sub one">${rv.aw}–${rv.bw}${rv.t?"–"+rv.t:""} · ${rv.n} ${gms(rv.n)}</div>`:none("No rivalries yet"));
+  const udC=slot("Underdog",u?`<div class="nm" style="margin-top:8px">${esc(u.name)}</div><div class="sub one">beat ${esc(u.opp)} · ${R0(u.pr*100)}%</div>`:none("None yet. Needs a 50+ rating gap"),u&&u.name);
+  const myC=slot("Man of Mystery",M?`<div class="nm">${esc(M.name)}</div><div class="sub one"><b>${R0(100*M.w/M.n)}%</b> ${M.w}W ${M.n-M.w}L</div>`:none("Needs 3+ games going random"),0,"mys");
+  const inC=slot("Insomniac",I?`<div class="nm">${esc(I.name)}</div><div class="sub one"><b>${I.n}</b> game${I.n==1?"":"s"}</div>`:none("No games between midnight and 4am"),0,"ins");
   const C0=T.cmb;
   const lk=(t,d)=>`<div class="card locked"><span class="tag">Premier Group Feature</span><div><b>${t}</b></div><div class="pixbox" style="height:30px"><i style="height:100%"></i></div><div class="nodata">${d}</div></div>`;
-  const stC=(t,key,c,val,sub)=>`<div class="card"${c?` data-stat="${key}" data-sr="${tper}" style="cursor:pointer"`:""}><div class="ct">${t}</div>${c?`<div class="nm">${esc(c.name)}</div><div class="sub"><b>${val}</b> ${sub}</div>`:none("Nobody yet")}</div>`;
-  const nhC=PREM()?stC("Needs Help","sds",C0.sds,C0.sds&&C0.sds.sd,"self-destructs"):lk("Needs Help","Most self-destructs. Not tracked in Free groups.");
+  const stC=(t,key,c,val,sub)=>`<div class="card"${c?` data-stat="${key}" data-sr="${tper}" style="cursor:pointer"`:""}><div class="ct">${t}</div>${c?`<div class="nm">${esc(c.name)}</div><div class="sub one"><b>${val}</b> ${sub}</div>`:none("Nobody yet")}</div>`;
+  const nhC=PREM()?stC("Needs Help","sds",C0.sds,C0.sds&&C0.sds.sd,"SDs"):lk("Needs Help","Most self-destructs. Not tracked in Free groups.");
   const pbC=PREM()?stC("Punching bag","taken",C0.taken,C0.taken&&R0(C0.taken.tk).toLocaleString(),"damage taken"):lk("Punching bag","Most damage taken. Not tracked in Free groups.");
-  const P0=T.pony,opC=PREM()?slot("One Trick Pony",P0?`<div class="nm">${esc(P0.name)}</div><div class="sub"><b>${esc(P0.ch)}</b> ${P0.pct}% of ${P0.n} ${gms(P0.n)} · ${P0.v} character${P0.v==1?"":"s"} played</div>`:none("Needs 11+ games with a character"),0,"pony"):lk("One Trick Pony","Least variety in fighters, over 10 matches. Not tracked in Free groups.");
-  const nm=(r,big,sub,n)=>r?`<div class="nm">${esc(r.name)}</div><div class="sub"><b>${big}</b> ${sub}</div>`:none(n);
-  const Nl=T.nol,Sb=T.sb,Gs=T.slayer,Br=T.bride,Cu=T.cursed,Rc=T.coaster,By=T.bully,Jk=T.jk,Gc=T.gc;
-  const Cc=T.couple,ccC=slot("Cutest Couple",Cc?`<div class="nm">${esc(Cc.a)} &amp; ${esc(Cc.b)}</div><div class="sub"><b>${Cc.n}</b> 1v1 matches together</div>`:none("Needs 2+ 1v1s between the same two"),0,"couple");
-  const nlC=slot("No-lifers",nm(Nl,Nl&&Nl.n,"game"+(Nl&&Nl.n==1?"":"s")+" between 9am and 5pm","No games between 9am and 5pm"),0,"nol");
-  const sbC=slot("Social Butterfly",nm(Sb,Sb&&Sb.n,"different opponents faced","Needs 2+ opponents"),0,"sb");
-  const gsC2=slot("Giant Slayer",nm(Gs,Gs&&Gs.n,"upset win"+(Gs&&Gs.n==1?"":"s")+" over higher-rated players","No upsets yet"),0,"slayer");
-  const byC=slot("Bully",By?`<div class="nm">${esc(By.name)}</div><div class="sub"><b>${By.n}</b> wins over ${esc(By.opp)} in ${By.of} meetings</div>`:none("Needs 3+ wins over one opponent"),0,"bully");
-  const brC=slot("Bridesmaid",nm(Br,Br&&Br.n,"second-place finish"+(Br&&Br.n==1?"":"es")+" in FFA","No FFA runner-ups yet"),0,"bride");
-  const cuC=slot("Cursed",nm(Cu,Cu&&Cu.n,"losses in a row","Needs a 3+ loss streak"),0,"cursed");
-  const rcC=slot("Rollercoaster",nm(Rc,Rc&&R0(Rc.v),"avg rating swing per game · "+(Rc&&Rc.n)+" games","Needs 3+ games"),0,"coaster");
-  const gcC=PREM()?slot("Glass Cannon",nm(Gc,Gc&&Gc.v.toFixed(1),"KOs + deaths per game · "+(Gc&&Gc.k)+" KOs, "+(Gc&&Gc.d)+" deaths","Needs 3+ games with stats"),0,"gc"):lk("Glass Cannon","Most KOs and deaths together. Not tracked in Free groups.");
-  const jkC=PREM()?slot("Jack of All Trades",nm(Jk,Jk&&Jk.v,"different characters played","Needs 3+ characters"),0,"jk"):lk("Jack of All Trades","Most different characters played. Not tracked in Free groups.");
-  const sc=[[M,myC],[I,inC],[Nl,nlC],[Sb,sbC],[Gs,gsC2],[By,byC],[Cc,ccC],[Br,brC],[Cu,cuC],[Rc,rcC],[Gc,gcC,1],[C0.sds,nhC,1],[C0.taken,pbC,1],[Jk,jkC,1],[P0,opC,1]].filter(([d,h,pr])=>d||(pr&&!PREM())).map(x=>x[1]);
+  const P0=T.pony,opC=PREM()?slot("One Trick Pony",P0?`<div class="nm">${esc(P0.name)}</div><div class="sub one"><b>${esc(P0.ch)}</b> ${P0.pct}%</div>`:none("Needs 11+ games with a character"),0,"pony"):lk("One Trick Pony","Least variety in fighters, over 10 matches. Not tracked in Free groups.");
+  const nm=(r,big,sub,n)=>r?`<div class="nm">${esc(r.name)}</div><div class="sub one"><b>${big}</b> ${sub}</div>`:none(n);
+  const Nl=T.nol,Sb=T.sb,Gs=T.slayer,Br=T.bride,Cu=T.cursed,By=T.bully,Jk=T.jk,Gc=T.gc;
+  const Cc=T.couple,ccC=slot("Cutest Couple",Cc?`<div class="nm">${esc(Cc.a)} &amp; ${esc(Cc.b)}</div><div class="sub one"><b>${Cc.n}</b> 1v1s</div>`:none("Needs 2+ 1v1s between the same two"),0,"couple");
+  const nlC=slot("No-lifers",nm(Nl,Nl&&Nl.n,"game"+(Nl&&Nl.n==1?"":"s"),"No games between 9am and 5pm"),0,"nol");
+  const sbC=slot("Social Butterfly",nm(Sb,Sb&&Sb.n,"opponents","Needs 2+ opponents"),0,"sb");
+  const gsC2=slot("Giant Slayer",nm(Gs,Gs&&Gs.n,"win"+(Gs&&Gs.n==1?"":"s"),"No wins over higher-rated players yet"),0,"slayer");
+  const byC=slot("Bully",By?`<div class="nm">${esc(By.name)}</div><div class="sub one"><b>${By.n}</b> wins vs ${esc(By.opp)}</div>`:none("Needs 3+ wins over one opponent"),0,"bully");
+  const brC=slot("Bridesmaid",nm(Br,Br&&Br.n,"runner-up"+(Br&&Br.n==1?"":"s"),"No FFA runner-ups yet"),0,"bride");
+  const cuC=slot("Cursed",Cu?`<div class="nm">${esc(Cu.name)}</div><div class="sub one"><b>${Cu.n}</b>-loss streak</div>`:none("Needs a 3+ loss streak"),0,"cursed");
+  const gcC=PREM()?slot("Glass Cannon",Gc?`<div class="nm">${esc(Gc.name)}</div><div class="sub one"><b>${Gc.v.toFixed(1)}</b></div>`:none("Needs 3+ games with stats"),0,"gc"):lk("Glass Cannon","Most KOs and deaths together. Not tracked in Free groups.");
+  const jkC=PREM()?slot("Jack of All Trades",nm(Jk,Jk&&Jk.v,"characters","Needs 3+ characters"),0,"jk"):lk("Jack of All Trades","Most different characters played. Not tracked in Free groups.");
+  const sc=[[M,myC],[I,inC],[Nl,nlC],[Sb,sbC],[Gs,gsC2],[By,byC],[Cc,ccC],[Br,brC],[Cu,cuC],[Gc,gcC,1],[C0.sds,nhC,1],[C0.taken,pbC,1],[Jk,jkC,1],[P0,opC,1]].filter(([d,h,pr])=>d||(pr&&!PREM())).map(x=>x[1]);
   let sg="";for(let i=0;i<sc.length;i+=2)sg+=i+1<sc.length?`<div class="pair">${sc[i]}${sc[i+1]}</div>`:sc[i];
   const supC=sc.length?`<h3 class="sh">SUPERLATIVES</h3>${sg}`:"";
   const lr=t=>{const L=T.lead[t];if(!L.cur)return`<div class="row" style="margin:8px 0"><span class="sub" style="flex:0 0 52px">${LB[t]}</span><span class="sub">No games yet</span></div>`;
@@ -692,12 +689,11 @@ const SUPD={
   ins:["Insomniac","Most games between midnight and 4am.",e=>[e.n,e.n==1?"game":"games"]],
   nol:["No-lifers","Most games between 9am and 5pm.",e=>[e.n,e.n==1?"game":"games"]],
   sb:["Social Butterfly","Most different opponents faced. Needs 2+.",e=>[e.n,"different opponents"]],
-  slayer:["Giant Slayer","Most upset wins over players rated 50+ higher.",e=>[e.n,e.n==1?"upset win":"upset wins"]],
+  slayer:["Giant Slayer","Most wins over players rated 50+ higher.",e=>[e.n,e.n==1?"win":"wins"]],
   bully:["Bully","Most wins over one opponent. Needs 3+ wins.",e=>[e.n,`wins over ${e.opp} in ${e.of} meetings`]],
   couple:["Cutest Couple","The duo with the most 1v1 matches against each other. Needs 2+.",e=>[e.n,"1v1 matches together"],1],
   bride:["Bridesmaid","Most 2nd-place finishes in matches with 3+ players.",e=>[e.n,e.n==1?"second place":"second places"]],
   cursed:["Cursed","Longest losing streak. Needs 3+ in a row.",e=>[e.n,"losses in a row"]],
-  coaster:["Rollercoaster","Biggest average rating swing per game. Needs 3+ games.",e=>[Math.round(e.v),`avg swing · ${e.n} games`]],
   gc:["Glass Cannon","Most KOs plus deaths per game. Needs 3+ games with stats.",e=>[e.v.toFixed(1),`${e.k} KOs · ${e.d} deaths`]],
   jk:["Jack of All Trades","Most different characters played. Needs 3+.",e=>[e.v,"different characters"]],
   pony:["One Trick Pony","Least variety in fighters, over 10 matches.",e=>[e.ch,`${e.pct}% of ${e.n} games · ${e.v} character${e.v==1?"":"s"}`]]
