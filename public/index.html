@@ -43,6 +43,7 @@ input.sm{flex:1;width:0;min-width:0;text-align:center;padding:8px 4px;font-size:
 .med{vertical-align:middle;image-rendering:pixelated}
 .medals{display:flex;flex-wrap:wrap;gap:6px 12px;margin-top:8px;font:8px var(--pf)}.mb{display:inline-flex;align-items:center;gap:4px}
 .mv{display:flex;align-items:center;gap:8px;margin:8px 0;cursor:pointer}.mv .dl{font:11px var(--pf);white-space:nowrap}.mv .rc{font-size:12px;color:var(--mu);min-width:62px;text-align:right}
+.act{display:flex;align-items:flex-end;gap:2px;height:76px;margin:14px 0 0;border-bottom:2px solid var(--ink)}.act>div{flex:1;min-width:0;position:relative;height:100%;display:flex;flex-direction:column;justify-content:flex-end}.act i{display:block;width:100%;background:var(--blue)}.act .cur i{background:var(--ac)}.act b{text-align:center;font:700 10px/12px ui-monospace,monospace}.act em{position:absolute;top:calc(100% + 4px);left:50%;transform:translateX(-50%);font:normal 10px ui-monospace,monospace;color:var(--mu);white-space:nowrap}.act em.r{left:auto;right:0;transform:none}
 .bar{height:12px;margin-top:4px;background:repeating-linear-gradient(90deg,var(--blue) 0 6px,transparent 6px 8px)}
 .pod{display:flex;align-items:flex-end;justify-content:center;gap:8px;margin:10px 0 8px;min-height:130px}
 .slot{flex:1;min-width:0;max-width:33%;text-align:center}
@@ -457,6 +458,7 @@ function playerPage(p){
   <button class="g mmb" data-mm="${esc(p.name)}">See matchup data ›</button>
   <div class="card"><div class="hd"><b class="ct">Win rate</b>${lbLink("wr")}</div><div class="tri">${[["Overall","all",p.w,p.l],["1v1","one",wm.one.w,wm.one.l],["FFA","ffa",wm.ffa.w,wm.ffa.l]].map(([t,k,w,l])=>`<div data-stat="wr" data-sm="${k}"><div class="elo">${pct(w,l)}</div><div class="sub">${t}</div><div class="sub">${w}W ${l}L</div></div>`).join("")}</div></div>
   ${op.best>=2?`<div class="card"><div class="hd"><b class="ct">Win streak</b>${lbLink("streak","","best")}</div><div style="margin-top:6px">Longest: <b>${op.best}</b> wins in a row</div>${p.streak>=2?`<div class="sub">Current: ${p.streak} in a row</div>`:""}</div>`:""}
+  <div class="card"><b class="ct">Time played</b><div class="tri" style="margin-top:4px">${[["Week",7],["Month",30],["All time",0]].map(([t,d])=>`<div><div class="elo">${fmtH(playMin(p.name,d?Date.now()-d*DAY:0))}</div><div class="sub">${t}</div></div>`).join("")}</div><div class="sub" style="margin-top:6px">Estimated from match times.</div></div>
   ${PREM()?combat(p):""}<div class="card"><b>Rating history</b>${trend(p)}</div>
   ${PREM()?charCard(p):""}${rivals(p)}${upsets(p)}${PREM()?"":lockedStats("Combat stats",COMBAT_ITEMS)+lockedStats("Fighter stats",FIGHTER_ITEMS)}`;
 }
@@ -494,6 +496,18 @@ let tper="week",rview="top3";
 const DAY=864e5,tms=x=>new Date(x.ts).getTime();
 function rAt(p,t,m="all"){let r=null;for(const x of p.h[m]){if(tms(x)<=t)r=x.r;else break}return r}
 function stepPts(p,t0,t1){const r0=rAt(p,t0)??1000,pts=[[t0,r0]];let last=r0;for(const x of p.h.all){const t=tms(x);if(t<=t0)continue;if(t>t1)break;pts.push([t,last]);pts.push([t,x.r]);last=x.r}pts.push([t1,last]);return pts}
+// Play-time estimate: a match lasts about as long as the gap since the previous one (3-15 min); the first match of a sitting counts 6 min.
+function durs(){if(D._dur)return D._dur;const M=D.matches,o=[];for(let i=0;i<M.length;i++){const g=i?tms(M[i])-tms(M[i-1]):1e9;o.push(g<=30*60000?Math.min(15,Math.max(3,g/60000)):6)}return D._dur=o}
+function playMin(name,t0){const du=durs();let s=0;D.matches.forEach((m,i)=>{if(tms(m)>(t0||0)&&m.results.some(r=>r.name==name))s+=du[i]});return s}
+const fmtH=m=>m<=0?"0m":m<60?Math.round(m)+"m":(m/60>=100?Math.round(m/60):(m/60).toFixed(1))+"h";
+function actCard(days){
+  const sz=days?1:7,L0=new Date();L0.setHours(24,0,0,0);const end=+L0;
+  let n=days||Math.min(26,Math.max(1,Math.ceil((end-Math.min(...D.matches.map(tms)))/(7*DAY))));
+  const c=Array(n).fill(0);for(const m of D.matches){const k=n-1-Math.floor((end-1-tms(m))/(sz*DAY));if(k>=0&&k<n)c[k]++}
+  const tot=c.reduce((a,b)=>a+b,0),mx=Math.max(...c,1),unit=sz==1?"day":"week",bi=c.indexOf(mx),step=days==7?1:days?7:4;
+  const lab=i=>{const d=new Date(end-(n-i-1)*sz*DAY-DAY);return days==7?d.toLocaleDateString(undefined,{weekday:"short"}):d.toLocaleDateString(undefined,{month:"short",day:"numeric"})};
+  const bars=c.map((v,i)=>`<div class="${i==n-1?"cur":""}">${days==7&&v?`<b>${v}</b>`:""}<i style="height:${v?Math.max(4,v/mx*80):0}%"></i>${(n-1-i)%step==0?`<em${i==n-1?' class="r"':""}>${lab(i)}</em>`:""}</div>`).join("");
+  return`<div class="card"><div class="row" style="margin:0"><b class="ct" style="flex:1">${sz==1?"Daily":"Weekly"} activity</b><span class="sub">${tot} ${tot==1?"match":"matches"} · avg ${(tot/n).toFixed(1)}/${unit}</span></div><div class="act">${bars}</div><div class="sub" style="margin-top:20px">Busiest ${unit}: ${lab(bi)} (${mx})</div></div>`}
 function trendsData(days){
   const P=D.players,lastT=D.matches.length?tms(D.matches[D.matches.length-1]):0,t1=Math.max(Date.now(),lastT),t0=days?t1-days*DAY:(D.matches.length?Math.min(...D.matches.map(tms))-1:t1-DAY);
   const inP=D.matches.filter(m=>tms(m)>t0);
@@ -600,6 +614,7 @@ function trendsPage(){
   const mv=T.rows.map(r=>{const d=R0(r.d),rc=r.rs==null?"NEW":r.rs-r.rn>0?"▲"+(r.rs-r.rn):r.rs-r.rn<0?"▼"+(r.rn-r.rs):"–";return`<div class="mv" data-n="${esc(r.name)}"><span class="rk">${r.rn<=3?medal(r.rn-1,20):r.rn}</span><span class="nm">${esc(r.name)}<div class="sub">${r.n} game${r.n>1?"s":""} · now ${R0(r.e)}</div></span><span class="dl ${d>0?"up":d<0?"dn":""}">${d>0?"▲":d<0?"▼":"–"} ${Math.abs(d)}</span><span class="rc">#${r.rn} ${rc}</span></div>`}).join("");
   const mx=Math.max(...T.active.map(r=>r.n));
   const act=T.active.map(r=>`<div style="margin:8px 0" data-n="${esc(r.name)}"><div class="row" style="margin:0"><span class="nm">${esc(r.name)}</span><span class="sub">${r.n} ${gms(r.n)} · ${r.opp} opponent${r.opp==1?"":"s"}</span></div><div class="bar" style="width:${Math.max(4,r.n/mx*100)}%"></div></div>`).join("");
+  const tpL=Object.values(D.players).map(p=>({name:p.name,m:playMin(p.name,T.t0)})).filter(x=>x.m>0).sort((a,b)=>b.m-a.m),tpM=tpL.length?tpL[0].m:1,tpC=tpL.length?`<div class="card"><div class="row" style="margin:0"><b class="ct" style="flex:1">Time played</b><span class="sub">est. · ${fmtH(tpL.reduce((a,x)=>a+x.m,0))} total</span></div>${tpL.map(r=>`<div style="margin:8px 0" data-n="${esc(r.name)}"><div class="row" style="margin:0"><span class="nm">${esc(r.name)}</span><span class="sub">≈ ${fmtH(r.m)}</span></div><div class="bar" style="width:${Math.max(4,r.m/tpM*100)}%"></div></div>`).join("")}<div class="sub">Estimated from the gaps between logged matches.</div></div>`:"";
   const st=(T.cur.length?T.cur.map(p=>`<div class="row" style="margin:6px 0" data-stat="streak" data-sv="cur" data-sr="all"><span class="nm">🔥 ${esc(p.name)}</span><span class="elo up">${p.streak}</span><span class="sub">in a row</span></div>`).join(""):`<div class="sub">No active streaks of 2 or more.</div>`)+(T.longest?`<div class="sub" style="margin-top:8px" data-stat="streak" data-sv="best" data-sr="${tper}">Longest ${tper=="all"?"ever":"this "+w}: <b>${esc(T.longest.name)}</b> · ${T.longest.n} wins in a row ›</div>`:"");
   const u=T.upset,rv=T.rival,M=T.mys,I=T.ins;
   const slot=(t,body,n,sk)=>`<div class="card"${n?` data-n="${esc(n)}" style="cursor:pointer"`:sk?` data-sup="${sk}" style="cursor:pointer"`:""}><div class="ct">${t}${sk?`<span class="chv">›</span>`:""}</div>${body}</div>`,none=m=>`<div class="sub" style="margin-top:8px">${m}</div>`;
@@ -633,7 +648,7 @@ function trendsPage(){
   const leadCard=`<div class="card"><b>Rating leaders</b>${lr("one")}${lr("ffa")}</div>`;
   const C=T.cmb,cr=(label,key,c,val,sub)=>c?`<div class="row" data-stat="${key}" data-sr="${tper}" style="margin:8px 0"><span class="sub" style="flex:0 0 104px">${label}</span><span class="nm">${esc(c.name)}${sub?`<div class="sub">${sub}</div>`:""}</span><span class="elo">${val}</span><span class="sub">›</span></div>`:`<div class="row" style="margin:8px 0"><span class="sub" style="flex:0 0 96px">${label}</span><span class="sub">—</span></div>`;
   const cmbCard=C.any?`<div class="card"><b>Combat leaders</b><div class="msg">Only matches with stats recorded count. Best K/D needs 3+. Tap a stat to see everyone ranked.</div>${cr("Best K/D","kd",C.kd,C.kd&&(C.kd.kd===Infinity?"∞":C.kd.kd.toFixed(2)),C.kd&&`${C.kd.k} KOs · ${C.kd.d} deaths · ${C.kd.n} ${gms(C.kd.n)}`)}${cr("Most KOs","kos",C.kos,C.kos&&C.kos.k)}${cr("Most damage","dmg",C.dmg,C.dmg&&Math.round(C.dmg.dmg).toLocaleString())}</div>`:`<div class="card"><b>Combat leaders</b><div class="msg">No stats recorded ${days?"in the last "+days+" days":"yet"}. Scan the second results screen, or type KOs, deaths, SDs, and damage when you add a match.</div></div>`;
-  return seg+raceCard(T,days)+`<div class="pair">${cf("Top climber",T.climber,true)}${cf("Biggest drop",T.faller,false)}</div><div class="pair">${rivC}${udC}</div><button class="g mmb" data-mm="">See matchup data ›</button>${supC}<div class="card"><b>Who's moving</b><div class="msg">Rating change over ${pt}. Tap a player for their page.</div>${mv}</div><div class="card"><b>Most active</b>${act}</div><div class="card"><b>Hot streaks</b><div style="margin-top:6px">${st}</div></div>${leadCard}${PREM()?cmbCard:""}${PREM()?"":lockedStats("Combat leaders",["Best K/D","Most KOs","Most damage"])}`;
+  return seg+actCard(days)+raceCard(T,days)+`<div class="pair">${cf("Top climber",T.climber,true)}${cf("Biggest drop",T.faller,false)}</div><div class="pair">${rivC}${udC}</div><button class="g mmb" data-mm="">See matchup data ›</button>${supC}<div class="card"><b>Who's moving</b><div class="msg">Rating change over ${pt}. Tap a player for their page.</div>${mv}</div><div class="card"><b>Most active</b>${act}</div>${tpC}<div class="card"><b>Hot streaks</b><div style="margin-top:6px">${st}</div></div>${leadCard}${PREM()?cmbCard:""}${PREM()?"":lockedStats("Combat leaders",["Best K/D","Most KOs","Most damage"])}`;
 }
 
 // ---------- Stat ranking pages ----------
