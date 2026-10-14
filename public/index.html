@@ -44,6 +44,7 @@ input.sm{flex:1;width:0;min-width:0;text-align:center;padding:8px 4px;font-size:
 .medals{display:flex;flex-wrap:wrap;gap:6px 12px;margin-top:8px;font:8px var(--pf)}.mb{display:inline-flex;align-items:center;gap:4px}
 .mv{display:flex;align-items:center;gap:8px;margin:8px 0;cursor:pointer}.mv .dl{font:11px var(--pf);white-space:nowrap}.mv .rc{font-size:12px;color:var(--mu);min-width:62px;text-align:right}
 .act{position:relative;display:flex;align-items:flex-end;gap:2px;height:76px;margin:30px 0 22px;border-bottom:2px solid var(--ink)}.act>div{flex:1;min-width:0;position:relative;height:100%;display:flex;flex-direction:column;justify-content:flex-end}.act i{display:block;width:100%;background:var(--blue)}.act .cur i{background:var(--ac)}.act b{position:absolute;left:-4px;right:-4px;text-align:center;font:700 10px/12px ui-monospace,monospace;white-space:nowrap;pointer-events:none}.act.hr b{font-size:8px;left:-6px;right:-6px}.act em{position:absolute;top:calc(100% + 4px);left:50%;transform:translateX(-50%);font:normal 10px ui-monospace,monospace;color:var(--mu);white-space:nowrap}.act em.r{left:auto;right:0;transform:none}.act em.l{left:0;transform:none}.act.fc i{background:#8a3ffc}.tpn{padding:4px 14px;font-size:14px}.tpn:disabled{opacity:.3}.act .yl{position:absolute;left:0;right:0;top:0;border-top:1px dashed var(--mu);opacity:.6;pointer-events:none}.act .ym{position:absolute;left:0;top:-14px;font:10px ui-monospace,monospace;color:var(--mu)}
+.pbox{min-width:0}.pbox .nm{font-size:15px;margin-top:8px;overflow-wrap:anywhere;line-height:1.25}.pbox .elo{font-size:20px;margin:6px 0 2px}.vs{font-weight:400;color:var(--mu);font-size:12px}.tip{padding:12px 0 2px;margin-top:12px;border-top:2px solid var(--ln)}.tip .tt{font-weight:700;font-size:15px;line-height:1.25}.tip .tipb{font-size:14px;line-height:1.4;margin:4px 0 8px;color:var(--tx)}.tip .row .elo{font-size:16px;margin:0}.yt{display:inline-block;margin:0 0 10px;padding:8px 10px;font:700 12px ui-monospace,monospace;color:var(--ink);background:var(--yel);border:3px solid var(--ink);box-shadow:2px 2px 0 var(--ink);text-decoration:none}
 .bar{height:12px;margin-top:4px;background:repeating-linear-gradient(90deg,var(--blue) 0 6px,transparent 6px 8px)}
 .pod{display:flex;align-items:flex-end;justify-content:center;gap:8px;margin:10px 0 8px;min-height:130px}
 .slot{flex:1;min-width:0;max-width:33%;text-align:center}
@@ -194,7 +195,7 @@ function editStatus(n){
   d.innerHTML=`<div class="card"><b>Status for ${esc(n)}</b><div class="row"><input class="n" id="sei" maxlength="40" placeholder="Say something (40 characters)" value="${esc(cur)}" autocomplete="off"></div><div class="msg" id="sem"></div><div class="row"><button class="g" style="flex:1" id="sex">Cancel</button><button style="flex:1" id="sev">Save</button></div></div>`;
   document.body.appendChild(d);
   const inp=document.getElementById("sei"),msg=document.getElementById("sem"),close=()=>d.remove();
-  const save=async()=>{const b=document.getElementById("sev");b.disabled=true;
+  const save=async()=>{if(demo){stt[n.toLowerCase()]=inp.value.trim().slice(0,40);if(!stt[n.toLowerCase()])delete stt[n.toLowerCase()];close();render();return}const b=document.getElementById("sev");b.disabled=true;
     try{const j=await api("matches",{method:"POST",body:JSON.stringify({action:"status",name:n,text:inp.value})});stt=j.statuses||{};close();render()}
     catch(e){b.disabled=false;msg.className="msg warn";msg.textContent=e.message}};
   document.getElementById("sev").onclick=save;document.getElementById("sex").onclick=close;
@@ -416,6 +417,59 @@ function cvcList(p){
   const L=Object.values(p.cvc).filter(r=>r.my==pchar).sort((a,b)=>psort=="best"?wr(b)-wr(a)||gm(b)-gm(a):wr(a)-wr(b)||gm(b)-gm(a));
   return`<div style="margin-top:14px"><div class="row"><b style="flex:1">${esc(pchar)} matchups</b><button class="g" onclick="psort=psort=='best'?'worst':'best';render()">${psort=="best"?"Best first":"Worst first"} ⇅</button></div>${L.length?L.map(r=>`<div class="row" style="margin:4px 0${gm(r)<3?";opacity:.55":""}"><span class="nm">vs ${esc(r.oc)}</span><span class="sub">${rec(r)} · ${Math.round(100*wr(r))}%${gm(r)<3?" · few games":""}</span></div>`).join(""):`<div class="sub">No matchups with ${esc(pchar)} yet.</div>`}</div>`;
 }
+// ---- Character insights, matchups and coaching ----
+const ARCH_LIST={SPACE:"Link,Young Link,Toon Link,Marth,Lucina,Roy,Chrom,Ike,Shulk,Cloud,Sephiroth,Byleth,Corrin,Robin,Simon,Richter,Pit,Dark Pit,Palutena,Mii Swordfighter,Meta Knight,Hero,Pyra/Mythra,Sora",ZONE:"Samus,Dark Samus,Snake,Mega Man,Villager,Duck Hunt,Mii Gunner,R.O.B.,Wii Fit Trainer,Pac-Man,Inkling,Banjo & Kazooie,Min Min,Isabelle,Olimar,Bowser Jr.",RUSH:"Fox,Falco,Captain Falcon,Sheik,Pikachu,Pichu,Luigi,Mario,Dr. Mario,Kirby,Ness,Lucas,Diddy Kong,Sonic,Greninja,Little Mac,Zero Suit Samus,Wolf,Mewtwo,Joker,Bayonetta,Ryu,Ken,Terry,Kazuya,Lucario,Mii Brawler,Incineroar,Pokémon Trainer",GRAP:"Bowser,Ganondorf,King Dedede,Donkey Kong,King K. Rool,Wario,Piranha Plant",TRAP:"Ice Climbers,Peach,Daisy,Jigglypuff,Mr. Game & Watch,Rosalina & Luma,Steve,Zelda,Ridley"};
+const ARCH={};for(const k in ARCH_LIST)ARCH_LIST[k].split(",").forEach(c=>ARCH[c]=k);
+const ARD={
+  SPACE:{trait:"good spacing",how:"Hit with the tip of your range, then step back out of reach, and punish whatever they whiff.",vs:"Their weapon outranges you. Don't run into it. Shield, jump over it, or bait a swing and punish.",q:c=>`${c} spacing and neutral guide Smash Ultimate`},
+  ZONE:{trait:"stage control and zoning",how:"Keep them at range with projectiles and make them approach into your best options.",vs:"Don't fight at range. Short hop, shield or reflect, and stay on top of them once you get in.",q:c=>`${c} zoning and stage control guide Smash Ultimate`},
+  RUSH:{trait:"tight combos and pressure",how:"Learn your true combos at low, mid and high percent, then pressure their shield between them.",vs:"Don't get cornered. Use your best out-of-shield option, vary your landings and trade less.",q:c=>`${c} combos guide Smash Ultimate`},
+  GRAP:{trait:"armor and grab setups",how:"Walk them down, use armor to stop approaches, and turn each grab into big damage.",vs:"Stay out of grab range and don't over-shield. Hit and move away, and don't trade into their armor.",q:c=>`${c} grab setups and neutral guide Smash Ultimate`},
+  TRAP:{trait:"setups and stage control",how:"Build traps, take center stage and cover their ledge options so they have to guess.",vs:"Stay patient and don't walk into their setups. Respect their ledge traps and punish them when they hold back.",q:c=>`${c} setups and stage control guide Smash Ultimate`},
+  ALL:{trait:"strong fundamentals",how:"Practice neutral, punishes and recovery before anything fancy.",vs:"There is no single gimmick to dodge. Win neutral, punish mistakes and stay patient.",q:c=>`${c} beginner guide Smash Ultimate`}
+};
+const arch=c=>ARD[ARCH[c]||"ALL"],ytl=q=>"https://www.youtube.com/results?search_query="+encodeURIComponent(q);
+const ytA=(q,t)=>`<a class="yt" href="${ytl(q)}" target="_blank" rel="noopener">▶ ${t||"Watch on YouTube"}</a>`;
+function insights(p){
+  const ok=c=>c&&c!="Random",cm=Object.entries(p.cm).filter(([c])=>ok(c)).map(([c,m])=>({c,n:m.n,w:m.w,l:m.n-m.w,r:m.w/m.n})),
+    cv=Object.values(p.cvc).filter(r=>ok(r.my)&&ok(r.oc)).map(r=>({...r,n:gm(r),r:wr(r)})),
+    main=cm.slice().sort((a,b)=>b.n-a.n)[0]||null,
+    bestC=cm.filter(x=>x.n>=3).sort((a,b)=>b.r-a.r||b.n-a.n)[0]||null,
+    q5=cm.filter(x=>x.n>=5),worstC=q5.length>=2?q5.slice().sort((a,b)=>a.r-b.r||b.n-a.n)[0]:null,
+    m5=cv.filter(x=>x.n>=5),bestM=m5.length?m5.slice().sort((a,b)=>b.r-a.r||b.n-a.n)[0]:null,worstM=m5.length>=2?m5.slice().sort((a,b)=>a.r-b.r||b.n-a.n)[0]:null;
+  return{cm,cv,main,bestC,worstC,bestM,worstM,m5};
+}
+function insightBoxes(p){
+  if(!PREM())return lockedStats("Character insights",["Best character","Worst character","Best matchup","Worst matchup"]);
+  const I=insights(p),e=esc,box=(t,nm,big,sub,good,empty)=>`<div class="card pbox"><div class="ct">${t}</div>${nm?`<div class="nm">${nm}</div><div class="elo ${good?"up":"dn"}">${big}</div><div class="sub">${sub}</div>`:`<div class="sub" style="margin-top:8px">${empty}</div>`}</div>`,
+    ch=x=>x&&[e(x.c),Math.round(100*x.r)+"%",`${x.w}W ${x.l}L · ${x.n} games`],
+    mt=x=>x&&[`${e(x.my)} <span class="vs">vs</span> ${e(x.oc)}`,Math.round(100*x.r)+"%",`${rec(x)} · ${x.n} games`],
+    b=ch(I.bestC),w=ch(I.worstC),bm=mt(I.bestM),wm=mt(I.worstM);
+  return`<div class="pair">${box("Best character",b&&b[0],b&&b[1],b&&b[2],true,"Needs 3+ games with a character")}${box("Worst character",w&&w[0],w&&w[1],w&&w[2],false,"Needs 5+ games on two characters")}</div><div class="pair">${box("Best matchup",bm&&bm[0],bm&&bm[1],bm&&bm[2],true,"Needs 5+ games vs one fighter")}${box("Worst matchup",wm&&wm[0],wm&&wm[1],wm&&wm[2],false,"Needs 5+ games vs two fighters")}</div>`;
+}
+function toughCard(p){
+  if(!PREM())return"";
+  const I=insights(p),e=esc,L=I.cv.filter(x=>x.n>=5&&x.r<.5).sort((a,b)=>a.r-b.r||b.n-a.n).slice(0,3);
+  const rows=L.map(x=>`<div class="tip"><div class="row" style="margin:0"><span class="nm">${e(x.my)} <span class="vs">vs</span> ${e(x.oc)}</span><span class="elo dn">${Math.round(100*x.r)}%</span></div><div class="sub">${rec(x)} over ${x.n} games</div><div class="tipb"><b>How to win:</b> ${e(arch(x.oc).vs)}</div>${ytA(`how to beat ${x.oc} as ${x.my} Smash Ultimate`,"How to beat "+e(x.oc))}</div>`).join("");
+  return`<div class="card"><b class="ct">Toughest matchups</b>${rows||`<div class="sub" style="margin-top:8px">No losing matchups with 5+ games yet. Nice.</div>`}</div>`;
+}
+function coachCard(p){
+  if(!PREM())return"";
+  const I=insights(p),e=esc,T=[],a=p.cs.one,b=p.cs.ffa,K=a.k+b.k,Dd=a.d+b.d,SD=a.sd+b.sd,N=a.n+b.n;
+  const win=x=>Math.round(100*x.r)+"%";
+  if(I.bestC&&I.main&&I.bestC.c!=I.main.c&&I.bestC.r-I.main.r>=.15)T.push({t:`Play ${I.bestC.c} more`,b:`${I.bestC.c} wins ${win(I.bestC)} of the time, against ${win(I.main)} with ${I.main.c}, your most played.`,q:`${I.bestC.c} guide Smash Ultimate`,l:"Learn "+I.bestC.c});
+  if(I.worstC&&I.worstC.r<=.4)T.push({t:`Drill or bench ${I.worstC.c}`,b:`${I.worstC.c} is winning only ${win(I.worstC)} over ${I.worstC.n} games. Practice it in training mode or save it for casual games.`,q:`${I.worstC.c} beginner guide Smash Ultimate`,l:"Improve "+I.worstC.c});
+  if(I.main&&I.main.n>=3){const A=arch(I.main.c);T.push({t:`Are you using ${I.main.c}'s strengths?`,b:`${I.main.c} rewards ${A.trait}. ${A.how}`,q:A.q(I.main.c),l:`${I.main.c} guide`})}
+  const tm=I.cv.filter(x=>x.n>=5&&x.r<.5).sort((x,y)=>x.r-y.r||y.n-x.n)[0];
+  if(tm)T.push({t:`Prepare for ${tm.oc}`,b:`${tm.my} is ${rec(tm)} against ${tm.oc}. ${arch(tm.oc).vs}`,q:`how to beat ${tm.oc} as ${tm.my} Smash Ultimate`,l:"How to beat "+tm.oc});
+  if(N>=5&&SD/N>=.15)T.push({t:"Stop self-destructing",b:`You self-destruct ${(SD/N).toFixed(2)} times per game. Work on recovery routes and safer ledge options.`,q:"Smash Ultimate recovery guide how to stop self destructing",l:"Recovery guide"});
+  if(N>=5&&Dd>0&&K/Dd<1)T.push({t:"Convert more openings",b:`Your K/D is ${(K/Dd).toFixed(2)}. Punish more of their mistakes and cover their landings to take stocks.`,q:"Smash Ultimate how to punish and edgeguard guide",l:"Punish and edgeguard"});
+  if(p.g.one&&p.g.ffa&&Math.abs(p.r.one-p.r.ffa)>=60)T.push({t:p.r.one<p.r.ffa?"Sharpen your 1v1s":"Brush up on free-for-alls",b:p.r.one<p.r.ffa?`Your FFA rating is ${Math.round(p.r.ffa-p.r.one)} higher than your 1v1. Practice neutral and edgeguarding one on one.`:`Your 1v1 rating is ${Math.round(p.r.one-p.r.ffa)} higher than your FFA. Learn to avoid third-party hits and pick your fights.`,q:p.r.one<p.r.ffa?"Smash Ultimate 1v1 neutral game guide":"Smash Ultimate free for all strategy",l:p.r.one<p.r.ffa?"1v1 neutral guide":"FFA strategy"});
+  if(p.streak<=-3)T.push({t:"Break the losing streak",b:`You have lost ${-p.streak} in a row. Take a short break, then watch a replay of your last loss to spot one thing to fix.`,q:"Smash Ultimate how to review your replays and improve",l:"Review your replays"});
+  T.push({t:"Nail the fundamentals",b:"Good DI, teching and out-of-shield options win more games than any combo.",q:"Smash Ultimate fundamentals DI tech out of shield guide",l:"Fundamentals guide"});
+  const L=T.slice(0,6);
+  return`<div class="card"><b class="ct">How to improve</b><div class="sub" style="margin:4px 0 0">Based on your results. Links open a YouTube search.</div>${L.map(x=>`<div class="tip"><div class="tt">${e(x.t)}</div><div class="tipb">${e(x.b)}</div>${ytA(x.q,x.l)}</div>`).join("")}</div>`;
+}
 function charCard(p){
   const ks=Object.keys(p.cm).sort((a,b)=>p.cm[b].n-p.cm[a].n);
   if(!ks.length)return`<div class="card"><b>By character</b><div class="sub">No character data yet. Fill in the Character box when logging matches.</div></div>`;
@@ -456,11 +510,12 @@ function playerPage(p){
   return`<button class="g" onclick="goBack()">← Back</button>
   <div class="card" style="margin-top:10px"><div class="row" style="gap:12px;margin:0 0 6px"><div style="flex:1;min-width:0"><div class="nm" style="font-size:20px">${bub(p.name)}${esc(p.name)} ${p.streak>=2?`<span data-stat="streak" data-sv="cur">🔥 ${p.streak}</span>`:""}</div><div class="sub">${p.w}W · ${p.l}L · ${p.g.all} ${gms(p.g.all)}</div></div></div>${medalLine(p)}${triP(p)}</div>
   <button class="g mmb" data-mm="${esc(p.name)}">See matchup data ›</button>
+  ${insightBoxes(p)}
   <div class="card"><div class="hd"><b class="ct">Win rate</b>${lbLink("wr")}</div><div class="tri">${[["Overall","all",p.w,p.l],["1v1","one",wm.one.w,wm.one.l],["FFA","ffa",wm.ffa.w,wm.ffa.l]].map(([t,k,w,l])=>`<div data-stat="wr" data-sm="${k}"><div class="elo">${pct(w,l)}</div><div class="sub">${t}</div><div class="sub">${w}W ${l}L</div></div>`).join("")}</div></div>
   ${op.best>=2?`<div class="card"><div class="hd"><b class="ct">Win streak</b>${lbLink("streak","","best")}</div><div style="margin-top:6px">Longest: <b>${op.best}</b> wins in a row</div>${p.streak>=2?`<div class="sub">Current: ${p.streak} in a row</div>`:""}</div>`:""}
   ${tpCard(p.name)}
   ${PREM()?combat(p):""}<div class="card"><b>Rating history</b>${trend(p)}</div>
-  ${PREM()?charCard(p):""}${rivals(p)}${upsets(p)}${PREM()?"":lockedStats("Combat stats",COMBAT_ITEMS)+lockedStats("Fighter stats",FIGHTER_ITEMS)}`;
+  ${PREM()?charCard(p):""}${toughCard(p)}${coachCard(p)}${rivals(p)}${upsets(p)}${PREM()?"":lockedStats("Combat stats",COMBAT_ITEMS)+lockedStats("Fighter stats",FIGHTER_ITEMS)}`;
 }
 const nv=v=>v==null||v===""?undefined:+v;
 function statsOf(x){const o={};for(const k of ["kills","deaths","sds","dmg"])if(Number.isFinite(x[k])&&x[k]>=0)o[k]=x[k];return o}
@@ -1114,17 +1169,24 @@ function drawHow(){
 document.getElementById("ov").onclick=e=>{if(e.target.id=="ov"){howto=-1;drawHow()}};
 // ---------- Demo group ----------
 function makeDemo(){
-  let s=7;const rnd=()=>(s=(s*16807)%2147483647)/2147483647;
-  const pl=[["Pixel",1.6,"Kirby"],["Nova",1.3,"Fox"],["Rook",1,"Link"],["Echo",.8,"Pikachu"],["Bolt",.6,"Mario"],["Mango",.4,"Samus"]],DAY=864e5,now=Date.now(),out=[];
-  for(let i=0;i<64;i++){
-    const n=rnd()<.55?2:rnd()<.5?3:4,pool=pl.slice().sort(()=>rnd()-.5).slice(0,n);
-    const sc=pool.map(p=>({p,v:p[1]*(.5+rnd())})).sort((a,b)=>b.v-a.v),stats=rnd()<.8;
-    out.push({id:"demo"+i,ts:new Date(now-(40*DAY)*(1-i/64)).toISOString(),results:sc.map((x,k)=>({name:x.p[0],place:k+1,char:rnd()<.8?x.p[2]:["Fox","Link","Mario","Kirby","Ness"][Math.floor(rnd()*5)],...(rnd()<.07?{rnd:true,char:"Random"}:{}),...(stats?{kills:Math.max(0,Math.round((n-k)*1.4+rnd()*3-1)),deaths:Math.max(0,Math.round(k*1.5+rnd()*2)),sds:rnd()<.15?1:0,dmg:Math.round(60+rnd()*140+(n-k)*25)}:{})}))});
+  let sd=11;const rnd=()=>(sd=(sd*16807)%2147483647)/2147483647,DAY=864e5,now=Date.now(),out=[];
+  const pl={Pixel:[1.5,["Kirby","Marth","Ness"]],Nova:[1.35,["Fox","Falco","Sheik"]],Rook:[1,["Link","Ike","Samus"]],Echo:[.85,["Pikachu","Lucina","Mario"]],Bolt:[.65,["Mario","Luigi","Ryu"]],Mango:[.45,["Samus","Fox","Kirby"]]},names=Object.keys(pl);
+  const hs=x=>[...x].reduce((a,c)=>(a*31+c.charCodeAt(0))%1009,7),g=(a,b)=>(hs(a+"|"+b)%1000)/1000-.5,mu=(a,b)=>(g(a,b)-g(b,a))*1.4,sk=c=>1+((hs(c)%7)-3)*.08;
+  const pick=p=>{const r=rnd();return pl[p][1][r<.6?0:r<.85?1:2]};
+  let id=0;
+  const add=(ts,ps)=>{const cs=ps.map(pick),n=ps.length,sc=ps.map((p,i)=>{let m=0;cs.forEach((c,j)=>{if(j!=i)m+=mu(cs[i],c)});return{p,c:cs[i],v:pl[p][0]*sk(cs[i])*(.55+rnd())*Math.exp(m/(n-1))}}).sort((a,b)=>b.v-a.v),stats=rnd()<.85;
+    out.push({id:"demo"+id++,ts:new Date(ts).toISOString(),results:sc.map((x,k)=>({name:x.p,place:k+1,char:rnd()<.05?"Random":x.c,...(rnd()<.05?{rnd:true,char:"Random"}:{}),...(stats?{kills:Math.max(0,Math.round((n-k)*1.4+rnd()*3-1)),deaths:Math.max(0,Math.round(k*1.5+rnd()*2)),sds:rnd()<.12?1:0,dmg:Math.round(60+rnd()*140+(n-k)*25)}:{})}))})};
+  const mid=new Date();mid.setHours(0,0,0,0);const m0=+mid;
+  for(let d=59;d>=0;d--){
+    const k=d==0?6:d==1?5:d<14?[2,3,4,6,8][Math.floor(rnd()*5)]:[0,2,3,4,6,8][Math.floor(rnd()*6)],r=rnd(),hr=r<.12?1+Math.floor(rnd()*3):r<.3?10+Math.floor(rnd()*6):18+Math.floor(rnd()*5);
+    let t=d==0?now-(k+1)*8.5*6e4:m0-d*DAY+hr*36e5+Math.floor(rnd()*50)*6e4;
+    for(let i=0;i<k;i++){t+=(4+rnd()*7)*6e4;if(t>now-6e4)break;const n=rnd()<.8?2:rnd()<.6?3:4;add(t,names.slice().sort(()=>rnd()-.5).slice(0,n))}
   }
   return out;
 }
-function startDemo(){demo=true;gid="demo";gname="Demo Squad";pass="";ms=makeDemo();ms.sort((a,b)=>new Date(a.ts)-new Date(b.ts));tab="lb";sel="";stat="";tryOpen=false;tryStage="";render();scrollTo(0,0)}
-function exitDemo(){demo=false;gid=ls("gid");gname=ls("gname");pass=ls("pass");ms=[];sel="";stat="";tab="lb";if(gid)load();render();scrollTo(0,0)}
+const DEMO_STATUS={pixel:"main character energy",nova:"ledge trap enjoyer",rook:"one more game",echo:"lag was the problem",bolt:"practicing, I swear",mango:"here for the vibes"};
+function startDemo(){demo=true;gid="demo";gname="Demo Squad";pass="";stt={...DEMO_STATUS};tpv="d";tpo=0;ms=makeDemo();ms.sort((a,b)=>new Date(a.ts)-new Date(b.ts));tab="lb";sel="";stat="";tryOpen=false;tryStage="";render();scrollTo(0,0)}
+function exitDemo(){demo=false;stt={};gid=ls("gid");gname=ls("gname");pass=ls("pass");ms=[];sel="";stat="";tab="lb";if(gid)load();render();scrollTo(0,0)}
 fetch("/api/pub").then(r=>r.json()).then(j=>{pubN=j.matches;pubAcc=j.acc;if(!gid)render()}).catch(()=>{});
 {const _r=render;render=function(){const o=[...document.querySelectorAll("#v details[open] summary")].map(x=>x.textContent);_r.apply(this,arguments);if(o.length)document.querySelectorAll("#v details").forEach(d=>{if(o.includes(d.querySelector("summary")?.textContent))d.open=true})}}
 load();render();if(admin)MP({action:"check",token:admin}).then(j=>{if(j.ok){admOk=true;tdCount(true);gmLoad(true);tkLoad(true);pkLoad(true)}else{admin="";ls("admin","")}render()}).catch(()=>{});if(gid)gaResume();setInterval(()=>{if(!document.hidden)load()},8000);setInterval(updateNow,15000);
