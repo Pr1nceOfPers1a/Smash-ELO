@@ -43,7 +43,7 @@ input.sm{flex:1;width:0;min-width:0;text-align:center;padding:8px 4px;font-size:
 .med{vertical-align:middle;image-rendering:pixelated}
 .medals{display:flex;flex-wrap:wrap;gap:6px 12px;margin-top:8px;font:8px var(--pf)}.mb{display:inline-flex;align-items:center;gap:4px}
 .mv{display:flex;align-items:center;gap:8px;margin:8px 0;cursor:pointer}.mv .dl{font:11px var(--pf);white-space:nowrap}.mv .rc{font-size:12px;color:var(--mu);min-width:62px;text-align:right}
-.act{display:flex;align-items:flex-end;gap:2px;height:76px;margin:14px 0 0;border-bottom:2px solid var(--ink)}.act>div{flex:1;min-width:0;position:relative;height:100%;display:flex;flex-direction:column;justify-content:flex-end}.act i{display:block;width:100%;background:var(--blue)}.act .cur i{background:var(--ac)}.act b{text-align:center;font:700 10px/12px ui-monospace,monospace}.act em{position:absolute;top:calc(100% + 4px);left:50%;transform:translateX(-50%);font:normal 10px ui-monospace,monospace;color:var(--mu);white-space:nowrap}.act em.r{left:auto;right:0;transform:none}
+.act{display:flex;align-items:flex-end;gap:2px;height:76px;margin:14px 0 0;border-bottom:2px solid var(--ink)}.act>div{flex:1;min-width:0;position:relative;height:100%;display:flex;flex-direction:column;justify-content:flex-end}.act i{display:block;width:100%;background:var(--blue)}.act .cur i{background:var(--ac)}.act b{text-align:center;font:700 10px/12px ui-monospace,monospace}.act em{position:absolute;top:calc(100% + 4px);left:50%;transform:translateX(-50%);font:normal 10px ui-monospace,monospace;color:var(--mu);white-space:nowrap}.act em.r{left:auto;right:0;transform:none}.act em.l{left:0;transform:none}
 .bar{height:12px;margin-top:4px;background:repeating-linear-gradient(90deg,var(--blue) 0 6px,transparent 6px 8px)}
 .pod{display:flex;align-items:flex-end;justify-content:center;gap:8px;margin:10px 0 8px;min-height:130px}
 .slot{flex:1;min-width:0;max-width:33%;text-align:center}
@@ -458,7 +458,7 @@ function playerPage(p){
   <button class="g mmb" data-mm="${esc(p.name)}">See matchup data ›</button>
   <div class="card"><div class="hd"><b class="ct">Win rate</b>${lbLink("wr")}</div><div class="tri">${[["Overall","all",p.w,p.l],["1v1","one",wm.one.w,wm.one.l],["FFA","ffa",wm.ffa.w,wm.ffa.l]].map(([t,k,w,l])=>`<div data-stat="wr" data-sm="${k}"><div class="elo">${pct(w,l)}</div><div class="sub">${t}</div><div class="sub">${w}W ${l}L</div></div>`).join("")}</div></div>
   ${op.best>=2?`<div class="card"><div class="hd"><b class="ct">Win streak</b>${lbLink("streak","","best")}</div><div style="margin-top:6px">Longest: <b>${op.best}</b> wins in a row</div>${p.streak>=2?`<div class="sub">Current: ${p.streak} in a row</div>`:""}</div>`:""}
-  <div class="card"><b class="ct">Time played</b><div class="tri" style="margin-top:4px">${[["Today",-1],["Week",7],["Month",30],["All time",0]].map(([t,d])=>`<div><div class="elo">${fmtH(playMin(p.name,d<0?(()=>{const z=new Date();z.setHours(0,0,0,0);return+z})():d?Date.now()-d*DAY:0))}</div><div class="sub">${t}</div></div>`).join("")}</div><div class="sub" style="margin-top:6px">Estimated from match times.</div></div>
+  ${tpCard(p.name)}
   ${PREM()?combat(p):""}<div class="card"><b>Rating history</b>${trend(p)}</div>
   ${PREM()?charCard(p):""}${rivals(p)}${upsets(p)}${PREM()?"":lockedStats("Combat stats",COMBAT_ITEMS)+lockedStats("Fighter stats",FIGHTER_ITEMS)}`;
 }
@@ -492,7 +492,7 @@ function medalLine(p){
   return o.length?`<div class="medals">${o.map(([t,i])=>`<span class="mb">${medal(i,18)} ${LB[t]} #${i+1}</span>`).join("")}</div>`:"";
 }
 // ---------- Trends ----------
-let tper="week",rview="top3";
+let tper="week",rview="top3",tpv="d";
 const DAY=864e5,tms=x=>new Date(x.ts).getTime();
 function rAt(p,t,m="all"){let r=null;for(const x of p.h[m]){if(tms(x)<=t)r=x.r;else break}return r}
 function stepPts(p,t0,t1){const r0=rAt(p,t0)??1000,pts=[[t0,r0]];let last=r0;for(const x of p.h.all){const t=tms(x);if(t<=t0)continue;if(t>t1)break;pts.push([t,last]);pts.push([t,x.r]);last=x.r}pts.push([t1,last]);return pts}
@@ -500,6 +500,31 @@ function stepPts(p,t0,t1){const r0=rAt(p,t0)??1000,pts=[[t0,r0]];let last=r0;for
 function durs(){if(D._dur)return D._dur;const M=D.matches,o=[];for(let i=0;i<M.length;i++){const g=i?tms(M[i])-tms(M[i-1]):1e9;o.push(g<=30*60000?Math.min(15,Math.max(3,g/60000)):6)}return D._dur=o}
 function playMin(name,t0){const du=durs();let s=0;D.matches.forEach((m,i)=>{if(tms(m)>(t0||0)&&m.results.some(r=>r.name==name))s+=du[i]});return s}
 const fmtH=m=>m<=0?"0m":m<60?Math.round(m)+"m":(m/60>=100?Math.round(m/60):(m/60).toFixed(1))+"h";
+function tpCard(name){
+  const du=durs(),z=new Date();z.setHours(0,0,0,0);const today=+z,end=today+DAY,mine=[];
+  D.matches.forEach((m,i)=>{if(m.results.some(r=>r.name==name))mine.push([tms(m),du[i]])});
+  const V={h:["Hourly","Today"],d:["Daily","Last 7 days"],w:["Weekly","Last 12 weeks"],a:["All time","All time"]};
+  const seg=`<div class="seg" style="margin:10px 0 6px">${Object.keys(V).map(k=>`<button class="${tpv==k?"on":""}" onclick="tpv='${k}';render()">${V[k][0]}</button>`).join("")}</div>`;
+  let body="",tot=0;
+  if(tpv=="a"){
+    if(!mine.length)body=`<div class="sub" style="margin:10px 0">No matches yet.</div>`;
+    else{
+      const d0=Math.floor((Math.min(mine[0][0],today)-today)/DAY),n=-d0+1,c=Array(n).fill(0);for(const[t,m]of mine)c[Math.floor((t-today)/DAY)-d0]+=m;
+      let a=0;const cum=c.map(v=>a+=v);tot=a;
+      if(n<2)body=`<div class="sub" style="margin:10px 0">Needs matches on 2 or more days.</div>`;
+      else{const mx=Math.max(...cum,1),X=i=>+(34+i*(256/(n-1))).toFixed(1),Y=v=>+(100-v/mx*90).toFixed(1),P=cum.map((v,i)=>[X(i),Y(v)]);let dd=`M${P[0][0]},${P[0][1]}`;for(let q=0;q<P.length-1;q++){const p0=P[q-1]||P[q],p1=P[q],p2=P[q+1],p3=P[q+2]||p2,k=6,cy=y=>Math.min(100,Math.max(10,y));dd+=`C${(p1[0]+(p2[0]-p0[0])/k).toFixed(1)},${cy(p1[1]+(p2[1]-p0[1])/k).toFixed(1)} ${(p2[0]-(p3[0]-p1[0])/k).toFixed(1)},${cy(p2[1]-(p3[1]-p1[1])/k).toFixed(1)} ${p2[0]},${p2[1]}`}
+        const dl=q=>new Date(today+(d0+q)*DAY).toLocaleDateString(undefined,{month:"short",day:"numeric"});
+        body=`<svg viewBox="0 0 300 128" width="100%" role="img" aria-label="Total estimated time played over time"><line x1="34" y1="100" x2="290" y2="100" stroke="var(--ink)"/><line x1="34" y1="10" x2="290" y2="10" stroke="var(--mu)" stroke-width=".5" opacity=".5"/><text x="30" y="13" text-anchor="end" font-size="8" fill="var(--mu)">${fmtH(mx)}</text><text x="30" y="103" text-anchor="end" font-size="8" fill="var(--mu)">0</text><path d="${dd}" fill="none" stroke="var(--ac)" stroke-width="2" stroke-linecap="round"/><circle cx="${P[n-1][0]}" cy="${P[n-1][1]}" r="3" fill="var(--ac)" stroke="var(--ink)"/><text x="34" y="116" font-size="8" fill="var(--mu)">${dl(0)}</text><text x="290" y="116" text-anchor="end" font-size="8" fill="var(--mu)">${dl(n-1)}</text></svg>`}
+    }
+  }else{
+    const n=tpv=="h"?24:tpv=="d"?7:12,sz=tpv=="h"?DAY/24:tpv=="w"?7*DAY:DAY,c=Array(n).fill(0);
+    for(const[t,m]of mine){const k=n-1-Math.floor((end-1-t)/sz);if(k>=0&&k<n&&t<end)c[k]+=m}
+    tot=c.reduce((x,y)=>x+y,0);const mx=Math.max(...c,1),cur=tpv=="h"?new Date().getHours():n-1,step=tpv=="h"?6:tpv=="d"?1:4;
+    const lab=i=>tpv=="h"?["12a","6a","12p","6p"][i/6]:tpv=="d"?new Date(end-(n-i)*DAY).toLocaleDateString(undefined,{weekday:"short"}):new Date(end-(n-i)*sz).toLocaleDateString(undefined,{month:"short",day:"numeric"});
+    const bars=c.map((v,i)=>`<div class="${i==cur?"cur":""}">${tpv=="d"&&v?`<b>${fmtH(v)}</b>`:""}<i style="height:${v?Math.max(4,v/mx*80):0}%"></i>${tpv=="h"?(i%6==0?`<em${i==0?' class="l"':""}>${lab(i)}</em>`:""):(n-1-i)%step==0?`<em${i==n-1?' class="r"':""}>${lab(i)}</em>`:""}</div>`).join("");
+    body=`<div class="act" style="margin-bottom:22px">${bars}</div>`;
+  }
+  return`<div class="card"><div class="row" style="margin:0"><b class="ct" style="flex:1">Time played</b><span class="sub">${V[tpv][1]} · <b style="color:var(--tx)">≈ ${fmtH(tot)}</b></span></div>${seg}${body}<div class="sub">Estimated from match times.</div></div>`}
 function movCard(){
   const z=new Date();z.setHours(0,0,0,0);const t0=+z,P=D.players,e=esc,R0=Math.round;
   const rows=Object.values(P).filter(p=>p.g.all).map(p=>({name:p.name,s:rAt(p,t0),e:p.r.all,n:D.matches.filter(m=>tms(m)>t0&&m.results.some(r=>r.name==p.name)).length})).filter(r=>r.n>0).map(r=>({...r,d:r.e-(r.s??1000)}));
