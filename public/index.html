@@ -467,7 +467,7 @@ function coachCard(p){
   if(p.g.one&&p.g.ffa&&Math.abs(p.r.one-p.r.ffa)>=60)T.push({t:p.r.one<p.r.ffa?"Sharpen your 1v1s":"Brush up on free-for-alls",b:p.r.one<p.r.ffa?`Your FFA rating is ${Math.round(p.r.ffa-p.r.one)} higher than your 1v1. Practice neutral and edgeguarding one on one.`:`Your 1v1 rating is ${Math.round(p.r.one-p.r.ffa)} higher than your FFA. Learn to avoid third-party hits and pick your fights.`,q:p.r.one<p.r.ffa?"Smash Ultimate 1v1 neutral game guide":"Smash Ultimate free for all strategy",l:p.r.one<p.r.ffa?"1v1 neutral guide":"FFA strategy"});
   if(p.streak<=-3)T.push({t:"Break the losing streak",b:`You have lost ${-p.streak} in a row. Take a short break, then watch a replay of your last loss to spot one thing to fix.`,q:"Smash Ultimate how to review your replays and improve",l:"Review your replays"});
   T.push({t:"Nail the fundamentals",b:"Good DI, teching and out-of-shield options win more games than any combo.",q:"Smash Ultimate fundamentals DI tech out of shield guide",l:"Fundamentals guide"});
-  const L=T.slice(0,6);
+  const L=T.slice(0,3);
   return`<div class="card"><b class="ct">How to improve</b><div class="sub" style="margin:4px 0 0">Based on your results. Links open a YouTube search.</div>${L.map(x=>`<div class="tip"><div class="tt">${e(x.t)}</div><div class="tipb">${e(x.b)}</div>${ytA(x.q,x.l)}</div>`).join("")}</div>`;
 }
 function charCard(p){
@@ -509,13 +509,14 @@ function playerPage(p){
   const wm=p.wm,op=oppOf(p.name);
   return`<button class="g" onclick="goBack()">← Back</button>
   <div class="card" style="margin-top:10px"><div class="row" style="gap:12px;margin:0 0 6px"><div style="flex:1;min-width:0"><div class="nm" style="font-size:20px">${bub(p.name)}${esc(p.name)} ${p.streak>=2?`<span data-stat="streak" data-sv="cur">🔥 ${p.streak}</span>`:""}</div><div class="sub">${p.w}W · ${p.l}L · ${p.g.all} ${gms(p.g.all)}</div></div></div>${medalLine(p)}${triP(p)}</div>
+  ${toughCard(p)}
   <button class="g mmb" data-mm="${esc(p.name)}">See matchup data ›</button>
   ${insightBoxes(p)}
   <div class="card"><div class="hd"><b class="ct">Win rate</b>${lbLink("wr")}</div><div class="tri">${[["Overall","all",p.w,p.l],["1v1","one",wm.one.w,wm.one.l],["FFA","ffa",wm.ffa.w,wm.ffa.l]].map(([t,k,w,l])=>`<div data-stat="wr" data-sm="${k}"><div class="elo">${pct(w,l)}</div><div class="sub">${t}</div><div class="sub">${w}W ${l}L</div></div>`).join("")}</div></div>
   ${op.best>=2?`<div class="card"><div class="hd"><b class="ct">Win streak</b>${lbLink("streak","","best")}</div><div style="margin-top:6px">Longest: <b>${op.best}</b> wins in a row</div>${p.streak>=2?`<div class="sub">Current: ${p.streak} in a row</div>`:""}</div>`:""}
   ${tpCard(p.name)}
   ${PREM()?combat(p):""}<div class="card"><b>Rating history</b>${trend(p)}</div>
-  ${PREM()?charCard(p):""}${toughCard(p)}${coachCard(p)}${rivals(p)}${upsets(p)}${PREM()?"":lockedStats("Combat stats",COMBAT_ITEMS)+lockedStats("Fighter stats",FIGHTER_ITEMS)}`;
+  ${PREM()?charCard(p):""}${coachCard(p)}${rivals(p)}${upsets(p)}${PREM()?"":lockedStats("Combat stats",COMBAT_ITEMS)+lockedStats("Fighter stats",FIGHTER_ITEMS)}`;
 }
 const nv=v=>v==null||v===""?undefined:+v;
 function statsOf(x){const o={};for(const k of ["kills","deaths","sds","dmg"])if(Number.isFinite(x[k])&&x[k]>=0)o[k]=x[k];return o}
