@@ -1,4 +1,4 @@
-// Rating tracks: all (every match), one (1v1 only), ffa (3+ players only), plus a per (player, character) track.
+// Rating tracks: one (1v1 only), ffa (3+ players only), all (games-weighted blend of those two), plus a per (player, character) track.
 (function (root) {
   const START = 1000, NEW_N = 10, K_NEW = 48, K_OLD = 32, UPSET_GAP = 50;
   function compute(ms) {
@@ -12,26 +12,36 @@
       const res = m.results, n = res.length, mode = n === 2 ? 'one' : 'ffa';
       res.forEach((x) => get(x.name));
       const dl = { all: {}, mode: {} };
-      for (const t of ['all', mode]) {
-        const d = {};
-        res.forEach((x) => (d[x.name] = 0));
-        for (let i = 0; i < n; i++) for (let j = i + 1; j < n; j++) {
-          const a = res[i], b = res[j], pa = P[a.name], pb = P[b.name];
-          const e = 1 / (1 + 10 ** ((pb.r[t] - pa.r[t]) / 400));
-          const s = a.place < b.place ? 1 : a.place > b.place ? 0 : 0.5;
-          d[a.name] += ((pa.g[t] < NEW_N ? K_NEW : K_OLD) / (n - 1)) * (s - e);
-          d[b.name] -= ((pb.g[t] < NEW_N ? K_NEW : K_OLD) / (n - 1)) * (s - e);
-          if (t === 'all' && s !== 0.5) { // upset: lower-rated player beat a higher-rated one (overall ratings before the match)
-            const [wi, lo] = s === 1 ? [a, b] : [b, a], pw = P[wi.name], pl = P[lo.name], gap = pl.r.all - pw.r.all;
-            if (gap >= UPSET_GAP) {
-              const pr = 1 / (1 + 10 ** (gap / 400)); // winner's win chance going in
-              pw.ups.push({ ts: m.ts, opp: lo.name, oc: lo.char || '', mc: wi.char || '', gap, pr, won: true });
-              pl.ups.push({ ts: m.ts, opp: wi.name, oc: wi.char || '', mc: lo.char || '', gap, pr, won: false });
-            }
-          }
+      // upsets use the overall rating going in (before this match)
+      for (let i = 0; i < n; i++) for (let j = i + 1; j < n; j++) {
+        const a = res[i], b = res[j];
+        if (a.place === b.place) continue;
+        const [wi, lo] = a.place < b.place ? [a, b] : [b, a], pw = P[wi.name], pl = P[lo.name], gap = pl.r.all - pw.r.all;
+        if (gap >= UPSET_GAP) {
+          const pr = 1 / (1 + 10 ** (gap / 400)); // winner's win chance going in
+          pw.ups.push({ ts: m.ts, opp: lo.name, oc: lo.char || '', mc: wi.char || '', gap, pr, won: true });
+          pl.ups.push({ ts: m.ts, opp: wi.name, oc: wi.char || '', mc: lo.char || '', gap, pr, won: false });
         }
-        for (const x of res) { const p = P[x.name]; p.r[t] += d[x.name]; p.g[t]++; p.h[t].push({ ts: m.ts, r: p.r[t] }); }
-        dl[t === 'all' ? 'all' : 'mode'] = d;
+      }
+      // the 1v1 or FFA rating moves with the result
+      const d = {}, before = {};
+      res.forEach((x) => { d[x.name] = 0; before[x.name] = P[x.name].r.all; });
+      for (let i = 0; i < n; i++) for (let j = i + 1; j < n; j++) {
+        const a = res[i], b = res[j], pa = P[a.name], pb = P[b.name];
+        const e = 1 / (1 + 10 ** ((pb.r[mode] - pa.r[mode]) / 400));
+        const s = a.place < b.place ? 1 : a.place > b.place ? 0 : 0.5;
+        d[a.name] += ((pa.g[mode] < NEW_N ? K_NEW : K_OLD) / (n - 1)) * (s - e);
+        d[b.name] -= ((pb.g[mode] < NEW_N ? K_NEW : K_OLD) / (n - 1)) * (s - e);
+      }
+      dl.mode = d;
+      for (const x of res) {
+        const p = P[x.name];
+        p.r[mode] += d[x.name]; p.g[mode]++; p.h[mode].push({ ts: m.ts, r: p.r[mode] });
+        // overall = average of 1v1 and FFA ratings, weighted by games played in each, so it always sits between them
+        p.g.all++;
+        p.r.all = (p.g.one * p.r.one + p.g.ffa * p.r.ffa) / (p.g.one + p.g.ffa);
+        p.h.all.push({ ts: m.ts, r: p.r.all });
+        dl.all[x.name] = p.r.all - before[x.name];
       }
       for (const x of res) {
         const p = P[x.name], win = x.place === 1;
