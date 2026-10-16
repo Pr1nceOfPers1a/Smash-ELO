@@ -42,7 +42,6 @@
     fast: [() => 'Fast starter, fades by game three', () => 'Peaks in game one', () => 'Only cares about the first game of the night'],
     sdWin: [(v) => `Self-destructs mostly when winning (${v.a} of ${v.b})`, () => 'Wins first, falls off the stage later', () => "Can't hold a lead without a little chaos"],
     onlyOne: [(v) => `Only ${v.Y} can beat them (${v.k} of ${v.L} losses)`, (v) => `${v.Y} is their kryptonite`, (v) => `Every loss has ${v.Y}'s name on it`],
-    dayMains: [(v) => `${v.A} on weekdays, ${v.B} on weekends`, (v) => `Weekday ${v.A}, weekend ${v.B}`, (v) => `Two lives: ${v.A} and ${v.B}`],
     owns: [(v) => `Perfect against ${v.Y} on ${v.d}s`, (v) => `${v.Y} cannot win on a ${v.d}`, (v) => `Owns ${v.Y} on ${v.d}s`],
     unbeaten: [(v) => `Unbeaten against ${v.Y} (${v.n}–0)`, (v) => `${v.Y} has never beaten them`, (v) => `${v.Y}'s nightmare`],
     odd: [(v) => `Wins ${v.pct}% of odd-numbered games`, (v) => `Odd games only (${v.pct}%)`, () => 'Better at odd numbers than even ones'],
@@ -56,7 +55,7 @@
     onlyWith: [(v) => `Only beats ${v.Y} with ${v.C}`, (v) => `Needs ${v.C} to beat ${v.Y}`, (v) => `Beats ${v.Y} as ${v.C}. Not as anything else`],
     owl: [(v) => `${v.pct}% of their games are after 1 AM`, () => 'Nocturnal', () => 'Sleep is optional'],
     noWeekend: [() => 'Has never played on a weekend', () => 'Weekends off', () => 'Weekday-only'],
-    weekendOnly: [() => 'Only ever plays on weekends', () => 'Weekend warrior', () => 'Saturday and Sunday are the only days that exist'],
+    weekendOnly: [() => 'Only ever plays on weekends', () => 'Weekend warrior', () => 'Only plays on Saturday and Sunday'],
     leaveWin: [() => 'Always leaves on a win', () => 'Never ends a night on a loss', () => 'Knows when to log off'],
     warm: [() => 'Warms up by losing', () => 'The first game of the night is a donation', (v) => `Starts the night with a loss ${v.pct}% of the time`],
     variety: [(v) => `Has played ${v.k} different characters`, (v) => `Commitment issues (${v.k} characters)`, () => 'A different character every week'],
@@ -175,10 +174,8 @@
       for (let d = 0; d < 7; d++) { const x = a.filter((q) => q.dow === d); if (x.length >= 4 && x.every((q) => q.beat > 0) && w / a.length < 0.8) push('owns', 3, x.length / 10, { Y, d: DAYN[d] }); }
       if (w >= 4) { const wc = {}; a.filter((x) => x.beat > 0 && x.c).forEach((x) => (wc[x.c] = (wc[x.c] || 0) + 1)); const tc = Object.entries(wc).sort((x, y) => y[1] - x[1])[0]; if (tc && tc[1] === a.filter((x) => x.beat > 0).length && a.filter((x) => x.c && x.c !== tc[0] && x.beat < 0).length >= 3 && !a.some((x) => x.c !== tc[0] && x.beat > 0)) push('onlyWith', 3, 0.7, { Y, C: tc[0] }); }
     }
-    // weekday vs weekend mains, and one character on one day
+    // one character on one day
     const top = (a) => { const c = {}; a.forEach((g) => g.char && (c[g.char] = (c[g.char] || 0) + 1)); const t = Object.entries(c).sort((x, y) => y[1] - x[1])[0]; return t && t[1] >= 5 ? t[0] : null; };
-    const tw = top(G.filter(WK)), te = top(we);
-    if (tw && te && tw !== te) push('dayMains', 3, 0.8, { A: tw, B: te });
     for (let d = 0; d < 7; d++) {
       const a = G.filter((g) => g.dow === d && g.char); if (a.length < 5) continue;
       const c = {}; a.forEach((g) => (c[g.char] = (c[g.char] || 0) + 1));
@@ -214,7 +211,6 @@
     for (let h = 0; h < 24; h++) { add('hourBest', { h }); add('hourWorst', { h }); }
     ['lateUp', 'lateDn', 'dayUp', 'rage', 'loyal', 'revenge', 'third', 'fast', 'closer', 'leaveWin', 'warm', 'owl', 'noWeekend', 'weekendOnly', 'neverLast', 'rndWin', 'sdWin', 'odd', 'even'].forEach((k) => add(k, { pct: PCT, a: 4, b: 5 }));
     for (const C of fighters) for (let d = 0; d < 7; d++) add('charDay', { C, d: DAYN[d] });
-    for (const A of fighters) for (const B of fighters) if (A !== B) add('dayMains', { A, B });
     for (const C of fighters) add('onlyWith', { C, Y: '[Player]' });
     for (let d = 0; d < 7; d++) add('owns', { Y: '[Player]', d: DAYN[d] });
     for (const M of MONN) add('since', { Y: '[Player]', M });

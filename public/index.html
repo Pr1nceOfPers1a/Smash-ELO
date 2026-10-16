@@ -138,12 +138,12 @@ details.ffa{margin:0 0 14px}details.ffa summary{cursor:pointer;list-style:none;f
 <script src="/elo.js"></script>
 <script src="/badges.js"></script>
 <script>
-const LB={all:"Overall",one:"1v1",ffa:"FFA"};
+const LB={one:"1v1",ffa:"FFA",all:"Average"},ORD=["one","ffa","all"];
 const FIGHTERS="Mario,Donkey Kong,Link,Samus,Dark Samus,Yoshi,Kirby,Fox,Pikachu,Luigi,Ness,Captain Falcon,Jigglypuff,Peach,Daisy,Bowser,Ice Climbers,Sheik,Zelda,Dr. Mario,Pichu,Falco,Marth,Lucina,Young Link,Ganondorf,Mewtwo,Roy,Chrom,Mr. Game & Watch,Meta Knight,Pit,Dark Pit,Zero Suit Samus,Wario,Snake,Ike,Pokémon Trainer,Diddy Kong,Lucas,Sonic,King Dedede,Olimar,Lucario,R.O.B.,Toon Link,Wolf,Villager,Mega Man,Wii Fit Trainer,Rosalina & Luma,Little Mac,Greninja,Mii Brawler,Mii Swordfighter,Mii Gunner,Palutena,Pac-Man,Robin,Shulk,Bowser Jr.,Duck Hunt,Ryu,Ken,Cloud,Corrin,Bayonetta,Inkling,Ridley,Simon,Richter,King K. Rool,Isabelle,Incineroar,Piranha Plant,Joker,Hero,Banjo & Kazooie,Terry,Byleth,Min Min,Steve,Sephiroth,Pyra/Mythra,Kazuya,Sora".split(",");
 const ls=(k,v)=>{try{return v===undefined?localStorage.getItem(k)||"":localStorage.setItem(k,v)}catch(e){return""}};
 const gms=n=>n==1?"game":"games";
 function resetDraft(){NAVS=[];sup="";mm=null;draft=[{name:"",place:1},{name:"",place:2}];note="";scanImg="";scanRaw=null;conf=false;confSnap=""}
-let stt={},ms=[],tab="lb",board="all",sel="",draft=[{name:"",place:1},{name:"",place:2}],note="",D=null;
+let stt={},ms=[],tab="lb",board="one",sel="",draft=[{name:"",place:1},{name:"",place:2}],note="",D=null;
 let me=ls("me"),pass=ls("pass"),admin=ls("admin"),gid=ls("gid"),gname=ls("gname"),jn=(typeof location!="undefined"&&new URLSearchParams(location.search).get("g")||"").slice(0,24),jk="",jmsg="",admOk=false,gtier=(typeof localStorage!="undefined"&&localStorage.getItem("gtier"))||"premier",gk="",gAdm=false,ml={open:false,step:"",key:"",code:"",chal:"",email:"",msg:"",busy:false},pkList=[],pkDays=30,pkMsg="",cg={open:false,pick:"",name:"",pw:"",ak:"",ak2:"",key:"",msg:"",busy:false,done:null},tdTot=null,tdStart=0,tdAcc=null,demo=false,tryOpen=false,tryKey="",tryMsg="",tryStage="",tryRes=null,tryBusy=false,tryLeft=0,pubN=null,pubAcc=null,howto=-1,howCtx="add",scanBase="",tkList=[],tkUses=1,tkHrs=24,tkMsg="",mgG="",mgMs=null,mgD=null;
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 let peep=null;
@@ -203,7 +203,7 @@ function editStatus(n){
   d.onclick=e=>{if(e.target===d)close()};inp.onkeydown=e=>{if(e.key=="Enter")save();if(e.key=="Escape")close()};
   inp.focus();inp.select();
 }
-const tri=p=>`<div class="tri">${["all","one","ffa"].map(t=>`<div><div class="elo">${p.g[t]?Math.round(p.r[t]):"—"}</div><div class="sub">${LB[t]}</div></div>`).join("")}</div>`;
+const tri=p=>`<div class="tri">${ORD.map(t=>`<div><div class="elo">${p.g[t]?Math.round(p.r[t]):"—"}</div><div class="sub">${LB[t]}</div></div>`).join("")}</div>`;
 const DOPEN=new Set(),dkey=d=>(mm?mm.sel.join("|"):"")+"#"+(d.querySelector("summary")?.textContent||"");
 document.addEventListener("toggle",e=>{const d=e.target;if(d&&d.tagName=="DETAILS"&&d.closest("#v")){d.open?DOPEN.add(dkey(d)):DOPEN.delete(dkey(d))}},true);
 function render(){
@@ -234,7 +234,7 @@ function renderCore(){
 
 
     const q=fq.trim().toLowerCase();
-    h+=`<div class="seg">${Object.keys(LB).map(t=>`<button class="${board==t?"on":""}" onclick="board='${t}';render()">${LB[t]}</button>`).join("")}<button class="srch${sopen?" on":""}" aria-label="Search players" onclick="${sopen?"sopen=false;fq='';render()":"sopen=true;render();document.getElementById('fq').focus()"}">${sopen?"✕":"🔍"}</button></div>`;
+    h+=`<div class="seg">${ORD.map(t=>`<button class="${board==t?"on":""}" onclick="board='${t}';render()">${LB[t]}</button>`).join("")}<button class="srch${sopen?" on":""}" aria-label="Search players" onclick="${sopen?"sopen=false;fq='';render()":"sopen=true;render();document.getElementById('fq').focus()"}">${sopen?"✕":"🔍"}</button></div>`;
     if(sopen)h+=`<div class="row"><input class="n" id="fq" placeholder="Search player" value="${esc(fq)}" oninput="fq=this.value;render();const e=document.getElementById('fq');e.focus();e.setSelectionRange(fq.length,fq.length)"></div>`;
     const full=boardList(board),L=full.filter(p=>!q||p.name.toLowerCase().includes(q));
     h+=L.length?L.map(p=>{const i=full.indexOf(p);return`<div class="card lb" data-n="${esc(p.name)}"><div class="rk">${i<3?medal(i):i+1}</div><div class="nm">${bub(p.name)}${esc(p.name)} ${p.streak>=2?"🔥"+p.streak:""}<div class="sub">${p.g[board]} ${gms(p.g[board])}${prov(p.g[board])}</div></div><div class="elo">${Math.round(p.r[board])}</div></div>`}).join(""):`<p class="msg">No ${LB[board]} matches${q?" for that search":" yet"}.</p>`;
@@ -337,7 +337,7 @@ function groupAdminCard(){
   return`<div class="card"><b>Group admin</b><div class="msg">Enter this group's admin password to delete matches and merge players.</div><form onsubmit="event.preventDefault();gaUnlock();return false"><div class="row"><input class="n" id="gak" type="password" autocomplete="off" placeholder="Admin password"><button type="submit">Unlock</button></div></form><div class="msg${wc(gaMsg)}">${esc(gaMsg)}</div></div>`;
 }
 
-let mg={from:"",to:""},mgOut="",mgOk=false,CH=[],fchar="",fq="",sopen=false,pchar="",pmode="all",prange="all";
+let mg={from:"",to:""},mgOut="",mgOk=false,CH=[],fchar="",fq="",sopen=false,pchar="",pmode="one",prange="all";
 function lev(a,b){const d=Array.from({length:a.length+1},(_,i)=>[i]);for(let j=1;j<=b.length;j++)d[0][j]=j;for(let i=1;i<=a.length;i++)for(let j=1;j<=b.length;j++)d[i][j]=Math.min(d[i-1][j]+1,d[i][j-1]+1,d[i-1][j-1]+(a[i-1]==b[j-1]?0:1));return d[a.length][b.length]}
 function flag(name,i){
   const n=name.trim(),known=Object.keys(D.players),l=n.toLowerCase();
@@ -370,7 +370,7 @@ function previewMerge(){
   if(conf.length){mgOk=false;mgOut=`<span class="dn">Can't merge: ${conf.length} match(es) include both players (${conf.slice(0,5).map(m=>new Date(m.ts).toLocaleDateString()).join(", ")}). Delete or fix them in History first.</span>`}
   else{
     const B=DD.players[to],A=calc(nm).players[to];mgOk=true;
-    mgOut=`${changed} match(es) will be renamed. ${esc(to)} before → after: ${["all","one","ffa"].map(t=>`${LB[t]} ${B.g[t]?Math.round(B.r[t]):"—"} → ${A.g[t]?Math.round(A.r[t]):"—"}`).join(" · ")}`;
+    mgOut=`${changed} match(es) will be renamed. ${esc(to)} before → after: ${ORD.map(t=>`${LB[t]} ${B.g[t]?Math.round(B.r[t]):"—"} → ${A.g[t]?Math.round(A.r[t]):"—"}`).join(" · ")}`;
   }
   render();
 }
@@ -389,15 +389,15 @@ let psort="best";
 const pct=(w,l)=>w+l?Math.round(100*w/(w+l))+"%":"—";
 const gm=r=>r.w+r.l+r.t,wr=r=>(r.w+.5*r.t)/gm(r),rec=r=>`${r.w}–${r.l}${r.t?"–"+r.t:""}`;
 const prov=g=>g&&g<10?`<span class="pv">provisional</span>`:"";
-const triP=p=>`<div class="tri">${["all","one","ffa"].map(t=>`<div><div class="elo">${p.g[t]?Math.round(p.r[t]):"—"}</div><div class="sub">${LB[t]}</div>${prov(p.g[t])}</div>`).join("")}</div>`;
+const triP=p=>`<div class="tri">${ORD.map(t=>`<div><div class="elo">${p.g[t]?Math.round(p.r[t]):"—"}</div><div class="sub">${LB[t]}</div>${prov(p.g[t])}</div>`).join("")}</div>`;
 function avgCard(P){
   const ps=Object.values(P);if(!ps.length)return"";
-  return`<div class="card"><div class="sub">Average rating</div><div class="tri">${["all","one","ffa"].map(t=>{const L=ps.filter(p=>p.g[t]);const a=L.length?L.reduce((s,p)=>s+p.r[t],0)/L.length:null;return`<div><div class="elo">${a==null?"—":Math.round(a)}</div><div class="sub">${LB[t]}</div><div class="sub">${L.length} ranked</div></div>`}).join("")}</div></div>`;
+  return`<div class="card"><div class="sub">Average rating</div><div class="tri">${ORD.map(t=>{const L=ps.filter(p=>p.g[t]);const a=L.length?L.reduce((s,p)=>s+p.r[t],0)/L.length:null;return`<div><div class="elo">${a==null?"—":Math.round(a)}</div><div class="sub">${LB[t]}</div><div class="sub">${L.length} ranked</div></div>`}).join("")}</div></div>`;
 }
 function trend(p){
   const h=p.h[pmode],now=Date.now(),DAY=864e5,all=prange=="all";
   const R={all:"All time",month:"Last month",week:"Last week"};
-  const segM=pgrp("c3","Game mode",`<div class="seg">${Object.keys(LB).map(t=>`<button class="${pmode==t?"on":""}" onclick="pmode='${t}';render()">${LB[t]}</button>`).join("")}</div>`);
+  const segM=pgrp("c3","Game mode",`<div class="seg">${ORD.map(t=>`<button class="${pmode==t?"on":""}" onclick="pmode='${t}';render()">${LB[t]}</button>`).join("")}</div>`);
   const segR=pgrp("c2","Time range",`<div class="seg">${Object.keys(R).map(k=>`<button class="${prange==k?"on":""}" onclick="prange='${k}';render()">${R[k]}</button>`).join("")}</div>`);
   if(!h.length)return segM+segR+`<div class="sub">No ${LB[pmode]} games yet.</div>`;
   const T=x=>new Date(x.ts).getTime(),t1=now,t0=prange=="week"?t1-7*DAY:prange=="month"?t1-30*DAY:Math.min(T(h[0]),t1-1);
@@ -546,7 +546,7 @@ function medal(i,size=22){
 }
 function boardList(t){return Object.values(D.players).filter(p=>p.g[t]).sort((a,b)=>b.r[t]-a.r[t])}
 function medalLine(p){
-  const o=["all","one","ffa"].map(t=>[t,boardList(t).findIndex(x=>x.name==p.name)]).filter(([t,i])=>i>=0&&i<3);
+  const o=ORD.map(t=>[t,boardList(t).findIndex(x=>x.name==p.name)]).filter(([t,i])=>i>=0&&i<3);
   return o.length?`<div class="medals">${o.map(([t,i])=>`<span class="mb">${medal(i,18)} ${LB[t]} #${i+1}</span>`).join("")}</div>`:"";
 }
 // ---------- Trends ----------
