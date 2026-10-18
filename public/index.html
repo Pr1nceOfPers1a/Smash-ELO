@@ -363,9 +363,9 @@ function flag(name,i){
 function mergeCard(P){
   if(!isGA())return"";
   const gs=isAdm()?(grp.list||[]):[],cur=mgG||gid,other=cur&&cur!=gid,PP=other&&mgD?mgD.players:P;
-  const names=Object.keys(PP).sort(),opt=v=>`<option value="">Choose…</option>`+names.map(n=>`<option ${n==v?"selected":""}>${esc(n)}</option>`).join("");
+  const names=Object.keys(PP).sort(),opt=(v,not)=>`<option value="">Choose…</option>`+names.filter(n=>n!=not).map(n=>`<option ${n==v?"selected":""}>${esc(n)}</option>`).join("");
   const gopt=gs.length?gs.map(g=>`<option value="${esc(g.id)}" ${g.id==cur?"selected":""}>${esc(g.name)}${g.id==gid?" (this device)":""}</option>`).join(""):`<option value="${esc(gid)}">${esc(gname||"Current group")}</option>`;
-  return`<div class="card"><b>Merge players</b><div class="msg">Moves all matches from the first name into the second, inside the chosen group. A backup CSV downloads first.</div>${isAdm()?`<div class="row"><span class="sub">Group</span><select onchange="mgPick(this.value)">${gopt}</select></div>`:""}<div class="row"><select onchange="mg.from=this.value;mgOut='';mgOk=false">${opt(mg.from)}</select><span class="sub">into</span><select onchange="mg.to=this.value;mgOut='';mgOk=false">${opt(mg.to)}</select></div><button class="g" onclick="previewMerge()">Preview</button><div class="msg${wc(mgOut)}">${mgOut}</div>${mgOk?`<button onclick="doMerge()">Merge now</button>`:""}</div>`;
+  return`<div class="card"><b>Merge players</b><div class="msg">Moves all matches from the first name into the second, inside the chosen group. A backup CSV downloads first.</div>${isAdm()?`<div class="row"><span class="sub">Group</span><select onchange="mgPick(this.value)">${gopt}</select></div>`:""}<div class="row"><select onchange="mg.from=this.value;if(mg.to==mg.from)mg.to='';mgOut='';mgOk=false;render()">${opt(mg.from,mg.to)}</select><span class="sub">into</span><select onchange="mg.to=this.value;mgOut='';mgOk=false;render()">${opt(mg.to,mg.from)}</select></div><button class="g" onclick="previewMerge()">Preview</button><div class="msg${wc(mgOut)}">${mgOut}</div>${mgOk?`<button onclick="doMerge()">Merge now</button>`:""}</div>`;
 }
 async function mgPick(id){
   mgG=id;mg={from:"",to:""};mgOut="";mgOk=false;mgMs=null;mgD=null;
