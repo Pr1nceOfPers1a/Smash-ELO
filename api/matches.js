@@ -75,6 +75,15 @@ module.exports = async (req, res) => {
         return res.status(200).json({ ok: true, statuses: all });
       }
       if (b.action === 'merge') return await merge(b, res, g);
+      if (b.action === 'undo') { // take back a match you just logged (within 2 minutes)
+        if (!UUID.test(b.id || '')) return res.status(400).json({ error: 'Bad id' });
+        const q = await sb(`matches?id=eq.${b.id}&group_id=eq.${g.id}&select=id,ts&limit=1`);
+        const row = q.ok ? (await q.json())[0] : null;
+        if (!row) return res.status(404).json({ error: 'Match not found' });
+        if (Date.now() - new Date(row.ts).getTime() > 120000) return res.status(403).json({ error: 'Too late to undo. Ask an admin to delete it.' });
+        await sb(`matches?id=eq.${b.id}&group_id=eq.${g.id}`, { method: 'DELETE' });
+        return res.status(200).json({ ok: true });
+      }
       if (!valid(b.results)) return res.status(400).json({ error: 'Invalid match' });
       const free = g.tier === 'free'; // free groups: names and placements only, characters and combat stats are Premier
       const results = b.results.map((x) => {
@@ -84,7 +93,8 @@ module.exports = async (req, res) => {
       });
       const r = await sb('matches', { method: 'POST', body: JSON.stringify({ results, group_id: g.id }) });
       if (!r.ok) return res.status(500).json({ error: 'Database error' });
-      return res.status(200).json({ ok: true });
+      let id = null; try { id = ((await r.json())[0] || {}).id || null; } catch (e) {}
+      return res.status(200).json({ ok: true, id });
     }
     if (req.method === 'DELETE') {
       if (!groupAdminOk(g, b.gkey, b.admin)) return res.status(401).json({ error: 'Wrong admin password' });

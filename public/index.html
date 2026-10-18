@@ -80,6 +80,20 @@ input.sm{flex:1;width:0;min-width:0;text-align:center;padding:8px 4px;font-size:
 #ov .box{position:relative;background:var(--card);border:4px solid var(--ink);box-shadow:6px 6px 0 var(--ink);padding:16px;max-width:420px;width:100%;max-height:90vh;overflow:auto}
 #ov .cl{position:absolute;top:8px;right:8px;width:30px;height:30px;padding:0;font:12px/1 var(--pf);background:var(--yel);color:var(--ink);box-shadow:2px 2px 0 var(--ink)}
 #ov .dots{padding-right:40px;display:flex;gap:6px;margin:0 0 10px}#ov .dots i{width:10px;height:10px;border:2px solid var(--ink);background:var(--in)}#ov .dots i.on{background:var(--ac)}
+#rq{display:none;position:fixed;inset:0;z-index:60;background:rgba(27,23,48,.6);align-items:center;justify-content:center;padding:16px}
+#rq .box{background:var(--card);border:4px solid var(--ink);box-shadow:6px 6px 0 var(--ink);padding:16px;max-width:420px;width:100%;max-height:90vh;overflow:auto}
+#rq .two{display:flex;gap:10px;margin:12px 0 10px}#rq .two button{flex:1;min-height:52px}
+#rq .no{position:relative;overflow:hidden;background:#ffd0dc;color:var(--ink)}#rq .no span{position:relative;z-index:1}
+#rq .no i{position:absolute;left:0;top:0;bottom:0;width:0;background:#ff9bb3;animation:rqf 3s linear forwards}
+@keyframes rqf{0%{width:0;background:#ff9bb3}100%{width:100%;background:#e5322d}}
+#rq .no.run{animation:rqt 3s linear forwards}@keyframes rqt{0%{color:var(--ink)}60%{color:var(--ink)}100%{color:#fff}}
+#rq .ck{display:flex;align-items:center;gap:8px;font:8px/1.6 var(--pf);color:var(--mu);margin:6px 0 0}
+#rq .pk{display:flex;align-items:center;gap:10px;padding:9px 6px;border-bottom:2px solid var(--ln);font:12px/1.3 ui-monospace,Menlo,Consolas,monospace;color:var(--ink)}
+#rq .pk input,#rq .ck input{width:20px;height:20px;flex:none;accent-color:var(--ac)}
+#rq .bar{height:14px;border:3px solid var(--ink);background:var(--in);margin:14px 0 4px;overflow:hidden;position:relative}#rq .bar i{position:absolute;top:0;bottom:0;width:40%;background:var(--ac);animation:rqb 1.1s ease-in-out infinite alternate}@keyframes rqb{from{left:0}to{left:60%}}
+#ud{display:none;position:fixed;left:12px;right:12px;bottom:70px;z-index:55;justify-content:center}
+#ud .t{display:flex;align-items:center;gap:12px;background:var(--ink);color:#fff;border:3px solid var(--ink);box-shadow:3px 3px 0 rgba(0,0,0,.4);padding:8px 8px 8px 14px;font:9px/1.5 var(--pf);max-width:420px;width:100%}
+#ud .t b{flex:1;font-weight:400}#ud .t button{background:var(--yel);color:var(--ink);box-shadow:none;border-color:var(--yel)}
 #ov ul{margin:6px 0 0;padding-left:20px;line-height:1.5}
 .big{font:11px/1.6 var(--pf);margin:0 0 8px}
 .tile.blue{background:#4d8dff}.tile.blue.on{background:#2f6bff}
@@ -134,7 +148,7 @@ details.ffa{margin:0 0 14px}details.ffa summary{cursor:pointer;list-style:none;f
 .hid{all:unset;cursor:text}.hid:active{transform:none!important}
 </style></head><body><main><h1>BRO <span>ELO</span></h1><div class="tl">▶ 1UP LEADERBOARD <span class="blink">█</span></div><div id="now"></div><div id="v"></div></main>
 <nav><button data-t="lb">Ranks</button><button data-t="tr">Trends</button><button data-t="add">Add</button><button data-t="hist">History</button><button data-t="set">Settings</button></nav>
-<input type="file" id="f" accept="image/*" hidden><input type="file" id="tf" accept="image/*" hidden><div id="ov"></div>
+<input type="file" id="f" accept="image/*" hidden><input type="file" id="tf" accept="image/*" hidden><div id="ov"></div><div id="rq"></div><div id="ud"></div>
 <script src="/elo.js"></script>
 <script src="/badges.js"></script>
 <script>
@@ -1022,7 +1036,7 @@ function peepExit(){
   gid=o.gid;gname=o.gname;pass=o.pass;gtier=o.gtier;ls("gtier",gtier);gAdm=o.gAdm;gk=o.gk;ms=[];sel="";stat="";tab="set";
   if(gid)load();render();scrollTo(0,0);
 }
-async function saveMatch(){
+async function saveMatch(auto){
   if(peep)return alert("Peek mode is view only.");
   if(scanBusy)return alert("Still reading the screenshot. Try again in a moment.");
   if(scanImg){conf=true;confSnap=JSON.stringify(draft)} // pressing Save is the confirmation for a scan
@@ -1032,11 +1046,47 @@ async function saveMatch(){
   if(r.length<2||r.some(x=>!x.name))return bad(r.length<2?"Need at least two players.":"Every player needs a username.");
   if(new Set(r.map(x=>x.name.toLowerCase())).size<r.length)return bad("Each username must be unique.");
   const b=document.getElementById("sv");if(b)b.disabled=true;
-  const accKind=scanImg&&sig(draft)===scanBase?"accepted":"missed"; // scanned and untouched = accepted; typed, edited or re-scanned = missed
-  const keep=confOk()?{image:scanImg,labels:r.map(x=>({name:x.name,place:x.place,character:x.char||"",kills:x.kills??null,deaths:x.deaths??null,sds:x.sds??null,damage:x.dmg??null})),scanned:scanRaw}:null;
-  try{await api("matches",{method:"POST",body:JSON.stringify({passcode:pass,results:r})});trackAcc(accKind);draft=[{name:"",place:1},{name:"",place:2}];note="";scanImg="";scanRaw=null;conf=false;confSnap="";tab="lb";await load();render()
+  const accKind=auto||(scanImg&&sig(draft)===scanBase)?"accepted":"missed"; // scanned and untouched = accepted; typed, edited or re-scanned = missed
+  const keep=!auto&&confOk()?{image:scanImg,labels:r.map(x=>({name:x.name,place:x.place,character:x.char||"",kills:x.kills??null,deaths:x.deaths??null,sds:x.sds??null,damage:x.dmg??null})),scanned:scanRaw}:null;
+  try{const sj=await api("matches",{method:"POST",body:JSON.stringify({passcode:pass,results:r})});trackAcc(accKind);if(auto&&sj&&sj.id)showUndo(sj.id);draft=[{name:"",place:1},{name:"",place:2}];note="";scanImg="";scanRaw=null;conf=false;confSnap="";tab="lb";await load();render()
     if(keep)api("scans",{method:"POST",body:JSON.stringify({passcode:pass,...keep})}).catch(e=>alert("Match saved, but the scan couldn't be saved: "+e.message))}
   catch(e){if(b)b.disabled=false;bad(e.message)}
+}
+// ---------- Auto-log: scan, one tap (or none), saved ----------
+let sj=null,rqT=0,sjN=0;
+const RHIDE="rndHide",rndHidden=()=>+ls(RHIDE)>Date.now();
+function recentNames(){const seen=[],ks=new Set();for(let k=ms.length-1;k>=0&&seen.length<6;k--)for(const x of ms[k].results){const l=x.name.toLowerCase();if(!ks.has(l)){ks.add(l);seen.push(x.name)}}return seen}
+function drawRq(){
+  const o=document.getElementById("rq");if(!o)return;
+  if(!sj||sj.stage=="off"){o.style.display="none";o.innerHTML="";return}
+  o.style.display="flex";let h="";
+  if(sj.stage=="ask")h=`<div class="box" role="dialog" aria-label="Did anybody go Random?"><div class="big">Did anybody go Random?</div><div class="two"><button class="g" onclick="rqYes()">Yes</button><button class="no run" onclick="rqAnswer([])"><i></i><span>No, save</span></button></div><label class="ck"><input type="checkbox" id="rqh" onchange="sj.hide=this.checked">Don't ask for 24 hours</label></div>`;
+  else if(sj.stage=="pick"){const rec=recentNames(),all=Object.keys(D.players).sort((a,b)=>a.localeCompare(b)),rest=all.filter(n=>!rec.includes(n)),row=n=>`<label class="pk"><input type="checkbox" ${sj.picks.has(n.toLowerCase())?"checked":""} onchange="rqTog('${esc(n).replace(/'/g,"\\'")}',this.checked)">${esc(n)}</label>`;
+    h=`<div class="box" role="dialog" aria-label="Who went Random?"><div class="big">Who went Random?</div>${rec.length?`<div class="sub" style="margin:0 0 4px">Recent players</div>${rec.map(row).join("")}`:""}${rest.length?(sj.all?`<div class="sub" style="margin:12px 0 4px">All players</div>${rest.map(row).join("")}`:`<div class="row" style="margin:10px 0 0"><button class="g" style="flex:1" onclick="sj.all=true;drawRq()">Pick from all players</button></div>`):""}<div class="row" style="margin:14px 0 0"><button style="flex:1" onclick="rqAnswer([...sj.picks])">Save</button></div></div>`}
+  else h=`<div class="box" role="dialog" aria-label="Submitting scan"><div class="big">Submitting scan…</div><div class="bar"><i></i></div></div>`;
+  const sc=o.querySelector(".box"),keep=sc?sc.scrollTop:0;o.innerHTML=h;
+}
+function rqYes(){clearTimeout(rqT);if(sj.hide)ls(RHIDE,String(Date.now()+864e5));sj.hideDone=true;const g=new Set;for(const n of recentNames())if(lastRnd(n))g.add(n.toLowerCase());sj.picks=g;sj.stage="pick";drawRq()}
+function rqTog(n,on){const l=n.toLowerCase();on?sj.picks.add(l):sj.picks.delete(l)}
+function rqAnswer(list){if(!sj||sj.ans)return;clearTimeout(rqT);if(sj.hide&&!sj.hideDone)ls(RHIDE,String(Date.now()+864e5));sj.ans=list.map(x=>x.toLowerCase());sj.stage="wait";drawRq();sjFinish()}
+async function sjFinish(){
+  const j=sj;if(!j||!j.fin||!j.ans)return;
+  const pl=j.res&&j.res.players||[];
+  if(pl.length<2){note=j.err?j.err:j.res&&j.res.problem?"Couldn't read it: "+j.res.problem:"Couldn't read that screen. Enter results by hand.";sj=null;scanBusy=false;drawRq();return render()}
+  ({draft}=fromScan(pl));
+  draft.forEach(r=>{const l=r.name.trim().toLowerCase();if(j.ans.includes(l)||(j.guess&&lastRnd(r.name))){r.rnd=true;r.char="Random"}}); // picks that aren't on the scan are ignored
+  scanImg="";scanRaw=null;conf=false;confSnap="";scanBusy=false;
+  await saveMatch(true);
+  const failed=tab=="add";sj=null;drawRq();if(failed){note="Couldn't save automatically. Check the result and tap Save match.";render()}
+}
+function showUndo(id){
+  const o=document.getElementById("ud");if(!o)return;clearTimeout(showUndo.t);
+  o.style.display="flex";o.innerHTML=`<div class="t"><b>Match logged</b><button onclick="undoMatch('${id}')">Undo</button></div>`;
+  showUndo.t=setTimeout(()=>{o.style.display="none";o.innerHTML=""},8000);
+}
+async function undoMatch(id){
+  const o=document.getElementById("ud");clearTimeout(showUndo.t);if(o){o.style.display="none";o.innerHTML=""}
+  try{await api("matches",{method:"POST",body:JSON.stringify({passcode:pass,action:"undo",id})});await load();render()}catch(e){alert(e.message)}
 }
 async function del(id){if(!confirm("Delete this match? Ratings will be recalculated."))return;try{await api("matches",{method:"DELETE",body:JSON.stringify({admin,gkey:gk,id})});await load()}catch(e){alert(e.message)}}
 function csv(list){
@@ -1051,15 +1101,14 @@ async function shrink(file){
 }
 document.getElementById("f").onchange=async e=>{if(peep){e.target.value="";return alert("Peek mode is view only.")}
   const file=e.target.files[0];e.target.value="";if(!file)return;
-  scanBusy=true;render();{const st=document.getElementById("st");if(st)st.textContent="Reading screenshot…"}
+  const hid=rndHidden(),j=sj={id:++sjN,stage:hid?"wait":"ask",ans:hid?[]:null,guess:hid,fin:false,res:null,err:"",hide:false,picks:new Set,all:false};
+  scanBusy=true;drawRq();render();{const st=document.getElementById("st");if(st)st.textContent="Reading screenshot…"}
+  if(!hid)rqT=setTimeout(()=>{if(sj===j&&j.stage=="ask")rqAnswer([])},3000); // nobody answered: nobody went Random
   try{
-    const img=await shrink(file),j=await api("scan",{method:"POST",body:JSON.stringify({passcode:pass,roster:Object.keys(D.players),chars:CH,image:img})});
-    if(j.players.length<2){note=j.problem?"Couldn't read it: "+j.problem:"Couldn't read that screen. Enter results by hand."}
-    else{if(scanImg)trackAcc("missed");({draft,note}=fromScan(j.players));draft.forEach(autoRnd);scanImg=img;scanRaw=j.players;conf=false;confSnap="";scanBase=sig(draft)}
-  }catch(err){note=err.message}
-  scanBusy=false;render();
+    const img=await shrink(file);j.res=await api("scan",{method:"POST",body:JSON.stringify({passcode:pass,roster:Object.keys(D.players),chars:CH,image:img})});
+  }catch(err){j.err=err.message}
+  j.fin=true;if(sj===j)sjFinish();
 };
-
 // ---------- Login page: demo + try scan ----------
 const PHONE="(323) 434-6498";
 function loginPage(){
@@ -1165,7 +1214,7 @@ function showHow(ctx){howCtx=ctx;howto=0;drawHow()}
 function drawHow(){
   const o=document.getElementById("ov");if(!o)return;
   if(howto<0){o.style.display="none";o.innerHTML="";return}
-  const s=HOW[howto],last=howto==HOW.length-1,body=s[1]??(howCtx=="try"?"Make sure the names and placements match your picture, then tap Accept scan to see the finished results.":"Make sure every name, placement and stat matches the screen. Fix anything that's off. A popup asks if all data is correct: tap Yes, save to log the match, or No, edit to keep fixing it first.");
+  const s=HOW[howto],last=howto==HOW.length-1,body=s[1]??(howCtx=="try"?"Make sure the names and placements match your picture, then tap Accept scan to see the finished results.":"Nothing to confirm. While it reads, a popup asks if anybody went Random. Tap Yes to pick who, or do nothing and it saves on its own after 3 seconds. Spot a mistake? Tap Undo right after, or fix it in History.");
   o.style.display="flex";
   o.innerHTML=`<div class="box" role="dialog" aria-label="How to scan"><button class="cl" aria-label="Close" title="Close" onclick="howto=-1;drawHow()">✕</button><div class="dots">${HOW.map((_,i)=>`<i class="${i==howto?"on":""}"></i>`).join("")}</div><div class="big">${howto+1}. ${esc(s[0])}</div><div class="msg" style="margin:0 0 14px">${body}</div><div class="row">${howto>0?`<button class="g" onclick="howto--;drawHow()">Back</button>`:`<button class="g" onclick="howto=-1;drawHow()">Close</button>`}<button style="flex:1" onclick="${last?"howto=-1":"howto++"};drawHow()">${last?"Got it":"Next"}</button></div></div>`;
 }
