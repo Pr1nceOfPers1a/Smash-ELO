@@ -1,12 +1,14 @@
 // Rating tracks: one (1v1 only), ffa (3+ players only), all (games-weighted blend of those two), plus a per (player, character) track.
 (function (root) {
-  const START = 1000, NEW_N = 10, K_NEW = 48, K_OLD = 32, UPSET_GAP = 50;
+  const START = 1000, NEW_N = 10, K_NEW = 48, K_OLD = 32, UPSET_GAP = 50, COMBAT_SCALE = 2;
+  // Combat rating: no wins or placements. Players in a match are compared on KOs, falls, self-destructs and damage only.
+  const perfOf = (x, useS, useD) => x.kills - x.deaths - (useS ? 0.5 * x.sds : 0) + (useD ? x.dmg / 200 : 0);
   function compute(ms) {
     const P = {}, C = {}, out = [];
     const get = (n) => (P[n] ??= {
-      name: n, r: { all: START, one: START, ffa: START }, g: { all: 0, one: 0, ffa: 0 },
+      name: n, r: { all: START, one: START, ffa: START, cmb: START }, g: { all: 0, one: 0, ffa: 0, cmb: 0 },
       w: 0, l: 0, wm: { one: { w: 0, l: 0 }, ffa: { w: 0, l: 0 } }, ffa: { n: 0, place: 0, size: 0 },
-      streak: 0, h: { all: [], one: [], ffa: [] }, h2h: {}, h2c: {}, cvc: {}, cm: {}, nchar: 0, ups: [], cs: { one: { k: 0, d: 0, n: 0, sd: 0, dmg: 0 }, ffa: { k: 0, d: 0, n: 0, sd: 0, dmg: 0 } },
+      streak: 0, h: { all: [], one: [], ffa: [], cmb: [] }, h2h: {}, h2c: {}, cvc: {}, cm: {}, nchar: 0, ups: [], cs: { one: { k: 0, d: 0, n: 0, sd: 0, dmg: 0 }, ffa: { k: 0, d: 0, n: 0, sd: 0, dmg: 0 } },
     });
     for (const m of ms) {
       const res = m.results, n = res.length, mode = n === 2 ? 'one' : 'ffa';
@@ -42,6 +44,20 @@
         p.r.all = (p.g.one * p.r.one + p.g.ffa * p.r.ffa) / (p.g.one + p.g.ffa);
         p.h.all.push({ ts: m.ts, r: p.r.all });
         dl.all[x.name] = p.r.all - before[x.name];
+      }
+      // combat rating moves with how people fought, not who won
+      const cp = res.filter((x) => Number.isFinite(x.kills) && Number.isFinite(x.deaths));
+      if (cp.length >= 2) {
+        const useS = cp.every((x) => Number.isFinite(x.sds)), useD = cp.every((x) => Number.isFinite(x.dmg));
+        const sc = cp.map((x) => perfOf(x, useS, useD)), cd = cp.map(() => 0), k = cp.length - 1;
+        for (let i = 0; i < cp.length; i++) for (let j = i + 1; j < cp.length; j++) {
+          const pa = P[cp[i].name], pb = P[cp[j].name];
+          const e = 1 / (1 + 10 ** ((pb.r.cmb - pa.r.cmb) / 400));
+          const so = 1 / (1 + Math.exp(-(sc[i] - sc[j]) / COMBAT_SCALE)); // how decisively they out-fought each other
+          cd[i] += ((pa.g.cmb < NEW_N ? K_NEW : K_OLD) / k) * (so - e);
+          cd[j] -= ((pb.g.cmb < NEW_N ? K_NEW : K_OLD) / k) * (so - e);
+        }
+        cp.forEach((x, i) => { const p = P[x.name]; p.r.cmb += cd[i]; p.g.cmb++; p.h.cmb.push({ ts: m.ts, r: p.r.cmb }); dl.cmb = dl.cmb || {}; dl.cmb[x.name] = cd[i]; });
       }
       for (const x of res) {
         const p = P[x.name], win = x.place === 1;
