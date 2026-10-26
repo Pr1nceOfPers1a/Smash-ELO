@@ -94,6 +94,10 @@ input.sm{flex:1;width:0;min-width:0;text-align:center;padding:8px 4px;font-size:
 #ud{display:none;position:fixed;left:12px;right:12px;bottom:70px;z-index:55;justify-content:center}
 #ud .t{display:flex;align-items:center;gap:12px;background:var(--ink);color:#fff;border:3px solid var(--ink);box-shadow:3px 3px 0 rgba(0,0,0,.4);padding:8px 8px 8px 14px;font:9px/1.5 var(--pf);max-width:420px;width:100%}
 #ud .t b{flex:1;font-weight:400}#ud .t button{background:var(--yel);color:var(--ink);box-shadow:none;border-color:var(--yel)}
+.cpg{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:10px 0 0}.cpg label{display:block;min-width:0}.cpg .sub{display:block;margin:0 0 3px;font-size:11px}.cpg select{width:100%}
+.cpl{display:inline-block;border:2px solid var(--ink);background:var(--g);color:var(--ink);font:700 10px/1.3 ui-monospace,monospace;padding:3px 6px}.cpls{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0 0}
+.cpc{display:flex;gap:8px;align-items:stretch;margin:10px 0 0}.cpc .ax{display:flex;flex-direction:column;justify-content:space-between;font:11px/1 ui-monospace,monospace;color:var(--mu);text-align:right;min-width:34px}.cpc svg{flex:1;min-width:0;height:84px;border:2px solid var(--ink);background:var(--in)}
+.cpr{display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:2px solid var(--ln);font:12px/1.3 ui-monospace,monospace}.cpr span{flex:1;min-width:0;overflow-wrap:anywhere}.cpa{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin:10px 0 0}.cpa label{min-width:0}.cpa input{width:100%;min-width:0}.cpa .sub{display:block;margin:0 0 3px;font-size:11px}
 #ov ul{margin:6px 0 0;padding-left:20px;line-height:1.5}
 .big{font:11px/1.6 var(--pf);margin:0 0 8px}
 .tile.blue{background:#4d8dff}.tile.blue.on{background:#2f6bff}
@@ -149,7 +153,7 @@ details.ffa{margin:0 0 14px}details.ffa summary{cursor:pointer;list-style:none;f
 </style></head><body><main><h1>BRO <span>ELO</span></h1><div class="tl">▶ 1UP LEADERBOARD <span class="blink">█</span></div><div id="now"></div><div id="v"></div></main>
 <nav><button data-t="lb">Ranks</button><button data-t="tr">Trends</button><button data-t="add">Add</button><button data-t="hist">History</button><button data-t="set">Settings</button></nav>
 <input type="file" id="f" accept="image/*" hidden><input type="file" id="tf" accept="image/*" hidden><div id="ov"></div><div id="rq"></div><div id="ud"></div>
-<script src="/elo.js"></script>
+<script src="/elo.js"></script><script src="/cpu.js"></script>
 <script src="/badges.js"></script>
 <script>
 const LB={one:"1v1",ffa:"FFA",cmb:"Combat",chr:"Chars",all:"Overall"},ORD=["one","ffa","cmb"];
@@ -198,7 +202,7 @@ function updateNow(){
   el.style.display="flex";
   el.innerHTML=`<span class="live"><i class="dot blink"></i>PLAYING NOW</span><span class="who">${shown.map(esc).join(", ")}${more>0?` +${more} more`:""}</span><span class="ago">${mins<1?"just now":mins+" min ago"}</span>`;
 }
-async function load(){if(!gid||demo)return;try{ms=await api("matches");try{stt=(await api("matches",{method:"POST",body:JSON.stringify({action:"statuses"})})).statuses||{}}catch(e){}ms.sort((a,b)=>new Date(a.ts)-new Date(b.ts));updateNow();const ae=document.activeElement?.tagName;if(tab!="add"&&ae!="SELECT"&&ae!="INPUT")render();else D=calc(ms)}catch(e){}}
+async function load(){if(!gid||demo)return;try{ms=await api("matches");try{stt=(await api("matches",{method:"POST",body:JSON.stringify({action:"statuses"})})).statuses||{}}catch(e){}try{const cj=await api("matches",{method:"POST",body:JSON.stringify({action:"cpu"})});if(cj&&cj.games)cpuD={anchors:cj.anchors||null,games:cj.games}}catch(e){}ms.sort((a,b)=>new Date(a.ts)-new Date(b.ts));updateNow();const ae=document.activeElement?.tagName;if(tab!="add"&&ae!="SELECT"&&ae!="INPUT")render();else D=calc(ms)}catch(e){}}
 function spark(h){
   if(h.length<2)return"";const v=h.map(x=>x.r),lo=Math.min(...v),hi=Math.max(...v),sp=Math.max(hi-lo,1);
   const pts=v.map((y,i)=>`${(i/(v.length-1)*296+2).toFixed(1)},${(56-(y-lo)/sp*52).toFixed(1)}`).join(" ");
@@ -531,6 +535,33 @@ function oppOf(name){
   return{avg:t=>o[t].g?Math.round(o[t].os/o[t].g):null,best,bavg:bn?Math.round(bs/bn):null};
 }
 const bdgs=p=>{let b=[];try{b=BADGES.pick(D.matches,p.name,2)}catch(e){}return b.length?`<div class="bds">${b.map(x=>`<span class="bd">✦ ${esc(x.t)}</span>`).join("")}</div>`:""};
+// ---------- Training vs CPU (personal rating, separate from the ladder) ----------
+let cpuD={anchors:null,games:[]},cpf={level:5,win:true,stocks:3,char:""},cpaOpen=false;
+const cpuAnch=()=>cpuD.anchors&&cpuD.anchors.length==9?cpuD.anchors:CPU.DEF;
+async function cpuPost(o){if(peep)return alert("Peek mode is view only.");try{const j=await api("matches",{method:"POST",body:JSON.stringify(o)});if(j&&j.games)cpuD={anchors:j.anchors||null,games:j.games};return true}catch(e){alert(e.message)}finally{render()}}
+const cpuLog=name=>cpuPost({action:"cpulog",name,level:cpf.level,win:cpf.win,stocks:cpf.stocks,...(PREM()&&cpf.char?{char:cpf.char}:{})});
+const cpuDel=id=>{if(confirm("Delete this training game?"))cpuPost({action:"cpudel",id})};
+async function cpaSave(){const v=[...document.querySelectorAll(".cpa input")].map(i=>+i.value);if(await cpuPost({action:"cpuanchors",anchors:v})){cpaOpen=false;render()}}
+function cpaReset(){if(confirm("Put the CPU ratings back to the defaults? Every training rating is recalculated."))cpuPost({action:"cpuanchors",anchors:null})}
+function cpuCard(p){
+  const R=CPU.rate(cpuD.games,cpuAnch(),p.name),n=R.g,e=esc,A=cpuAnch();
+  const lv=Object.keys(R.lv).sort((a,b)=>a-b).map(k=>`<span class="cpl">Lv ${k} · ${R.lv[k].w}–${R.lv[k].l}</span>`).join("");
+  const base=n>10?R.h[n-11].r:1000,dl=R.r-base,chars=Object.entries(R.ch).sort((a,b)=>b[1].g-a[1].g);
+  let chart="";
+  if(n>=2){const rs=R.h.map(x=>x.r),lo=Math.min(...rs),hi=Math.max(...rs),mid=(lo+hi)/2,sp=Math.max(hi-lo,40),y0=mid-sp/2,pts=rs.map((r,i)=>`${(2+i/(n-1)*296).toFixed(1)},${(68-(r-y0)/sp*64).toFixed(1)}`).join(" ");
+    chart=`<div class="cpc"><div class="ax"><span>${Math.round(mid+sp/2)}</span><span>${Math.round(mid-sp/2)}</span></div><svg viewBox="0 0 300 70" preserveAspectRatio="none" role="img" aria-label="Training rating over time"><polyline points="${pts}" fill="none" stroke="var(--ac)" stroke-width="2.5" vector-effect="non-scaling-stroke" stroke-linejoin="round"/></svg></div><div class="sub" style="margin:4px 0 0">Rating after each of your ${n} games</div>`}
+  const recent=R.games.slice(-5).reverse().map(g=>`<div class="cpr"><span>${new Date(g.ts).toLocaleDateString(undefined,{month:"short",day:"numeric"})} · Lv ${g.level} · <b>${g.win?"Win":"Loss"}</b> · ${g.win?"you kept":"CPU kept"} ${g.stocks}${g.char?` · ${e(g.char)}`:""}</span><button class="x" aria-label="Delete game" onclick="cpuDel('${e(g.id)}')">✕</button></div>`).join("");
+  const opts=(a,sel)=>a.map(([v,t])=>`<option value="${v}" ${v==sel?"selected":""}>${t}</option>`).join("");
+  return`<div class="card"><div class="hd"><b class="ct">Training vs CPU</b></div>
+  <div class="row" style="margin:6px 0 0;align-items:flex-end"><div style="flex:1"><div class="elo" style="font-size:22px">${n?Math.round(R.r):"—"}</div><div class="sub">Training rating${n&&n<10?` <span class="pv">provisional</span>`:""}</div></div><div style="text-align:right"><div class="sub">${n} ${gms(n)} · ${R.w}W ${R.l}L</div>${n>=3?`<div class="sub ${dl>=0?"up":"dn"}">${dl>=0?"+":""}${Math.round(dl)} ${n>10?"over last 10":"so far"}</div>`:""}</div></div>
+  ${chart}${lv?`<div class="cpls">${lv}</div>`:""}
+  ${chars.length?`<div class="sub" style="margin:12px 0 2px">By character</div>${chars.map(([c,x])=>`<div class="cpr"><span>${e(c)}</span><b>${Math.round(x.r)}</b><span class="sub" style="flex:none">${x.g} ${gms(x.g)}</span></div>`).join("")}`:""}
+  <div class="sub" style="margin:14px 0 0"><b>Log a game</b></div>
+  <div class="cpg"><label><span class="sub">CPU level</span><select onchange="cpf.level=+this.value">${opts([1,2,3,4,5,6,7,8,9].map(x=>[x,"Level "+x]),cpf.level)}</select></label><label><span class="sub">Result</span><select onchange="cpf.win=this.value=='w'">${opts([["w","Win"],["l","Loss"]],cpf.win?"w":"l")}</select></label><label><span class="sub">Winner's stocks left</span><select onchange="cpf.stocks=+this.value">${opts([[3,"3 (dominant)"],[2,"2"],[1,"1 (close)"]],cpf.stocks)}</select></label>${PREM()?`<label><span class="sub">Your character</span><select onchange="cpf.char=this.value">${opts([["","Not set"],...CH.filter(c=>c!="Random").map(c=>[c.replace(/"/g,"&quot;"),e(c)])],cpf.char)}</select></label>`:""}</div>
+  <div class="row" style="margin:10px 0 0"><button style="flex:1" onclick="cpuLog('${e(p.name).replace(/'/g,"\\'")}')">Log game</button><button class="g" onclick="cpaOpen=!cpaOpen;render()">${cpaOpen?"Hide":"CPU ratings"}</button></div>
+  ${cpaOpen?`<div class="msg" style="margin:10px 0 0">How tough each CPU level is. Higher means tougher, so a win earns more. Changing these re-rates every training game.</div><div class="cpa">${A.map((a,i)=>`<label><span class="sub">Lv ${i+1}</span><input class="n" type="number" inputmode="numeric" min="100" max="3000" value="${a}"></label>`).join("")}</div><div class="row" style="margin:10px 0 0"><button style="flex:1" onclick="cpaSave()">Save</button><button class="g" onclick="cpaReset()">Reset</button></div>`:""}
+  ${recent?`<div class="sub" style="margin:14px 0 2px">Recent games</div>${recent}`:""}</div>`;
+}
 function playerPage(p){
   const wm=p.wm,op=oppOf(p.name);
   return`<button class="g" onclick="goBack()">← Back</button>
@@ -541,6 +572,7 @@ function playerPage(p){
   <div class="card"><div class="hd"><b class="ct">Win rate</b>${lbLink("wr")}</div><div class="tri">${[["Overall","all",p.w,p.l],["1v1","one",wm.one.w,wm.one.l],["FFA","ffa",wm.ffa.w,wm.ffa.l]].map(([t,k,w,l])=>`<div data-stat="wr" data-sm="${k}"><div class="elo">${pct(w,l)}</div><div class="sub">${t}</div><div class="sub">${w}W ${l}L</div></div>`).join("")}</div></div>
   ${op.best>=2?`<div class="card"><div class="hd"><b class="ct">Win streak</b>${lbLink("streak","","best")}</div><div style="margin-top:6px">Longest: <b>${op.best}</b> wins in a row</div>${p.streak>=2?`<div class="sub">Current: ${p.streak} in a row</div>`:""}</div>`:""}
   ${tpCard(p.name)}
+  ${cpuCard(p)}
   ${PREM()?combat(p):""}<div class="card"><b>Rating history</b>${trend(p)}</div>
   ${PREM()?charCard(p):""}${coachCard(p)}${rivals(p)}${upsets(p)}${PREM()?"":lockedStats("Combat stats",COMBAT_ITEMS)+lockedStats("Fighter stats",FIGHTER_ITEMS)}`;
 }
@@ -1248,7 +1280,14 @@ function makeDemo(){
   return out;
 }
 const DEMO_STATUS={pixel:"main character energy",nova:"ledge trap enjoyer",rook:"one more game",echo:"lag was the problem",bolt:"practicing, I swear",mango:"here for the vibes"};
-function startDemo(){demo=true;gid="demo";gname="Demo Squad";pass="";stt={...DEMO_STATUS};tpv="d";tpo=0;ms=makeDemo();ms.sort((a,b)=>new Date(a.ts)-new Date(b.ts));tab="lb";sel="";stat="";tryOpen=false;tryStage="";render();scrollTo(0,0)}
+function makeDemoCpu(){
+  let sd=7;const rnd=()=>(sd=(sd*16807)%2147483647)/2147483647,DAY=864e5,now=Date.now(),out=[],A=CPU.DEF;let id=0;
+  const plan={Pixel:[46,"Kirby",.38,.62],Nova:[30,"Fox",.3,.5],Rook:[14,"Link",.2,.35],Echo:[9,"Pikachu",.15,.25]};
+  for(const[nm,[n,ch,lo,hi]]of Object.entries(plan))for(let i=0;i<n;i++){
+    const t=i/(n-1||1),skill=900+t*(hi-lo)*600+lo*400,lvl=Math.min(9,Math.max(1,Math.round(3+t*4+rnd()*1.6))),pw=1/(1+10**((A[lvl-1]-skill)/400)),win=rnd()<pw;
+    out.push({id:"d"+(id++),ts:new Date(now-(1-t)*21*DAY-rnd()*DAY*.4).toISOString(),name:nm,level:lvl,win,stocks:win?(rnd()<.45?3:rnd()<.6?2:1):(rnd()<.5?2:1),char:ch})}
+  return out}
+function startDemo(){cpuD={anchors:null,games:makeDemoCpu()};demo=true;gid="demo";gname="Demo Squad";pass="";stt={...DEMO_STATUS};tpv="d";tpo=0;ms=makeDemo();ms.sort((a,b)=>new Date(a.ts)-new Date(b.ts));tab="lb";sel="";stat="";tryOpen=false;tryStage="";render();scrollTo(0,0)}
 function exitDemo(){demo=false;stt={};gid=ls("gid");gname=ls("gname");pass=ls("pass");ms=[];sel="";stat="";tab="lb";if(gid)load();render();scrollTo(0,0)}
 fetch("/api/pub").then(r=>r.json()).then(j=>{pubN=j.matches;pubAcc=j.acc;if(!gid)render()}).catch(()=>{});
 {const _r=render;render=function(){const o=[...document.querySelectorAll("#v details[open] summary")].map(x=>x.textContent);_r.apply(this,arguments);if(o.length)document.querySelectorAll("#v details").forEach(d=>{if(o.includes(d.querySelector("summary")?.textContent))d.open=true})}}

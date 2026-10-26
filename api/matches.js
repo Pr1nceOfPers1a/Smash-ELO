@@ -1,6 +1,7 @@
 const { sb, auth, adminOk, groupAdminOk } = require('./_lib');
 const { getJson, putJson } = require('./_store');
 const SKEY = (id) => `status/${id}.json`;
+const CKEY = (id) => `cpu/${id}.json`;
 const UUID = /^[0-9a-f-]{36}$/i;
 const nameOk = (s) => typeof s === 'string' && s.trim().length > 0 && s.length <= 24;
 function valid(rs) {
@@ -73,6 +74,29 @@ module.exports = async (req, res) => {
         if (text) { if (!all[key] && Object.keys(all).length >= 400) return res.status(400).json({ error: 'Too many statuses' }); all[key] = text; } else delete all[key];
         if (!(await putJson(SKEY(g.id), all))) return res.status(500).json({ error: 'Could not save status' });
         return res.status(200).json({ ok: true, statuses: all });
+      }
+      if (b.action && String(b.action).startsWith('cpu')) { // personal training games against CPUs (kept apart from the ladder)
+        const d = (await getJson(CKEY(g.id))) || { anchors: null, games: [] };
+        if (!Array.isArray(d.games)) d.games = [];
+        if (b.action === 'cpu') return res.status(200).json({ anchors: d.anchors || null, games: d.games });
+        if (b.action === 'cpulog') {
+          if (!nameOk(b.name)) return res.status(400).json({ error: 'Bad name' });
+          if (!Number.isInteger(b.level) || b.level < 1 || b.level > 9) return res.status(400).json({ error: 'Pick a CPU level from 1 to 9' });
+          if (!Number.isInteger(b.stocks) || b.stocks < 1 || b.stocks > 3) return res.status(400).json({ error: 'Stocks left must be 1 to 3' });
+          if (typeof b.win !== 'boolean') return res.status(400).json({ error: 'Pick win or loss' });
+          if (d.games.length >= 5000) return res.status(400).json({ error: 'Too many training games saved' });
+          const ch = g.tier === 'free' || typeof b.char !== 'string' ? '' : b.char.trim().slice(0, 30);
+          d.games.push({ id: require('crypto').randomBytes(8).toString('hex'), ts: new Date().toISOString(), name: b.name.trim(), level: b.level, stocks: b.stocks, win: b.win, ...(ch ? { char: ch } : {}) });
+        } else if (b.action === 'cpudel') {
+          const n = d.games.length; d.games = d.games.filter((x) => x.id !== b.id);
+          if (d.games.length === n) return res.status(404).json({ error: 'Game not found' });
+        } else if (b.action === 'cpuanchors') {
+          if (b.anchors === null) d.anchors = null;
+          else if (Array.isArray(b.anchors) && b.anchors.length === 9 && b.anchors.every((x) => Number.isFinite(x) && x >= 100 && x <= 3000)) d.anchors = b.anchors.map((x) => Math.round(x));
+          else return res.status(400).json({ error: 'Anchors must be 9 numbers from 100 to 3000' });
+        } else return res.status(400).json({ error: 'Unknown action' });
+        if (!(await putJson(CKEY(g.id), d))) return res.status(500).json({ error: 'Could not save' });
+        return res.status(200).json({ ok: true, anchors: d.anchors || null, games: d.games });
       }
       if (b.action === 'merge') return await merge(b, res, g);
       if (b.action === 'undo') { // take back a match you just logged (within 2 minutes)
