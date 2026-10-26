@@ -537,12 +537,18 @@ function oppOf(name){
 const bdgs=p=>{let b=[];try{b=BADGES.pick(D.matches,p.name,2)}catch(e){}return b.length?`<div class="bds">${b.map(x=>`<span class="bd">✦ ${esc(x.t)}</span>`).join("")}</div>`:""};
 // ---------- Training vs CPU (personal rating, separate from the ladder) ----------
 let cpuD={anchors:null,games:[]},cpf={level:5,win:true,stocks:3,char:""},cpaOpen=false;
-const cpuAnch=()=>cpuD.anchors&&cpuD.anchors.length==9?cpuD.anchors:CPU.DEF;
+const cpuManual=()=>!!(cpuD.anchors&&cpuD.anchors.length==9);
+let cpuTc={k:"",v:null},cpaEdit=false;
+function cpuAnch(){if(cpuManual())return cpuD.anchors;const k=cpuD.games.length+":"+(cpuD.games.length?cpuD.games[cpuD.games.length-1].id:"");if(cpuTc.k!=k)cpuTc={k,v:CPU.tune(cpuD.games,null)};return cpuTc.v}
 async function cpuPost(o){if(peep)return alert("Peek mode is view only.");try{const j=await api("matches",{method:"POST",body:JSON.stringify(o)});if(j&&j.games)cpuD={anchors:j.anchors||null,games:j.games};return true}catch(e){alert(e.message)}finally{render()}}
 const cpuLog=name=>cpuPost({action:"cpulog",name,level:cpf.level,win:cpf.win,stocks:cpf.stocks,...(PREM()&&cpf.char?{char:cpf.char}:{})});
 const cpuDel=id=>{if(confirm("Delete this training game?"))cpuPost({action:"cpudel",id})};
-async function cpaSave(){const v=[...document.querySelectorAll(".cpa input")].map(i=>+i.value);if(await cpuPost({action:"cpuanchors",anchors:v})){cpaOpen=false;render()}}
-function cpaReset(){if(confirm("Put the CPU ratings back to the defaults? Every training rating is recalculated."))cpuPost({action:"cpuanchors",anchors:null})}
+async function cpaSave(){const v=[...document.querySelectorAll(".cpa input")].map(i=>+i.value);if(await cpuPost({action:"cpuanchors",anchors:v})){cpaEdit=false;render()}}
+async function cpaAuto(){if(confirm("Go back to automatic CPU ratings? Every training rating is recalculated.")){if(await cpuPost({action:"cpuanchors",anchors:null})){cpaEdit=false;render()}}}
+function cpaPanel(A,R){
+  const man=cpuManual(),all=cpuD.games.length,lv=new Set(cpuD.games.map(g=>g.level)).size;
+  if(man||cpaEdit)return`<div class="msg" style="margin:10px 0 0">${man?"Set by hand.":"Editing by hand."} Higher means a tougher CPU, so a win earns more. Changing these re-rates every training game.</div><div class="cpa">${A.map((a,i)=>`<label><span class="sub">Lv ${i+1}</span><input class="n" type="number" inputmode="numeric" min="100" max="3000" value="${a}"></label>`).join("")}</div><div class="row" style="margin:10px 0 0"><button style="flex:1" onclick="cpaSave()">Save</button><button class="g" onclick="${man?"cpaAuto()":"cpaEdit=false;render()"}">${man?"Use auto":"Cancel"}</button></div>`;
+  return`<div class="msg" style="margin:10px 0 0">${all<12||lv<2?"Starting values. They tune themselves as games at different levels are logged.":`Tuned automatically from ${all} games at ${lv} levels. It moves slowly with a few players, and only learns the gaps between levels.`}</div><div class="cpa">${A.map((a,i)=>{const d=a-CPU.DEF[i];return`<div><span class="sub">Lv ${i+1}</span><b>${a}</b>${Math.abs(d)>=5?`<div class="sub ${d>0?"up":"dn"}" style="margin:0">${d>0?"+":""}${d}</div>`:""}</div>`}).join("")}</div><div class="row" style="margin:10px 0 0"><button class="g" style="flex:1" onclick="cpaEdit=true;render()">Set by hand</button></div>`}
 function cpuCard(p){
   const R=CPU.rate(cpuD.games,cpuAnch(),p.name),n=R.g,e=esc,A=cpuAnch();
   const lv=Object.keys(R.lv).sort((a,b)=>a-b).map(k=>`<span class="cpl">Lv ${k} · ${R.lv[k].w}–${R.lv[k].l}</span>`).join("");
@@ -558,8 +564,8 @@ function cpuCard(p){
   ${chars.length?`<div class="sub" style="margin:12px 0 2px">By character</div>${chars.map(([c,x])=>`<div class="cpr"><span>${e(c)}</span><b>${Math.round(x.r)}</b><span class="sub" style="flex:none">${x.g} ${gms(x.g)}</span></div>`).join("")}`:""}
   <div class="sub" style="margin:14px 0 0"><b>Log a game</b></div>
   <div class="cpg"><label><span class="sub">CPU level</span><select onchange="cpf.level=+this.value">${opts([1,2,3,4,5,6,7,8,9].map(x=>[x,"Level "+x]),cpf.level)}</select></label><label><span class="sub">Result</span><select onchange="cpf.win=this.value=='w'">${opts([["w","Win"],["l","Loss"]],cpf.win?"w":"l")}</select></label><label><span class="sub">Winner's stocks left</span><select onchange="cpf.stocks=+this.value">${opts([[3,"3 (dominant)"],[2,"2"],[1,"1 (close)"]],cpf.stocks)}</select></label>${PREM()?`<label><span class="sub">Your character</span><select onchange="cpf.char=this.value">${opts([["","Not set"],...CH.filter(c=>c!="Random").map(c=>[c.replace(/"/g,"&quot;"),e(c)])],cpf.char)}</select></label>`:""}</div>
-  <div class="row" style="margin:10px 0 0"><button style="flex:1" onclick="cpuLog('${e(p.name).replace(/'/g,"\\'")}')">Log game</button><button class="g" onclick="cpaOpen=!cpaOpen;render()">${cpaOpen?"Hide":"CPU ratings"}</button></div>
-  ${cpaOpen?`<div class="msg" style="margin:10px 0 0">How tough each CPU level is. Higher means tougher, so a win earns more. Changing these re-rates every training game.</div><div class="cpa">${A.map((a,i)=>`<label><span class="sub">Lv ${i+1}</span><input class="n" type="number" inputmode="numeric" min="100" max="3000" value="${a}"></label>`).join("")}</div><div class="row" style="margin:10px 0 0"><button style="flex:1" onclick="cpaSave()">Save</button><button class="g" onclick="cpaReset()">Reset</button></div>`:""}
+  <div class="row" style="margin:10px 0 0"><button style="flex:1" onclick="cpuLog('${e(p.name).replace(/'/g,"\\'")}')">Log game</button><button class="g" onclick="cpaOpen=!cpaOpen;cpaEdit=false;render()">${cpaOpen?"Hide":"CPU ratings"}</button></div>
+  ${cpaOpen?cpaPanel(A,R):""}
   ${recent?`<div class="sub" style="margin:14px 0 2px">Recent games</div>${recent}`:""}</div>`;
 }
 function playerPage(p){
